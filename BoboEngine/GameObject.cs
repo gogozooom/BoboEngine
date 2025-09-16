@@ -43,7 +43,7 @@
         }
         public void Destroy()
         {
-            foreach (ObjectBehavior component in components)
+            foreach (ObjectBehavior component in components.ToArray())
             {
                 component.Destroy();
             }

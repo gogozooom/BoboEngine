@@ -61,7 +61,7 @@ namespace BoboEngine
             objects.Add(_object);
 
             _object.connectedScene = this;
-
+                
             StartObject(_object);
         }
         public void RemoveObject(GameObject _object)

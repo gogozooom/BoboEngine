@@ -1,5 +1,6 @@
 ﻿using ConsoleCommand;
 using System.Reflection.Emit;
+using System.Xml.Linq;
 
 namespace BoboEngine
 {
@@ -34,6 +35,25 @@ namespace BoboEngine
             currentScene = scene;
         }
 
+        [Command("RemoveObject", "['name'] Deletes the specified object")]
+        public static void RemoveObject(string modelName)
+        {
+            GameObject obj = currentScene.Find(modelName);
+
+            if (obj == null)
+            {
+                Program.LogError($"Could not find '{modelName}'! Try using one of the following:");
+
+                foreach (var _obj in currentScene.objects)
+                {
+                    Program.LogMessage($" - '{_obj.name}'");
+                }
+
+                return;
+            }
+
+            obj.Destroy();
+        }
         [Command("SpawnMesh", "['name', x, y, z] Creates a new mesh object at the specified position")]
         public static void SpawnObject(string modelName, float x, float y, float z)
         {
