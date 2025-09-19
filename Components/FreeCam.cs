@@ -1,7 +1,6 @@
 ﻿using BoboEngine;
 using BoboEngine.GMath;
 using InputDevices;
-using System.Diagnostics;
 
 public class FreeCam : ObjectBehavior
 {
@@ -16,11 +15,11 @@ public class FreeCam : ObjectBehavior
 
     public override void Update()
     {
-        float3 posInput = _3DMouse.input.position;
-        float3 rotInput = _3DMouse.input.rotation;
+        Float3 posInput = _3DMouse.input.position;
+        Float3 rotInput = _3DMouse.input.rotation;
 
-        camera.transform.rotation += new float3(rotInput.x, -rotInput.y, -rotInput.z) * 75f * Time.deltaTime;
-        camera.transform.position += camera.transform.TransformVector(new float3(-posInput.x, posInput.y, posInput.z)) * 3 * Time.deltaTime;
+        camera.transform.rotation += new Float3(rotInput.x, -rotInput.y, -rotInput.z) * 75f * Time.deltaTime;
+        camera.transform.position += camera.transform.TransformVector(new Float3(-posInput.x, posInput.y, posInput.z)) * 3 * Time.deltaTime;
 
         if (_3DMouse.input.rightPressed)
         {

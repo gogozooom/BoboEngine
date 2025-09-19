@@ -4,9 +4,9 @@ namespace BoboEngine
 {
     public class Mesh : ObjectBehavior
     {
-        public float3[] vertices;
-        public int3[] faces;
-        public float3[] faceColors;
+        public Float3[] vertices;
+        public Int3[] faces;
+        public Float3[] faceColors;
 
         public Mesh()
         {
@@ -37,9 +37,9 @@ namespace BoboEngine
                 return false;
             }
 
-            List<float3> vertices = new();
-            List<int3> faces = new();
-            List<float3> faceColors = new();
+            List<Float3> vertices = new();
+            List<Int3> faces = new();
+            List<Float3> faceColors = new();
 
             string[] data = File.ReadAllLines(filePath);
 
@@ -56,7 +56,7 @@ namespace BoboEngine
 
                     int[] indexs = new int[faceIndexGroups.Length];
 
-                    float3 faceColor = float3.random;
+                    Float3 faceColor = Float3.random;
 
                     for (int i = 0; i < faceIndexGroups.Length; i++)
                     {
@@ -64,15 +64,15 @@ namespace BoboEngine
 
                         if (i == 2) // 3rd Vertex
                         {
-                            faces.Add((int3)indexs);
-                            faceColors.Add(float3.random);
+                            faces.Add((Int3)indexs);
+                            faceColors.Add(Float3.random);
                         }
                         else if (i > 2) // 3rd Onward Vertices TODO: possible issue with concave mesh
                         {
                             int[] continuedIndex = [indexs[0], indexs[i - 1], indexs[i]];
 
-                            faces.Add((int3)continuedIndex);
-                            faceColors.Add(float3.random);
+                            faces.Add((Int3)continuedIndex);
+                            faceColors.Add(Float3.random);
                         }
                     }
                 }

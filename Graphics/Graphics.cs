@@ -2,6 +2,7 @@
 using Raylib_cs;
 using System.Diagnostics;
 using System.Numerics;
+using Float3 = BoboEngine.GMath.Float3;
 
 namespace BoboEngine.Graphics
 {
@@ -57,13 +58,13 @@ namespace BoboEngine.Graphics
 
             Raylib.CloseWindow();
         }
-        static Color[] ToFlatByteArray(float3[] colorBuffer)
+        static Color[] ToFlatByteArray(Float3[] colorBuffer)
         {
             Color[] data = new Color[colorBuffer.Length];
 
             for (int i = 0; i < colorBuffer.Length; i++)
             {
-                float3 col = colorBuffer[i];
+                Float3 col = colorBuffer[i];
                 data[i] = new Color((int)(Math.Clamp(col.r, 0, 1) * 255), (int)(Math.Clamp(col.g, 0, 1) * 255), (int)(Math.Clamp(col.b, 0, 1) * 255), 255);
             }
 
@@ -73,11 +74,11 @@ namespace BoboEngine.Graphics
         public static int debug_trianglesRendered = 0;
         public static int debug_pixelsChecked = 0;
         public static int debug_meshes = 0;
-        public static float3[] Render(Scene scene)
+        public static Float3[] Render(Scene scene)
         {
             Camera cam = scene.camera;
 
-            float3[] colorBuffer = new float3[renderFrameWidth * renderFrameHeight];
+            Float3[] colorBuffer = new Float3[renderFrameWidth * renderFrameHeight];
             float[] depthBuffer = new float[renderFrameWidth * renderFrameHeight];
 
             List<Mesh> meshes = new();
@@ -97,9 +98,9 @@ namespace BoboEngine.Graphics
 
                 Parallel.For(0, mesh.faces.Length, i =>
                 {
-                    float3 a = VertexToScreen(mesh.vertices[mesh.faces[i].a], transform, cam);
-                    float3 b = VertexToScreen(mesh.vertices[mesh.faces[i].b], transform, cam);
-                    float3 c = VertexToScreen(mesh.vertices[mesh.faces[i].c], transform, cam);
+                    Float3 a = VertexToScreen(mesh.vertices[mesh.faces[i].a], transform, cam);
+                    Float3 b = VertexToScreen(mesh.vertices[mesh.faces[i].b], transform, cam);
+                    Float3 c = VertexToScreen(mesh.vertices[mesh.faces[i].c], transform, cam);
                     if (a.z <= 0 || b.z <= 0 || c.z <= 0) return; // Make better fix later
 
                     debug_trianglesRendered++;
@@ -122,7 +123,7 @@ namespace BoboEngine.Graphics
                         {
                             debug_pixelsChecked++;
 
-                            float2 p = new(x, y);
+                            Float2 p = new(x, y);
 
                             /* Test 
                             int px = y * renderFrameWidth + x;
@@ -130,11 +131,11 @@ namespace BoboEngine.Graphics
                             continue;
                             // Test */
 
-                            if (Maths.PointInTriangle((float2)a, (float2)b, (float2)c, p, out float3 weights))
+                            if (Maths.PointInTriangle((Float2)a, (Float2)b, (Float2)c, p, out Float3 weights))
                             {
                                 int px = y * renderFrameWidth + x;
 
-                                float depth = 1 / float3.Dot(new float3(1 / a.z, 1 / b.z, 1 / c.z), weights);
+                                float depth = 1 / Float3.Dot(new Float3(1 / a.z, 1 / b.z, 1 / c.z), weights);
 
                                 if (depth > depthBuffer[px] && depthBuffer[px] != 0) continue;
 
@@ -153,7 +154,7 @@ namespace BoboEngine.Graphics
         }
 
 
-        public static void DrawToBMP(float3[] image, string fileName) // Borrowed from Sebastian Lague
+        public static void DrawToBMP(Float3[] image, string fileName) // Borrowed from Sebastian Lague
         {
             throw new NotImplementedException("DEPRICATED!");
 
@@ -181,7 +182,7 @@ namespace BoboEngine.Graphics
             {
                 for (int x = 0; x < image.GetLength(0); x++)
                 {
-                    float3 col = image[y * x];
+                    Float3 col = image[y * x];
                     writer.Write((byte)(col.b * 255));  
                     writer.Write((byte)(col.g * 255));
                     writer.Write((byte)(col.r * 255));
@@ -195,20 +196,20 @@ namespace BoboEngine.Graphics
             //Process.Start("explorer.exe", '"'+outputPath+'"');
         }
 
-        public static float3 VertexToScreen(float3 vertex, Transform transform, Camera cam)
+        public static Float3 VertexToScreen(Float3 vertex, Transform transform, Camera cam)
         {
-            float3 vertex_world = transform.ToWorldPoint(vertex);
-            float3 vertex_camera = cam.transform.ToLocalPoint(vertex_world);
+            Float3 vertex_world = transform.ToWorldPoint(vertex);
+            Float3 vertex_camera = cam.transform.ToLocalPoint(vertex_world);
 
             vertex_camera.y = -vertex_camera.y; // Fix top bottom rendering
 
             float screenHeight_world = Maths.Tan(cam.fov / 2) * 2;
             float pixelsPerWorldUnit = renderFrameWidth / screenHeight_world / vertex_camera.z;
 
-            float2 pixelOffset = (float2)vertex_camera * pixelsPerWorldUnit;
-            float2 vertex_screen = pixelOffset + new float2(renderFrameWidth, renderFrameHeight) / 2f;
+            Float2 pixelOffset = (Float2)vertex_camera * pixelsPerWorldUnit;
+            Float2 vertex_screen = pixelOffset + new Float2(renderFrameWidth, renderFrameHeight) / 2f;
 
-            return new float3(vertex_screen.x, vertex_screen.y, vertex_camera.z); // Center 0,0 (And mirror for top bottom rendering)
+            return new Float3(vertex_screen.x, vertex_screen.y, vertex_camera.z); // Center 0,0 (And mirror for top bottom rendering)
         }
     }
 }

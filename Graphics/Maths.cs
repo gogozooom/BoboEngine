@@ -82,20 +82,20 @@ namespace BoboEngine.GMath
         {
             return r * 180 / MathF.PI;
         }
-        public static float GetTriangleDepthAtPoint(float3 a, float3 b, float3 c, float2 p)
+        public static float GetTriangleDepthAtPoint(Float3 a, Float3 b, Float3 c, Float2 p)
         {
-            PointInTriangle((float2)a, (float2)b, (float2)c, p, out float3 weights);
+            PointInTriangle((Float2)a, (Float2)b, (Float2)c, p, out Float3 weights);
 
             return weights.x * a.z + weights.y * b.z + weights.z * c.z;
         }
-        public static float SinedTriangleArea(float2 a, float2 b, float2 c)
+        public static float SinedTriangleArea(Float2 a, Float2 b, Float2 c)
         {
-            float2 ac = a - c;
-            float2 abPerp = (b - a).CrossProduct();
+            Float2 ac = a - c;
+            Float2 abPerp = (b - a).CrossProduct();
 
-            return -(float2.Dot(ac, abPerp) / 2);
+            return -(Float2.Dot(ac, abPerp) / 2);
         }
-        public static bool PointInTriangle(float2 a, float2 b, float2 c, float2 p)
+        public static bool PointInTriangle(Float2 a, Float2 b, Float2 c, Float2 p)
         {
             // Test if point is on right side of each edge segment
             float areaABP = SinedTriangleArea(a, b, p);
@@ -107,7 +107,7 @@ namespace BoboEngine.GMath
 
             return inTri && totalArea > 0;
         }
-        public static bool PointInTriangle(float2 a, float2 b, float2 c, float2 p, out float3 weights)
+        public static bool PointInTriangle(Float2 a, Float2 b, Float2 c, Float2 p, out Float3 weights)
         {
             // Test if point is on right side of each edge segment
             float areaABP = SinedTriangleArea(a, b, p);
@@ -131,7 +131,7 @@ namespace BoboEngine.GMath
         }
     }
 
-    public struct int3(int x = 0, int y = 0, int z = 0)
+    public struct Int3(int x = 0, int y = 0, int z = 0)
     {
         public int x = x;
         public int y = y;
@@ -141,16 +141,16 @@ namespace BoboEngine.GMath
         public int b { get => y; set => y = value; }
         public int c { get => z; set => z = value; }
         public override string ToString() => $"({x},{y},{z})";
-        public static explicit operator int3(int[] n)
+        public static explicit operator Int3(int[] n)
         {
             return new(n[0], n[1], n[2]);
         }
-        public static explicit operator int3(float3 f)
+        public static explicit operator Int3(Float3 f)
         {
             return new((int)f.x, (int)f.y, (int)f.z);
         }
     }
-    public struct float3(float x = 0, float y = 0, float z = 0)
+    public struct Float3(float x = 0, float y = 0, float z = 0)
     {
         public float x = x;
         public float y = y;
@@ -161,57 +161,57 @@ namespace BoboEngine.GMath
         public float b { get => z; set => z = value; }
 
         #region variants
-        public static float3 white => new(1, 1, 1);
-        public static float3 black => new(0, 0, 0);
-        public static float3 red => new(1, 0, 0);
-        public static float3 green => new(0, 1, 0);
-        public static float3 blue => new(0, 0, 1);
+        public static Float3 white => new(1, 1, 1);
+        public static Float3 black => new(0, 0, 0);
+        public static Float3 red => new(1, 0, 0);
+        public static Float3 green => new(0, 1, 0);
+        public static Float3 blue => new(0, 0, 1);
 
-        public static float3 xAxis => new(1, 0, 0);
-        public static float3 yAxis => new(0, 1, 0);
-        public static float3 zAxis => new(0, 0, 1);
+        public static Float3 xAxis => new(1, 0, 0);
+        public static Float3 yAxis => new(0, 1, 0);
+        public static Float3 zAxis => new(0, 0, 1);
 
 
-        public static float3 zero => new(0, 0, 0);
-        public static float3 one => new(1, 1, 1);
+        public static Float3 zero => new(0, 0, 0);
+        public static Float3 one => new(1, 1, 1);
         /// <summary>
         /// Random cords from 0f - 1f
         /// </summary>
-        public static float3 random => new(Maths.Random(75), Maths.Random(75), Maths.Random(75));
+        public static Float3 random => new(Maths.Random(75), Maths.Random(75), Maths.Random(75));
         #endregion
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float Length() => MathF.Sqrt(Dot(this, this));
-        public float3 Normalized() => this / Length();
-        public static float Dot(float3 a, float3 b) => a.x * b.x + a.y * b.y + a.z * b.z;
-        public static float3 operator +(float3 a, float3 b) => new(a.x + b.x, a.y + b.y, a.z + b.z); // Vector Adding
-        public static float3 operator -(float3 a, float3 b) => new(a.x - b.x, a.y - b.y, a.z - b.z); // Vector Subracting
+        public Float3 Normalized() => this / Length();
+        public static float Dot(Float3 a, Float3 b) => a.x * b.x + a.y * b.y + a.z * b.z;
+        public static Float3 operator +(Float3 a, Float3 b) => new(a.x + b.x, a.y + b.y, a.z + b.z); // Vector Adding
+        public static Float3 operator -(Float3 a, Float3 b) => new(a.x - b.x, a.y - b.y, a.z - b.z); // Vector Subracting
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float3 operator *(float3 a, float3 b) => new(a.x * b.x, a.y * b.y, a.z * b.y); // Vector Multiplication
-        public static float3 operator /(float3 a, float3 b) => new(a.x / b.x, a.y / b.y, a.z / b.y); // Vector Division
-        public static float3 operator *(float3 v, float f) => new(v.x * f, v.y * f, v.z * f); // Vector Length Multiplication
-        public static float3 operator /(float3 v, float f) => new(v.x / f, v.y / f, v.z / f); // Vector Length Division
-        public static float3 operator -(float3 a) => new(-a.x, -a.y, -a.z); // Negative Vector
+        public static Float3 operator *(Float3 a, Float3 b) => new(a.x * b.x, a.y * b.y, a.z * b.y); // Vector Multiplication
+        public static Float3 operator /(Float3 a, Float3 b) => new(a.x / b.x, a.y / b.y, a.z / b.y); // Vector Division
+        public static Float3 operator *(Float3 v, float f) => new(v.x * f, v.y * f, v.z * f); // Vector Length Multiplication
+        public static Float3 operator /(Float3 v, float f) => new(v.x / f, v.y / f, v.z / f); // Vector Length Division
+        public static Float3 operator -(Float3 a) => new(-a.x, -a.y, -a.z); // Negative Vector
 
         public Color ToColor() => new((int)(x * 255), (int)(y * 255), (int)(z * 255));
         public override string ToString() => $"({x.ToString()},{y.ToString()},{z.ToString()})";
-        public static float3 Parse(string s) => (float3)s.Split(',').Select(float.Parse).ToArray();
+        public static Float3 Parse(string s) => (Float3)s.Split(',').Select(float.Parse).ToArray();
 
-        public int3 RoundToInt3()
+        public Int3 RoundToInt3()
         {
             return new((int)float.Round(x), (int)float.Round(y), (int)float.Round(z));
         }
 
-        public static explicit operator float3(float[] f)
+        public static explicit operator Float3(float[] f)
         {
             return new(f[0], f[1], f[2]);
         }
-        public static implicit operator float3(int3 i)
+        public static implicit operator Float3(Int3 i)
         {
             return new(i.x, i.y, i.z);
         }
     }
-    public struct float2(float x = 0, float y = 0)
+    public struct Float2(float x = 0, float y = 0)
     {
         public float x = x;
         public float y = y;
@@ -219,38 +219,38 @@ namespace BoboEngine.GMath
 
         #region variants
 
-        public static float2 xAxis => new(1, 0);
-        public static float2 yAxis => new(0, 1);
+        public static Float2 xAxis => new(1, 0);
+        public static Float2 yAxis => new(0, 1);
 
 
-        public static float2 zero => new(0, 0);
-        public static float2 one => new(1, 1);
+        public static Float2 zero => new(0, 0);
+        public static Float2 one => new(1, 1);
         /// <summary>
         /// Random cords from 0f - 1f
         /// </summary>
-        public static float2 random => new(Maths.Random(0), Maths.Random(1));
+        public static Float2 random => new(Maths.Random(0), Maths.Random(1));
         #endregion
 
         public float Length() => MathF.Sqrt(x * x + y * y);
-        public float2 Normalized() => this / Length();
-        public float2 CrossProduct() => new (y, -x);
-        public static float Dot(float2 a, float2 b) => a.x * b.x + a.y * b.y;
+        public Float2 Normalized() => this / Length();
+        public Float2 CrossProduct() => new (y, -x);
+        public static float Dot(Float2 a, Float2 b) => a.x * b.x + a.y * b.y;
 
-        public static float2 operator +(float2 a, float2 b) => new(a.x + b.x, a.y + b.y); // Vector Adding
-        public static float2 operator -(float2 a, float2 b) => new(a.x - b.x, a.y - b.y); // Vector Subracting
-        public static float2 operator *(float2 a, float2 b) => new(a.x * b.x, a.y * b.y); // Vector Multiplication
-        public static float2 operator *(float2 v, float f) => new(v.x * f, v.y * f); // Vector Length Multiplication
-        public static float2 operator /(float2 v, float f) => new(v.x / f, v.y / f); // Vector Length Division
-        public static float2 operator -(float2 a) => new(-a.x, -a.y); // Negative Vector
+        public static Float2 operator +(Float2 a, Float2 b) => new(a.x + b.x, a.y + b.y); // Vector Adding
+        public static Float2 operator -(Float2 a, Float2 b) => new(a.x - b.x, a.y - b.y); // Vector Subracting
+        public static Float2 operator *(Float2 a, Float2 b) => new(a.x * b.x, a.y * b.y); // Vector Multiplication
+        public static Float2 operator *(Float2 v, float f) => new(v.x * f, v.y * f); // Vector Length Multiplication
+        public static Float2 operator /(Float2 v, float f) => new(v.x / f, v.y / f); // Vector Length Division
+        public static Float2 operator -(Float2 a) => new(-a.x, -a.y); // Negative Vector
 
         public override string ToString() => $"({x},{y})";
-        public static float2 Parse(string s) => (float2)s.Split(',').Select(float.Parse).ToArray();
+        public static Float2 Parse(string s) => (Float2)s.Split(',').Select(float.Parse).ToArray();
 
-        public static explicit operator float2(float[] f)
+        public static explicit operator Float2(float[] f)
         {
             return new(f[0], f[1]);
         }
-        public static explicit operator float2(float3 v)
+        public static explicit operator Float2(Float3 v)
         {
             return new(v.x, v.y);
         }

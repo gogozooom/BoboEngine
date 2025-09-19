@@ -1,7 +1,4 @@
-﻿
-using HidSharp.Reports;
-
-namespace BoboEngine
+﻿namespace BoboEngine
 {
     public class Scene
     {

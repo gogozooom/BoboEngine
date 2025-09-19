@@ -146,16 +146,16 @@ namespace InputDevices
                             }
                             else
                             {
-                                if (posInput) // Hacky solution
+                                if (posInput) // Hacky solution TODO: (Has problem of X inputs randomly getting swapped, better distinction solution to be found)
                                 {
-                                    float3 pos = new(ConvertInput(data[0].GetLogicalValue()), ConvertInput(data[4].GetLogicalValue()), ConvertInput(data[3].GetLogicalValue())); // [6,7] Are still readable?
+                                    Float3 pos = new(ConvertInput(data[0].GetLogicalValue()), ConvertInput(data[4].GetLogicalValue()), ConvertInput(data[3].GetLogicalValue())); // [6,7] Are still readable?
 
                                     input.SetPositionInput(pos);
                                     posInput = false;
                                 }
                                 else
                                 {
-                                    float3 rot = new(ConvertInput(data[0].GetLogicalValue()), ConvertInput(data[7].GetLogicalValue()), ConvertInput(data[6].GetLogicalValue())); // But this makes more sense
+                                    Float3 rot = new(ConvertInput(data[0].GetLogicalValue()), ConvertInput(data[7].GetLogicalValue()), ConvertInput(data[6].GetLogicalValue())); // But this makes more sense
 
                                     input.SetRotationInput(rot);
                                     posInput = true;
@@ -195,8 +195,8 @@ namespace InputDevices
     }
     public class _3DInput
     {
-        public float3 position { get; private set; }
-        public float3 rotation { get; private set; }
+        public Float3 position { get; private set; }
+        public Float3 rotation { get; private set; }
         public bool leftPressed { get; private set; }
         public bool rightPressed { get; private set; }
         public Action<bool> onLeftInput;
@@ -204,12 +204,12 @@ namespace InputDevices
 
         public _3DInput()
         {
-            position = float3.zero;
-            rotation = float3.zero;
+            position = Float3.zero;
+            rotation = Float3.zero;
             leftPressed = false;
             rightPressed = false;
         }
-        public _3DInput(float3 position, float3 rotation, bool leftPressed, bool rightPressed)
+        public _3DInput(Float3 position, Float3 rotation, bool leftPressed, bool rightPressed)
         {
             this.position = position;
             this.rotation = rotation;
@@ -217,11 +217,11 @@ namespace InputDevices
             this.rightPressed = rightPressed;
         }
 
-        public void SetPositionInput(float3 position)
+        public void SetPositionInput(Float3 position)
         {
             this.position = position;
         }
-        public void SetRotationInput(float3 rotation)
+        public void SetRotationInput(Float3 rotation)
         {
             this.rotation = rotation;
         }
