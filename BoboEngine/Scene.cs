@@ -16,7 +16,6 @@
             camera = cameraObject.AddComponent<Camera>();
 
             AddObject(cameraObject);
-            // TODO: make scene be able to load and save from file format!
         }
         /// <summary>
         /// Updates all objects in the scene

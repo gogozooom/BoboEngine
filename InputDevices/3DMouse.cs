@@ -1,249 +1,247 @@
-﻿using BoboEngine.GMath;
-using ConsoleCommand;
+﻿using ConsoleCommand;
 using HidSharp;
 using HidSharp.Reports;
+using BoboEngine;
 
-namespace InputDevices
+namespace InputDevices;
+
+public static class _3DMouse
 {
-    // Possible TODO: Extends off of InputDevice base class
-    public static class _3DMouse
+    public static _3DInput input { get; private set; } = new();
+
+    const int ID_VENDOR = 0x256F;
+    const int ID_PRODUCT = 0xC635;
+
+    static HidDevice inputDevice;
+    static HidStream inputStream;
+
+    [Command("InitMouse", "Initalizes 3DMouse Device!")]
+    public static bool Initalize()
     {
-        public static _3DInput input { get; private set; } = new();
+        var list = DeviceList.Local;
 
-        const int ID_VENDOR = 0x256F;
-        const int ID_PRODUCT = 0xC635;
+        string targetID = GetFormattedID();
 
-        static HidDevice inputDevice;
-        static HidStream inputStream;
-
-        [Command("InitMouse", "Initalizes 3DMouse Device!")]
-        public static bool Initalize()
+        foreach (var device in list.GetHidDevices())
         {
-            var list = DeviceList.Local;
+            //Program.Log($" * [{device.GetFriendlyName()}] Properties:");
 
-            string targetID = GetFormattedID();
+            string[] deviceInfo = device.DevicePath.Split("#");
 
-            foreach (var device in list.GetHidDevices())
+            if (deviceInfo.Length < 2) continue; 
+
+            string deviceID = deviceInfo[1];
+
+            if (deviceID.Equals(targetID, StringComparison.OrdinalIgnoreCase))
             {
-                //Program.Log($" * [{device.GetFriendlyName()}] Properties:");
+                inputDevice = device;
+                break;
+            }
+        }
 
-                string[] deviceInfo = device.DevicePath.Split("#");
+        if (inputDevice == null)
+        {
+            Program.LogError($"Could not find targetID = '{targetID}'");
+            return false;
+        }
 
-                if (deviceInfo.Length < 2) continue; 
+        bool success = inputDevice.TryOpen(out inputStream);
 
-                string deviceID = deviceInfo[1];
+        if (!success)
+        {
+            Program.LogError($"Could not open inputStream!");
+            return false;
+        }
 
-                if (deviceID.Equals(targetID, StringComparison.OrdinalIgnoreCase))
+        return true;
+    }
+
+    static Thread readInputLoop;
+
+    [Command("GetMouse", "Prints the current input")]
+    public static void GetInput()
+    {
+        Program.LogMessage(input);
+    }
+    [Command("ReadMouse", "Reads mouse input")]
+    public static void StartReadingInput()
+    {
+        if (readInputLoop != null)
+        {
+            if (readInputLoop.IsAlive)
+            {
+                Program.LogWarning("Already Reading Input!");
+                return;
+            }
+        }
+
+        readInputLoop = new Thread(ReadInputLoop);
+
+        readInputLoop.Start();
+    }
+    static void ReadInputLoop()
+    {
+        if (inputStream == null)
+        {
+            if (!Initalize())
+            {
+                return;
+            }
+        }
+
+        var reportDescriptor = inputDevice.GetReportDescriptor();
+
+        var inputReportBuffer = new byte[inputDevice.GetMaxInputReportLength()];
+        var inputReceiver = reportDescriptor.CreateHidDeviceInputReceiver();
+        var inputParser = reportDescriptor.DeviceItems[0].CreateDeviceItemInputParser();
+
+        inputReceiver.Start(inputStream);
+
+        int startTime = Environment.TickCount;
+        bool posInput = true;
+        while (true)
+        {
+            if (inputReceiver.WaitHandle.WaitOne(1000))
+            {
+                if (!inputReceiver.IsRunning) // Disconnected?
                 {
-                    inputDevice = device;
+                    Program.LogError("DEVICE DISCONNECTED WHILE READING INPUT!");
+
+                    inputDevice = null;
+                    inputStream = null;
+
                     break;
-                }
-            }
+                } 
 
-            if (inputDevice == null)
-            {
-                Program.LogError($"Could not find targetID = '{targetID}'");
-                return false;
-            }
-
-            bool success = inputDevice.TryOpen(out inputStream);
-
-            if (!success)
-            {
-                Program.LogError($"Could not open inputStream!");
-                return false;
-            }
-
-            return true;
-        }
-
-        static Thread readInputLoop;
-
-        [Command("GetMouse", "Prints the current input")]
-        public static void GetInput()
-        {
-            Program.LogMessage(input);
-        }
-        [Command("ReadMouse", "Reads mouse input")]
-        public static void StartReadingInput()
-        {
-            if (readInputLoop != null)
-            {
-                if (readInputLoop.IsAlive)
+                Report report;
+                while (inputReceiver.TryRead(inputReportBuffer, 0, out report))
                 {
-                    Program.LogWarning("Already Reading Input!");
-                    return;
-                }
-            }
+                    // Parse the report if possible.
+                    // This will return false if (for example) the report applies to a different DeviceItem.
 
-            readInputLoop = new Thread(ReadInputLoop);
 
-            readInputLoop.Start();
-        }
-        static void ReadInputLoop()
-        {
-            if (inputStream == null)
-            {
-                if (!Initalize())
-                {
-                    return;
-                }
-            }
-
-            var reportDescriptor = inputDevice.GetReportDescriptor();
-
-            var inputReportBuffer = new byte[inputDevice.GetMaxInputReportLength()];
-            var inputReceiver = reportDescriptor.CreateHidDeviceInputReceiver();
-            var inputParser = reportDescriptor.DeviceItems[0].CreateDeviceItemInputParser();
-
-            inputReceiver.Start(inputStream);
-
-            int startTime = Environment.TickCount;
-            bool posInput = true;
-            while (true)
-            {
-                if (inputReceiver.WaitHandle.WaitOne(1000))
-                {
-                    if (!inputReceiver.IsRunning) // Disconnected?
+                    if (inputParser.TryParseReport(inputReportBuffer, 0, report))
                     {
-                        Program.LogError("DEVICE DISCONNECTED WHILE READING INPUT!");
+                        string totalMessage = "Data:\n";
 
-                        inputDevice = null;
-                        inputStream = null;
+                        List<DataValue> data = new();
 
-                        break;
-                    } 
-
-                    Report report;
-                    while (inputReceiver.TryRead(inputReportBuffer, 0, out report))
-                    {
-                        // Parse the report if possible.
-                        // This will return false if (for example) the report applies to a different DeviceItem.
-
-
-                        if (inputParser.TryParseReport(inputReportBuffer, 0, report))
+                        for (int i = 0; i < inputParser.ValueCount; i++)
                         {
-                            string totalMessage = "Data:\n";
+                            var value = inputParser.GetValue(i);
 
-                            List<DataValue> data = new();
+                            totalMessage += $"  [{i}] '{value.DataItem.ElementBits}' '{value.GetLogicalValue()}'\n";
 
-                            for (int i = 0; i < inputParser.ValueCount; i++)
+                            data.Add(value);
+                        }
+
+                        totalMessage += $"\nEnd; PosInput = '{posInput}'";
+
+                        //Program.LogMessage(input);
+
+                        if (data[0].DataItem.ExpectedUsageType == ExpectedUsageType.PushButton)
+                        {
+                            input.SetButtonInput(data[0].GetLogicalValue() == 1, data[1].GetLogicalValue() == 1);
+                        }
+                        else
+                        {
+                            if (posInput) // Hacky solution TODO: (Has problem of X inputs randomly getting swapped, better distinction solution to be found)
                             {
-                                var value = inputParser.GetValue(i);
+                                Float3 pos = new(ConvertInput(data[0].GetLogicalValue()), ConvertInput(data[4].GetLogicalValue()), ConvertInput(data[3].GetLogicalValue())); // [6,7] Are still readable?
 
-                                totalMessage += $"  [{i}] '{value.DataItem.ElementBits}' '{value.GetLogicalValue()}'\n";
-
-                                data.Add(value);
-                            }
-
-                            totalMessage += $"\nEnd; PosInput = '{posInput}'";
-
-                            //Program.LogMessage(input);
-
-                            if (data[0].DataItem.ExpectedUsageType == ExpectedUsageType.PushButton)
-                            {
-                                input.SetButtonInput(data[0].GetLogicalValue() == 1, data[1].GetLogicalValue() == 1);
+                                input.SetPositionInput(pos);
+                                posInput = false;
                             }
                             else
                             {
-                                if (posInput) // Hacky solution TODO: (Has problem of X inputs randomly getting swapped, better distinction solution to be found)
-                                {
-                                    Float3 pos = new(ConvertInput(data[0].GetLogicalValue()), ConvertInput(data[4].GetLogicalValue()), ConvertInput(data[3].GetLogicalValue())); // [6,7] Are still readable?
+                                Float3 rot = new(ConvertInput(data[0].GetLogicalValue()), ConvertInput(data[7].GetLogicalValue()), ConvertInput(data[6].GetLogicalValue())); // But this makes more sense
 
-                                    input.SetPositionInput(pos);
-                                    posInput = false;
-                                }
-                                else
-                                {
-                                    Float3 rot = new(ConvertInput(data[0].GetLogicalValue()), ConvertInput(data[7].GetLogicalValue()), ConvertInput(data[6].GetLogicalValue())); // But this makes more sense
-
-                                    input.SetRotationInput(rot);
-                                    posInput = true;
-                                }
+                                input.SetRotationInput(rot);
+                                posInput = true;
                             }
                         }
                     }
                 }
             }
         }
-
-        #region Background
-        public static string ToHex(this int value)
-        {
-            return String.Format("{0:X}", value).ToLower();
-        }
-        static float ConvertInput(int input)
-        {
-            float result = 0;
-
-            if (input <= 350) // Negative
-            {
-                result = -input/350f;
-            }
-            else // Positive
-            {
-                result = (65535 - input)/349f;
-            }
-
-            return result;
-        }
-        static string GetFormattedID()
-        {
-            return $"vid_{ID_VENDOR.ToHex()}&pid_{ID_PRODUCT.ToHex()}";
-        }
-        #endregion
     }
-    public class _3DInput
+
+    #region Background
+    public static string ToHex(this int value)
     {
-        public Float3 position { get; private set; }
-        public Float3 rotation { get; private set; }
-        public bool leftPressed { get; private set; }
-        public bool rightPressed { get; private set; }
-        public Action<bool> onLeftInput;
-        public Action<bool> onRightInput;
+        return String.Format("{0:X}", value).ToLower();
+    }
+    static float ConvertInput(int input)
+    {
+        float result = 0;
 
-        public _3DInput()
+        if (input <= 350) // Negative
         {
-            position = Float3.zero;
-            rotation = Float3.zero;
-            leftPressed = false;
-            rightPressed = false;
+            result = -input/350f;
         }
-        public _3DInput(Float3 position, Float3 rotation, bool leftPressed, bool rightPressed)
+        else // Positive
         {
-            this.position = position;
-            this.rotation = rotation;
-            this.leftPressed = leftPressed;
-            this.rightPressed = rightPressed;
+            result = (65535 - input)/349f;
         }
 
-        public void SetPositionInput(Float3 position)
+        return result;
+    }
+    static string GetFormattedID()
+    {
+        return $"vid_{ID_VENDOR.ToHex()}&pid_{ID_PRODUCT.ToHex()}";
+    }
+    #endregion
+}
+public class _3DInput
+{
+    public Float3 position { get; private set; }
+    public Float3 rotation { get; private set; }
+    public bool leftPressed { get; private set; }
+    public bool rightPressed { get; private set; }
+    public Action<bool> onLeftInput;
+    public Action<bool> onRightInput;
+
+    public _3DInput()
+    {
+        position = Float3.zero;
+        rotation = Float3.zero;
+        leftPressed = false;
+        rightPressed = false;
+    }
+    public _3DInput(Float3 position, Float3 rotation, bool leftPressed, bool rightPressed)
+    {
+        this.position = position;
+        this.rotation = rotation;
+        this.leftPressed = leftPressed;
+        this.rightPressed = rightPressed;
+    }
+
+    public void SetPositionInput(Float3 position)
+    {
+        this.position = position;
+    }
+    public void SetRotationInput(Float3 rotation)
+    {
+        this.rotation = rotation;
+    }
+    public void SetButtonInput(bool leftPressed, bool rightPressed)
+    {
+        if (!this.leftPressed && leftPressed || this.leftPressed && !leftPressed)
         {
-            this.position = position;
+            onLeftInput?.Invoke(leftPressed);
         }
-        public void SetRotationInput(Float3 rotation)
+        if (!this.rightPressed && rightPressed || this.rightPressed && !rightPressed)
         {
-            this.rotation = rotation;
+            onRightInput?.Invoke(rightPressed);
         }
-        public void SetButtonInput(bool leftPressed, bool rightPressed)
-        {
-            if (!this.leftPressed && leftPressed || this.leftPressed && !leftPressed)
-            {
-                onLeftInput?.Invoke(leftPressed);
-            }
-            if (!this.rightPressed && rightPressed || this.rightPressed && !rightPressed)
-            {
-                onRightInput?.Invoke(rightPressed);
-            }
 
 
-            this.leftPressed = leftPressed;
-            this.rightPressed = rightPressed;
-        }
+        this.leftPressed = leftPressed;
+        this.rightPressed = rightPressed;
+    }
 
-        public override string ToString()
-        {
-            return $"pos: [{position}] rot: [{rotation}] buttons: [{leftPressed},{rightPressed}]";
-        }
+    public override string ToString()
+    {
+        return $"pos: [{position}] rot: [{rotation}] buttons: [{leftPressed},{rightPressed}]";
     }
 }

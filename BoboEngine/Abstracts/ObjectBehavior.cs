@@ -1,6 +1,6 @@
 ﻿namespace BoboEngine
 {
-    public class ObjectBehavior
+    public abstract class ObjectBehavior
     {
         public GameObject gameObject;
         public Transform transform => gameObject.transform;
@@ -10,7 +10,7 @@
         /// </summary>
         public virtual void Start()
         {
-            Console.WriteLine("[ObjectBehavior Start!]");
+
         }
         /// <summary>
         /// Runs every frame

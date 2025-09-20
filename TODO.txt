@@ -1,0 +1,17 @@
+TODO:
+	- [Scene.cs] ObjectCreated and ObjectRemoved actions
+	- [Shader.cs] Create Lit material and Light sources
+	- [Renderer.cs] Fix triangles disappearing when slightly behind the camera.
+	- [Transform.cs] Optimize GetBasisVectors() Method.
+	- Decouple shaders into a Mesh Renderer class?
+	- Get rendering code running on GPU.
+	- Make window resizeable.
+
+	- Create scene skyboxes
+	- [Transform.cs] Create parent and children relationships
+	- [Texture.cs] Add support for png files
+	- [Renderer.cs] Add support for transparency
+	- [SceneManager.cs] Create scene file loading
+	- Full input system! (InputBaseDevice class)
+	- Create UI System!
+	- Create sound and audio listener system! (Maybe with some cool effects!)

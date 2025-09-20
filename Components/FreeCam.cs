@@ -1,5 +1,4 @@
 ﻿using BoboEngine;
-using BoboEngine.GMath;
 using InputDevices;
 
 public class FreeCam : ObjectBehavior

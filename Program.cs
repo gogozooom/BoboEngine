@@ -1,5 +1,4 @@
 ﻿using BoboEngine;
-using BoboEngine.Graphics;
 using ConsoleCommand;
 using System.Diagnostics;
 using System.Reflection;
@@ -21,7 +20,7 @@ internal static class Program
         ConsoleCmd.Initialize();
 
         SceneManager.LoadScene();
-        Graphics.Initalize();
+        Renderer.Initalize();
 
         // Read Console Loop
         while (true) 
@@ -34,6 +33,14 @@ internal static class Program
                 ConsoleInputted?.Invoke(input);
             }
         }
+    }
+    public static string GetLocalModelPath(string model)
+    {
+        return Path.Combine(Program.ProgramDirectory, "Models", model + ".obj");
+    }
+    public static string GetLocalTexturePath(string model)
+    {
+        return Path.Combine(Program.ProgramDirectory, "Textures", model + ".bmp");
     }
 
     #region ConsoleLogging
