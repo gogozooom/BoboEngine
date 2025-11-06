@@ -1,7 +1,6 @@
 ﻿using ConsoleCommand;
 using GLFW;
 using Raylib_cs;
-using System.Diagnostics;
 using System.Numerics;
 using static OpenGL.GL;
 
@@ -41,15 +40,13 @@ public static class Renderer
 
         var testMesh = new Mesh();
 
-        testMesh.LoadObjFile(Program.GetLocalModelPath("Cube"));
+        testMesh.LoadObjFile(Program.GetLocalModelPath("Test"));
 
         while (!Glfw.WindowShouldClose(WindowManager.window))
         {
             Glfw.PollEvents();
 
             // update
-
-
 
             // render
             WindowManager.ClearBuffer();
@@ -65,9 +62,11 @@ public static class Renderer
 
             Glfw.SwapBuffers(WindowManager.window);
         }
+
+
+        WindowManager.CloseWindow();
     }
 
-    /*
     /*
     static void RenderWindowLoopRAY()
     {
@@ -277,8 +276,7 @@ public static class Renderer
 
         return colorBuffer;
     }
-
-    */
+    //*/
 
     public static void DrawLine(Int2 startPointA, Int2 endPointB, Float3 lineColor, Camera cam, ref Float3[] colorBuffer, ref float[] depthBuffer)
     {

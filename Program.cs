@@ -26,6 +26,8 @@ internal static class Program
 
         ConsoleCmd.Initialize();
 
+        //TMP.NotMain(args);
+
         //SceneManager.LoadScene();
         Renderer.Initalize();
 

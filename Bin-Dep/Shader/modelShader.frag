@@ -5,5 +5,5 @@ in vec3 v_VertexColor;
 
 void main()
 {
-    f_color = vec4(v_VertexColor, 1);
+    f_color = vec4(v_VertexColor, 1); // Color r g b a
 }

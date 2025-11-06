@@ -1,6 +1,4 @@
 ﻿using BoboEngine.Shaders;
-using System.Numerics;
-using System.Runtime.CompilerServices;
 using static OpenGL.GL;
 
 namespace BoboEngine;
@@ -100,21 +98,69 @@ public class Mesh : ObjectBehavior
         this.normals = normals.ToArray();
         this.textureCoords = textureCoords.ToArray();
 
-        var vertexData = new float[vertices.Count * 3];
-
-        for (int i = 0; i < this.vertices.Length; i += 3)
-        {
-            var vertex = this.vertices[i];
-
-            vertexData[i] = vertex.x;
-            vertexData[i+1] = vertex.y;
-            vertexData[i+2] = vertex.z;
-        }
-
         // OpenGl Time
 
-        shader = new Shader("Shader/modelShader.vShader", "Shader/modelShader.fShader");
+        var vertexData = new float[faces.Count * 18];
 
+        for (int i = 0; i < this.faces.Length; i++)
+        {
+            var face = this.faces[i];
+
+            var faceIndex = i * 18;
+
+            Float3 a = vertices[face.vertex_indexs[0]];
+
+            vertexData[faceIndex + 0] = a.x;
+            vertexData[faceIndex + 1] = a.y;
+            vertexData[faceIndex + 2] = a.z;
+
+            vertexData[faceIndex + 3] = face.faceColor.r;
+            vertexData[faceIndex + 4] = face.faceColor.g;
+            vertexData[faceIndex + 5] = face.faceColor.b;
+
+            Float3 b = vertices[face.vertex_indexs[1]];
+
+            faceIndex += 6;
+
+            vertexData[faceIndex + 0] = b.x;
+            vertexData[faceIndex + 1] = b.y;
+            vertexData[faceIndex + 2] = b.z;
+
+            vertexData[faceIndex + 3] = face.faceColor.r;
+            vertexData[faceIndex + 4] = face.faceColor.g;
+            vertexData[faceIndex + 5] = face.faceColor.b;
+
+            Float3 c = vertices[face.vertex_indexs[2]];
+
+            faceIndex += 6;
+
+            vertexData[faceIndex + 0] = c.x;
+            vertexData[faceIndex + 1] = c.y;
+            vertexData[faceIndex + 2] = c.z;
+
+            vertexData[faceIndex + 3] = face.faceColor.r;
+            vertexData[faceIndex + 4] = face.faceColor.g;
+            vertexData[faceIndex + 5] = face.faceColor.b;
+        }
+
+        for (int g = 0; g < vertexData.Length / 6; g++)
+        {
+            Program.Log("Pos: " + vertexData[g * 6 + 0] + ", " + vertexData[g * 6 + 1] + ", " + vertexData[g * 6 + 2]);
+            Program.Log("Col: " + vertexData[g * 6 + 3] + ", " + vertexData[g * 6 + 4] + ", " + vertexData[g * 6 + 5]);
+        }
+
+        shader = new Shader("Shader/modelShader.vert", "Shader/modelShader.frag");
+
+        // Vertex | Color
+        /*
+        var _vertexData = new[] {
+            -0.5f, -0.5f, 0.0f,     1,1,1,
+            0.5f, -0.5f, 0.0f,      1,1,1,
+            0.0f,  0.5f, 0.0f,      1,1,1,
+        };
+        */
+
+        /*
         float[] _vertexData = {
                 -0.5f,  0.5f, 1.0f,     1.0f, 0.0f, 0.0f, // top left
                  0.5f,  0.5f, 1.0f,     1.0f, 0.0f, 0.0f, // top right
@@ -124,6 +170,10 @@ public class Mesh : ObjectBehavior
                  0.5f, -0.5f, 1.0f,     1.0f, 1.0f, 0.0f, // bottom right
                 -0.5f, -0.5f, 1.0f,     0.0f, 1.0f, 0.0f, // bottom left
             };
+        */
+
+
+        vertexBufferSize = (uint)vertexData.Length;
 
         vao = glGenVertexArray();
         vbo = glGenBuffer();
@@ -131,9 +181,9 @@ public class Mesh : ObjectBehavior
         glBindVertexArray(vao);
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
-        fixed (float* ptrVertices = &_vertexData[0])
+        fixed (float* ptrVertices = &vertexData[0])
         {
-            glBufferData(GL_ARRAY_BUFFER, sizeof(float) * _vertexData.Length, ptrVertices, GL_STATIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertexData.Length, ptrVertices, GL_STATIC_DRAW);
         }
 
         // Position (x,y,z)
