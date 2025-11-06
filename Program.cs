@@ -1,9 +1,16 @@
 ﻿using BoboEngine;
 using ConsoleCommand;
+using GLFW;
 using System.Diagnostics;
 using System.Reflection;
+
 internal static class Program
 {
+    /// <summary>
+    /// Title of the window
+    /// </summary>
+    public const string TITLE = "BoboEngine";
+
     public static string ExecutablePath { get; private set; }
     public static string ProgramDirectory { get; private set; }
 
@@ -19,7 +26,7 @@ internal static class Program
 
         ConsoleCmd.Initialize();
 
-        SceneManager.LoadScene();
+        //SceneManager.LoadScene();
         Renderer.Initalize();
 
         // Read Console Loop
@@ -36,11 +43,11 @@ internal static class Program
     }
     public static string GetLocalModelPath(string model)
     {
-        return Path.Combine(Program.ProgramDirectory, "Models", model + ".obj");
+        return Path.Combine(ProgramDirectory, "Models", model + ".obj");
     }
     public static string GetLocalTexturePath(string model)
     {
-        return Path.Combine(Program.ProgramDirectory, "Textures", model + ".bmp");
+        return Path.Combine(ProgramDirectory, "Textures", model + ".bmp");
     }
 
     #region ConsoleLogging

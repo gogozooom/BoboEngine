@@ -1,6 +1,6 @@
 ﻿namespace BoboEngine.Shaders
 {
-    public class ShaderUnlit : Shader
+    public class ShaderUnlit
     {
         Texture texture;
 
@@ -13,7 +13,7 @@
             texture = new(filePath);
         }
 
-        public override Float3 PixelColor(Float2 pixelCoord, Float2 texCoord, Float3 normal, float depth)
+        public Float3 PixelColor(Float2 pixelCoord, Float2 texCoord, Float3 normal, float depth, Transform transform = null)
         {
             return texture.Sample(texCoord);
         }

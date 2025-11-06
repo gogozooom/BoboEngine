@@ -15,9 +15,11 @@
 
         public T AddComponent<T>() where T : ObjectBehavior, new()
         {
-            T t = new T();
+            T t = new T
+            {
+                gameObject = this
+            };
 
-            t.gameObject = this;
             components.Add(t);
             t.Start();
 

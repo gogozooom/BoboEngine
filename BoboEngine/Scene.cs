@@ -4,6 +4,8 @@
     {
         public List<GameObject> objects = new();
         public Camera camera;
+        public Action<GameObject> ObjectAdded;
+        public Action<GameObject> RemovingObject;
 
         public Scene(GameObject[] objects)
         {
@@ -54,14 +56,18 @@
         /// <param name="_object">The object to instantiate</param>
         public void AddObject(GameObject _object)
         {
+            if (_object == null) return;
+
             objects.Add(_object);
 
             _object.connectedScene = this;
                 
             StartObject(_object);
+            ObjectAdded?.Invoke(_object);
         }
         public void RemoveObject(GameObject _object)
         {
+            RemovingObject?.Invoke(_object);
             objects.Remove(_object);
 
             _object.OnDestroy();

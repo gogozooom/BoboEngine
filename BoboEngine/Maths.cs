@@ -149,6 +149,27 @@ public struct Int3(int x = 0, int y = 0, int z = 0)
         return new((int)f.x, (int)f.y, (int)f.z);
     }
 }
+public struct Int2(int x = 0, int y = 0)
+{
+    public int x = x;
+    public int y = y;
+
+    public static Int2 operator +(Int2 a, Int2 b) => new(a.x + b.x, a.y + b.y); // Adding
+
+    public override string ToString() => $"({x},{y})";
+    public static explicit operator Int2(int[] n)
+    {
+        return new(n[0], n[1]);
+    }
+    public static explicit operator Int2(Float2 f)
+    {
+        return new((int)f.x, (int)f.y);
+    }
+    public static explicit operator Int2(Float3 f)
+    {
+        return new((int)f.x, (int)f.y);
+    }
+}
 public struct Float3(float x = 0, float y = 0, float z = 0)
 {
     public float x = x;
@@ -181,10 +202,21 @@ public struct Float3(float x = 0, float y = 0, float z = 0)
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public float Length() => MathF.Sqrt(Dot(this, this));
-    public Float3 Normalized() => this / Length();
+    public Float3 Normalized()
+    {
+        float l = Length();
+
+        if (l == 0) // Prevent NAN
+        {
+            return zero;
+        }
+
+        return this / Length();
+    }
     public static float Dot(Float3 a, Float3 b) => a.x * b.x + a.y * b.y + a.z * b.z;
     public static Float3 operator +(Float3 a, Float3 b) => new(a.x + b.x, a.y + b.y, a.z + b.z); // Vector Adding
     public static Float3 operator -(Float3 a, Float3 b) => new(a.x - b.x, a.y - b.y, a.z - b.z); // Vector Subracting
+    public static Float3 operator -(float a, Float3 b) => new(a - b.x, a - b.y, a - b.z); // Subracting
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Float3 operator *(Float3 a, Float3 b) => new(a.x * b.x, a.y * b.y, a.z * b.y); // Vector Multiplication
     public static Float3 operator /(Float3 a, Float3 b) => new(a.x / b.x, a.y / b.y, a.z / b.y); // Vector Division

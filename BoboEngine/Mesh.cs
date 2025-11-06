@@ -1,8 +1,21 @@
 ﻿using BoboEngine.Shaders;
+using System.Numerics;
+using System.Runtime.CompilerServices;
+using static OpenGL.GL;
 
 namespace BoboEngine;
 public class Mesh : ObjectBehavior
 {
+    /// <summary>
+    /// Vertex Array Object Reference
+    /// </summary>
+    private uint vao;
+    /// <summary>
+    /// Vertex Buffer Object Reference
+    /// </summary>
+    private uint vbo;
+    private uint vertexBufferSize;
+
     public Float3[] vertices;
     public FaceInfo[] faces;
     public Float3[] normals;
@@ -16,7 +29,14 @@ public class Mesh : ObjectBehavior
 
     }
 
-    public bool LoadObjFile(string filePath)
+    public override void OnDestroy()
+    {
+        base.OnDestroy();
+
+        Delete();
+    }
+
+    public unsafe bool LoadObjFile(string filePath)
     {
         // -- Error Checks --
         if (string.IsNullOrEmpty(filePath))
@@ -58,7 +78,7 @@ public class Mesh : ObjectBehavior
             else if (line.StartsWith("vn ")) // Face Normals
             {
                 float[] axes = line[3..].Split(' ').Select(float.Parse).ToArray(); // Have to start with a 3???
-                normals.Add(new(axes[0], axes[1]));
+                normals.Add(new(-axes[0], axes[1], axes[2]));
             }
             else if(line.StartsWith("vt ")) // Vertex Texture Chords
             {
@@ -80,7 +100,75 @@ public class Mesh : ObjectBehavior
         this.normals = normals.ToArray();
         this.textureCoords = textureCoords.ToArray();
 
+        var vertexData = new float[vertices.Count * 3];
+
+        for (int i = 0; i < this.vertices.Length; i += 3)
+        {
+            var vertex = this.vertices[i];
+
+            vertexData[i] = vertex.x;
+            vertexData[i+1] = vertex.y;
+            vertexData[i+2] = vertex.z;
+        }
+
+        // OpenGl Time
+
+        shader = new Shader("Shader/modelShader.vShader", "Shader/modelShader.fShader");
+
+        float[] _vertexData = {
+                -0.5f,  0.5f, 1.0f,     1.0f, 0.0f, 0.0f, // top left
+                 0.5f,  0.5f, 1.0f,     1.0f, 0.0f, 0.0f, // top right
+                -0.5f, -0.5f, 1.0f,     0.0f, 1.0f, 0.0f, // bottom left
+                                                   
+                 0.5f,  0.5f, 1.0f,     1.0f, 0.0f, 0.0f, // top right
+                 0.5f, -0.5f, 1.0f,     1.0f, 1.0f, 0.0f, // bottom right
+                -0.5f, -0.5f, 1.0f,     0.0f, 1.0f, 0.0f, // bottom left
+            };
+
+        vao = glGenVertexArray();
+        vbo = glGenBuffer();
+
+        glBindVertexArray(vao);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
+        fixed (float* ptrVertices = &_vertexData[0])
+        {
+            glBufferData(GL_ARRAY_BUFFER, sizeof(float) * _vertexData.Length, ptrVertices, GL_STATIC_DRAW);
+        }
+
+        // Position (x,y,z)
+        glVertexAttribPointer(0, 3, GL_FLOAT, false, 6 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(0);
+
+        // Color (r,g,b)
+        glVertexAttribPointer(1, 3, GL_FLOAT, false, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+        glEnableVertexAttribArray(1);
+
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindVertexArray(0);
+
         return true;
+    }
+
+    public void BindVAO()
+    {
+        glBindVertexArray(vao);
+    }
+    public void UnBindVAO()
+    {
+        glBindVertexArray(0);
+    }
+    public uint GetVertexBufferSize()
+    {
+        return vertexBufferSize;
+    }
+    public void Delete()
+    {
+        glDeleteBuffer(vbo);
+        glDeleteVertexArray(vao);
+
+        vao = 0;
+        vbo = 0;
     }
 
     public bool IsEmpty()

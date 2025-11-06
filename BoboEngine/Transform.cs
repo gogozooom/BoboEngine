@@ -124,13 +124,17 @@ public class Transform
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Float3 ToLocalPoint(Float3 point)
     {
-        return TransformVector((inv_rightVector, inv_upVector, inv_backVector), (point / scale) - position);
+        return TransformVectorInv((point / scale) - position);
     }
-
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public Float3 TransformVectorInv(Float3 point)
+    {
+        return TransformVector((inv_rightVector, inv_upVector, inv_backVector), point);
+    }
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Float3 TransformVector(Float3 point)
     {
-        return rightVector * point.x + upVector * point.y + backVector * point.z;
+        return TransformVector((rightVector, upVector, backVector), point);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

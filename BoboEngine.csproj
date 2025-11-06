@@ -3,15 +3,21 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
-    <RootNamespace>_3DMouseRepurpose</RootNamespace>
+    <RootNamespace>BoboEngine</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <Title>BoboEngine</Title>
+    <Description>A fully custom 3D engine made by Bobo!</Description>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="ComputeSharp" Version="3.2.0" />
     <PackageReference Include="Raylib-cs" Version="7.0.1" />
   </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="xcopy $(ProjectDir)Bin-Dep $(TargetDir) /E /H /I /Y" />
+  </Target>
 
 </Project>

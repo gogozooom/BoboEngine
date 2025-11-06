@@ -1,6 +1,5 @@
 TODO:
-	- [Scene.cs] ObjectCreated and ObjectRemoved actions
-	- [Shader.cs] Create Lit material and Light sources
+	- [Mesh.cs] Add support for multiple object in a obj file
 	- [Renderer.cs] Fix triangles disappearing when slightly behind the camera.
 	- [Transform.cs] Optimize GetBasisVectors() Method.
 	- Decouple shaders into a Mesh Renderer class?
