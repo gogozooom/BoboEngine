@@ -2,12 +2,14 @@
 {
     public class Scene
     {
-        public List<GameObject> objects = new();
         public Camera camera;
+        public List<GameObject> objects = new();
         public Action<GameObject> ObjectAdded;
-        public Action<GameObject> RemovingObject;
+        public Action<GameObject> DestroyingObject;
 
-        public Scene(GameObject[] objects)
+        private List<GameObject> _objectsBufferedForRemoval = new();
+
+        public void InitializeScene(GameObject[] objects)
         {
             foreach (var obj in objects)
             {
@@ -19,11 +21,19 @@
 
             AddObject(cameraObject);
         }
+
         /// <summary>
         /// Updates all objects in the scene
         /// </summary>
         public void Update()
         {
+            foreach (var obj in _objectsBufferedForRemoval)
+            {
+                RemoveObject(obj);
+            }
+
+            _objectsBufferedForRemoval.Clear();
+
             foreach (var item in objects)
             {
                 UpdateObject(item);
@@ -43,12 +53,17 @@
         /// <summary>
         /// Destroys all objects in scene
         /// </summary>
-        public void Destroy()
+        public void DestroyAll()
         {
             foreach (var item in objects)
             {
                 item.Destroy();
             }
+        }
+        public void DestroyObject(GameObject gameObject)
+        {
+            if(!_objectsBufferedForRemoval.Contains(gameObject))
+                _objectsBufferedForRemoval.Add(gameObject);
         }
         /// <summary>
         /// Adds an object to the scene
@@ -62,12 +77,11 @@
 
             _object.connectedScene = this;
                 
-            StartObject(_object);
             ObjectAdded?.Invoke(_object);
         }
         public void RemoveObject(GameObject _object)
         {
-            RemovingObject?.Invoke(_object);
+            DestroyingObject?.Invoke(_object);
             objects.Remove(_object);
 
             _object.OnDestroy();

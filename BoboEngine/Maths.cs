@@ -1,4 +1,5 @@
 ﻿using Raylib_cs;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 
 namespace BoboEngine;
@@ -242,6 +243,8 @@ public struct Float3(float x = 0, float y = 0, float z = 0)
     {
         return new(i.x, i.y, i.z);
     }
+
+    public static implicit operator Vector3(Float3 f) => new Vector3(f.x, f.y, f.z);
 }
 public struct Float2(float x = 0, float y = 0)
 {

@@ -1,6 +1,6 @@
-﻿using ConsoleCommand;
+﻿using Raylib_cs;
+using ConsoleCommand;
 using GLFW;
-using Raylib_cs;
 using System.Numerics;
 using static OpenGL.GL;
 
@@ -23,51 +23,83 @@ public static class Renderer
     public static bool debug_viewNormals = false;
     public static bool debug_viewWireFrame = false;
 
-    public static void Initalize()
+    public static void Initalize(bool sepThread)
     {
-        RenderWindowLoopGL(); // Runs on same thread
-
-        //Task loop = Task.Run(RenderWindowLoopGL); // Runs on a separate thread
+        if (sepThread)
+        {
+            Task loop = Task.Run(RenderWindowLoopGL); // Runs on a separate thread
+        }
+        else
+        {
+            RenderWindowLoopGL(); // Runs on same thread
+        }
     }
+
+    [Command("BufferDelete")]
+    public static void Test()
+    {
+        _test = true;
+    }
+
+    static bool _test = false;
 
     static void RenderWindowLoopGL()
     {
-        WindowManager.SetClearColor(new Vector4(1, 0, 1, 1));
+        WindowManager.SetClearColor(new Vector4(1, 1, 1, 1));
 
         WindowManager.CreateWindow(renderFrameWidth, renderFrameHeight, Program.TITLE);
 
-        //var testMesh = SceneManager.currentScene.Find("Cobblestone2").GetComponent<Mesh>();
+        float timeLastFrame = Time.time;
 
-        var testMesh = new Mesh();
+        Program.Log(Camera.main.GetProjectionMatrix());
 
-        testMesh.LoadObjFile(Program.GetLocalModelPath("Test"));
-
-        while (!Glfw.WindowShouldClose(WindowManager.window))
+        while (!Glfw.WindowShouldClose(WindowManager.Window))
         {
+            Time.deltaTime = Time.time - timeLastFrame;
+            timeLastFrame = Time.time;
+
             Glfw.PollEvents();
 
             // update
 
+            SceneManager.currentScene.Update();
+
             // render
+
             WindowManager.ClearBuffer();
 
-            testMesh.shader.Bind();
+            Matrix4x4 cameraMatrix = Camera.main.GetProjectionMatrix();
 
-            testMesh.BindVAO();
-            glDrawArrays(GL_TRIANGLES, 0, (int)testMesh.GetVertexBufferSize());
-            testMesh.UnBindVAO();
+            //cameraMatrix = Matrix4x4.Identity;
 
+            foreach (var obj in SceneManager.currentScene.objects)
+            {
+                Mesh targetMesh = obj.GetComponent<Mesh>();
 
-            testMesh.shader.Unbind();
+                if (!targetMesh) continue;
+                if (targetMesh.IsEmpty()) continue;
 
-            Glfw.SwapBuffers(WindowManager.window);
+                targetMesh.shader.Bind();
+                targetMesh.shader.SetMatrix4x4("projection", cameraMatrix);
+                targetMesh.shader.SetMatrix4x4("model", targetMesh.transform.Matrix);
+
+                targetMesh.BindVAO();
+
+                glDrawArrays(GL_TRIANGLES, 0, (int)targetMesh.GetVertexBufferSize());
+                targetMesh.UnBindVAO();
+
+                targetMesh.shader.Unbind();
+            }
+
+            Glfw.SwapBuffers(WindowManager.Window);
         }
 
 
         WindowManager.CloseWindow();
     }
 
-    /*
+
+    [Obsolete("No longer supported")]
     static void RenderWindowLoopRAY()
     {
         Camera camera = SceneManager.currentScene.camera;
@@ -95,24 +127,13 @@ public static class Renderer
             Raylib.DrawTexturePro(texture, src, dest, origin, 0.0f, Color.White);
             Raylib.EndDrawing();
 
-            
-            Debug.WriteLine($"Preformance Report: FPS '{(int)(1 / Time.deltaTime)}'" +
-                $"\n - Meshes:        '{debug_meshes}'" +
-                $"\n - Tris:        '{debug_trianglesRendered}'" +
-                $"\n - Pixel Checks '{debug_pixelsChecked}'");
-            
-
-            debug_trianglesRendered = 0;
-            debug_pixelsChecked = 0;
-            debug_meshes = 0;
-
             i++;
         }
 
         Raylib.CloseWindow();
     }
-    */
 
+    [Obsolete("No longer supported")]
     static Color[] ToFlatByteArray(Float3[] colorBuffer)
     {
         Color[] data = new Color[colorBuffer.Length];
@@ -126,12 +147,7 @@ public static class Renderer
         return data;
     }
 
-    
-    public static int debug_trianglesRendered = 0;
-    public static int debug_pixelsChecked = 0;
-    public static int debug_meshes = 0;
-    
-    /*
+    [Obsolete("No longer supported")]
     public static Float3[] Render(Scene scene)
     {
         Camera cam = scene.camera;
@@ -149,7 +165,7 @@ public static class Renderer
 
             if (mesh.shader == null)
             {
-                Debug.WriteLine($"Could not render '{obj}' because no shader is assigned!");
+                Program.LogWarning($"Could not render '{obj}' because no shader is assigned!");
                 continue;
             }
 
@@ -158,8 +174,6 @@ public static class Renderer
 
         foreach (var mesh in meshes)
         {
-            debug_meshes++;
-
             Transform transform = mesh.transform;
 
             var depthLock = new object();
@@ -172,8 +186,6 @@ public static class Renderer
                 Float3 b = VertexToScreen(cam, mesh.vertices[face.vertex_indexs[1]], transform);
                 Float3 c = VertexToScreen(cam, mesh.vertices[face.vertex_indexs[2]], transform);
                 if (a.z <= 0 || b.z <= 0 || c.z <= 0) return; // Make better fix later
-
-                debug_trianglesRendered++;
 
                 // Bounds
                 float minX = Maths.Min(a.x, b.x, c.x);
@@ -222,8 +234,6 @@ public static class Renderer
                 {
                     for (int x = blockStartX; x <= blockEndX; x++)
                     {
-                        debug_pixelsChecked++;
-
                         Float2 p = new(x, y);
 
                         if (Maths.PointInTriangle((Float2)a, (Float2)b, (Float2)c, p, out Float3 weights))
@@ -261,9 +271,9 @@ public static class Renderer
                                 case renderType.uv:
                                     colorBuffer[px] = new(texCoord.x, texCoord.y); // Debug UV Render
                                     break;
-                                default:
-                                    colorBuffer[px] = mesh.shader.PixelColor(new(x, y), texCoord, normal, depth, mesh.transform); // Shader Renderer
-                                    break;
+                                //default:
+                                    //colorBuffer[px] = mesh.shader.PixelColor(new(x, y), texCoord, normal, depth, mesh.transform); // Shader Renderer
+                                    //break;
                             }
                         }
                     }
@@ -276,8 +286,9 @@ public static class Renderer
 
         return colorBuffer;
     }
-    //*/
 
+
+    [Obsolete("No longer supported")]
     public static void DrawLine(Int2 startPointA, Int2 endPointB, Float3 lineColor, Camera cam, ref Float3[] colorBuffer, ref float[] depthBuffer)
     {
         // Bruh, I'm way to lazy to figure this out myself. SOURCE: https://stackoverflow.com/questions/11678693/all-cases-covered-bresenhams-line-algorithm
@@ -318,6 +329,8 @@ public static class Renderer
             }
         }
     }
+
+    [Obsolete("No longer supported")]
     public static void DrawLine(Float3 linePointA, Float3 linePointB, Float3 lineColor, Camera cam, ref Float3[] colorBuffer, ref float[] depthBuffer)
     {
         Float3 screenLinePointA = VertexToScreen(cam, linePointA);
@@ -331,6 +344,7 @@ public static class Renderer
         DrawLine(startPointA, endPointB, lineColor, cam, ref colorBuffer, ref depthBuffer);
     }
 
+    [Obsolete("No longer supported")]
     public static void DrawToBMP(Float3[] image, string fileName) // Borrowed from Sebastian Lague
     {
         throw new NotImplementedException("DEPRICATED!");

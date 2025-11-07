@@ -1,4 +1,5 @@
 ﻿using BoboEngine.Shaders;
+using OpenGL;
 using static OpenGL.GL;
 
 namespace BoboEngine;
@@ -71,12 +72,12 @@ public class Mesh : ObjectBehavior
             if (line.StartsWith("v ")) // Vertex Info
             {
                 float[] axes = line[2..].Split(' ').Select(float.Parse).ToArray();
-                vertices.Add(new(-axes[0], axes[1], axes[2])); // Flip x to make positive x go right
+                vertices.Add(new(axes[0], axes[1], axes[2])); // Flip x to make positive x go right
             }
             else if (line.StartsWith("vn ")) // Face Normals
             {
                 float[] axes = line[3..].Split(' ').Select(float.Parse).ToArray(); // Have to start with a 3???
-                normals.Add(new(-axes[0], axes[1], axes[2]));
+                normals.Add(new(axes[0], axes[1], axes[2]));
             }
             else if(line.StartsWith("vt ")) // Vertex Texture Chords
             {
@@ -98,13 +99,24 @@ public class Mesh : ObjectBehavior
         this.normals = normals.ToArray();
         this.textureCoords = textureCoords.ToArray();
 
+        return true;
+    }
+
+    public unsafe void BindOpenGL()
+    {
+        if (!WindowManager.Initialized)
+        {
+            Program.LogError("Cannot bind open gl without a window!");
+            return;
+        }
+
         // OpenGl Time
 
-        var vertexData = new float[faces.Count * 18];
+        var vertexData = new float[faces.Length * 18];
 
-        for (int i = 0; i < this.faces.Length; i++)
+        for (int i = 0; i < faces.Length; i++)
         {
-            var face = this.faces[i];
+            var face = faces[i];
 
             var faceIndex = i * 18;
 
@@ -143,25 +155,17 @@ public class Mesh : ObjectBehavior
             vertexData[faceIndex + 5] = face.faceColor.b;
         }
 
-        for (int g = 0; g < vertexData.Length / 6; g++)
-        {
-            Program.Log("Pos: " + vertexData[g * 6 + 0] + ", " + vertexData[g * 6 + 1] + ", " + vertexData[g * 6 + 2]);
-            Program.Log("Col: " + vertexData[g * 6 + 3] + ", " + vertexData[g * 6 + 4] + ", " + vertexData[g * 6 + 5]);
-        }
-
-        shader = new Shader("Shader/modelShader.vert", "Shader/modelShader.frag");
-
         // Vertex | Color
         /*
-        var _vertexData = new[] {
+        vertexData = [
             -0.5f, -0.5f, 0.0f,     1,1,1,
             0.5f, -0.5f, 0.0f,      1,1,1,
             0.0f,  0.5f, 0.0f,      1,1,1,
-        };
-        */
+        ];
+        //*/
 
         /*
-        float[] _vertexData = {
+        vertexData = [
                 -0.5f,  0.5f, 1.0f,     1.0f, 0.0f, 0.0f, // top left
                  0.5f,  0.5f, 1.0f,     1.0f, 0.0f, 0.0f, // top right
                 -0.5f, -0.5f, 1.0f,     0.0f, 1.0f, 0.0f, // bottom left
@@ -169,9 +173,16 @@ public class Mesh : ObjectBehavior
                  0.5f,  0.5f, 1.0f,     1.0f, 0.0f, 0.0f, // top right
                  0.5f, -0.5f, 1.0f,     1.0f, 1.0f, 0.0f, // bottom right
                 -0.5f, -0.5f, 1.0f,     0.0f, 1.0f, 0.0f, // bottom left
-            };
-        */
+            ];
+        //*/
 
+        /* Log Vertex Data
+        for (int g = 0; g < vertexData.Length / 6; g++)
+        {
+            Program.Log("Pos: " + vertexData[g * 6 + 0] + ", " + vertexData[g * 6 + 1] + ", " + vertexData[g * 6 + 2]);
+            Program.Log("Col: " + vertexData[g * 6 + 3] + ", " + vertexData[g * 6 + 4] + ", " + vertexData[g * 6 + 5]);
+        }
+        //*/
 
         vertexBufferSize = (uint)vertexData.Length;
 
@@ -197,13 +208,21 @@ public class Mesh : ObjectBehavior
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
 
-        return true;
+        Program.Log($"[{this}] BindOpenGL Success");
     }
 
+    /// <summary>
+    /// Bind "Vertex Buffer Object"
+    /// </summary>
     public void BindVAO()
     {
+        if (vao == 0) BindOpenGL();
+
         glBindVertexArray(vao);
     }
+    /// <summary>
+    /// Unbind "Vertex Buffer Object"
+    /// </summary>
     public void UnBindVAO()
     {
         glBindVertexArray(0);
@@ -214,7 +233,7 @@ public class Mesh : ObjectBehavior
     }
     public void Delete()
     {
-        glDeleteBuffer(vbo);
+        //glDeleteBuffer(vbo);
         glDeleteVertexArray(vao);
 
         vao = 0;

@@ -1,6 +1,5 @@
 ﻿using BoboEngine;
 using ConsoleCommand;
-using GLFW;
 using System.Diagnostics;
 using System.Reflection;
 
@@ -28,8 +27,7 @@ internal static class Program
 
         //TMP.NotMain(args);
 
-        //SceneManager.LoadScene();
-        Renderer.Initalize();
+        StartProgram(true); // Testing
 
         // Read Console Loop
         while (true) 
@@ -43,6 +41,14 @@ internal static class Program
             }
         }
     }
+
+    [Command("S", "[sepThread? (def = true)] Starts scene! Enter 'S true' if console is still desired to be used")]
+    public static void StartProgram(bool sepThread)
+    {
+        SceneManager.LoadScene();
+        Renderer.Initalize(sepThread);
+    }
+
     public static string GetLocalModelPath(string model)
     {
         return Path.Combine(ProgramDirectory, "Models", model + ".obj");

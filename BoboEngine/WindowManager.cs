@@ -8,13 +8,16 @@ namespace BoboEngine
 {
     internal static class WindowManager
     {
-        public static Window window { get; private set; }
-        public static Float2 windowSize { get; private set; }
-        public static Vector4 clearColor { get; private set; }
+        public static bool Initialized => Window != Window.None;
+
+        public static Window Window { get; private set; }
+        public static Float2 WindowSize { get; private set; }
+        public static float WindowAspectRatio => WindowSize.x / WindowSize.y;
+        public static Vector4 ClearColor { get; private set; }
 
         public static unsafe void CreateWindow(int width, int height, string title)
         {
-            windowSize = new Float2(width, height);
+            WindowSize = new Float2(width, height);
 
             Glfw.Init();
 
@@ -23,11 +26,11 @@ namespace BoboEngine
             Glfw.WindowHint(Hint.OpenglProfile, Profile.Core);
 
             Glfw.WindowHint(Hint.Focused, true);
-            Glfw.WindowHint(Hint.Resizable, false);
+            Glfw.WindowHint(Hint.Resizable, true);
 
-            window = Glfw.CreateWindow(width, height, title, GLFW.Monitor.None, Window.None);
+            Window = Glfw.CreateWindow(width, height, title, GLFW.Monitor.None, Window.None);
 
-            if (window == Window.None)
+            if (Window == Window.None)
             {
                 Console.WriteLine("Failed to create window!");
                 return;
@@ -37,9 +40,9 @@ namespace BoboEngine
             int x = (screen.Width - width) / 2;
             int y = (screen.Height - height) / 2;
 
-            Glfw.SetWindowPosition(window, x, y);
+            Glfw.SetWindowPosition(Window, x, y);
 
-            Glfw.MakeContextCurrent(window);
+            Glfw.MakeContextCurrent(Window);
 
             // Import all gl functions
             Import(Glfw.GetProcAddress);
@@ -52,10 +55,13 @@ namespace BoboEngine
             glClearDepth(1);
 
             glEnable(GL_BLEND);
+            glEnable(GL_CULL_FACE);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
             glEnable(GL_DEPTH_TEST);
             glEnable(GL_LEQUAL);
+
+            Glfw.SetFramebufferSizeCallback(Window, framebuffer_size_callback);
 
             // Errors
             Glfw.SetErrorCallback((code, message) =>
@@ -64,22 +70,28 @@ namespace BoboEngine
             });
         }
 
+        static void framebuffer_size_callback(Window window, int width, int height)
+        {
+            WindowSize = new Float2(width, height);
+            glViewport(0, 0, width, height);
+        }
+
         public static void CloseWindow()
         {
-            Glfw.DestroyWindow(window);
+            Glfw.DestroyWindow(Window);
             Glfw.Terminate();
         }
 
         public static void ClearBuffer()
         {
-            glClearColor(clearColor.X, clearColor.Y, clearColor.Z, clearColor.W);
+            glClearColor(ClearColor.X, ClearColor.Y, ClearColor.Z, ClearColor.W);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         }
 
 
         public static void SetClearColor(Vector4 _clearColor)
         {
-            clearColor = _clearColor;
+            ClearColor = _clearColor;
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Numerics;
+using System.Runtime.CompilerServices;
 
 namespace BoboEngine;
 
@@ -20,11 +21,21 @@ public class Transform
 
     public Float3 rightVector { get; private set; }
     public Float3 upVector { get; private set; }
-    public Float3 backVector { get; private set; }
+    public Float3 forwardVector { get; private set; }
 
     public Float3 inv_rightVector { get; private set; }
     public Float3 inv_upVector { get; private set; }
-    public Float3 inv_backVector { get; private set; }
+    public Float3 inv_forwardVector { get; private set; }
+
+    // TODO: Cache Matrix! Add support for static objects!
+    public Matrix4x4 MatrixTrans => Matrix4x4.CreateTranslation(new Vector3(-position.x, position.y, position.z)); // Invert x to align with unity
+    public Matrix4x4 MatrixScale => Matrix4x4.CreateScale(scale);
+    public Matrix4x4 MatrixRot => Matrix4x4.CreateRotationZ(Maths.ToRad(-roll)) * Matrix4x4.CreateRotationX(Maths.ToRad(pitch)) * Matrix4x4.CreateRotationY(Maths.ToRad(-yaw));
+    public Matrix4x4 MatrixInverseRot => Matrix4x4.CreateRotationY(Maths.ToRad(yaw)) * Matrix4x4.CreateRotationX(Maths.ToRad(-pitch)) * Matrix4x4.CreateRotationZ(Maths.ToRad(roll));
+
+    public Matrix4x4 Matrix => MatrixScale * MatrixRot * MatrixTrans;
+    
+
 
     public Transform()
     {
@@ -45,8 +56,8 @@ public class Transform
         _yaw = rotation.y;
         _roll = rotation.z;
 
-        (rightVector, upVector, backVector) = GetBasisVectors();
-        (inv_rightVector, inv_upVector, inv_backVector) = GetInverseBasisVectors();
+        (rightVector, upVector, forwardVector) = GetBasisVectors();
+        (inv_rightVector, inv_upVector, inv_forwardVector) = GetInverseBasisVectors();
     }
     public void SetPosition(Float3 position)
     {
@@ -68,9 +79,9 @@ public class Transform
     }
     (Float3 rightVector, Float3 upVector, Float3 backVector) GetInverseBasisVectors()
     {
-        return (new(rightVector.x, upVector.x, backVector.x),
-                new(rightVector.y, upVector.y, backVector.y),
-                new(rightVector.z, upVector.z, backVector.z));
+        return (new(rightVector.x, upVector.x, forwardVector.x),
+                new(rightVector.y, upVector.y, forwardVector.y),
+                new(rightVector.z, upVector.z, forwardVector.z));
     }
     (Float3 rightVector, Float3 upVector, Float3 backVector) GetBasisVectors()
     {
@@ -105,7 +116,7 @@ public class Transform
     {
         Float3 rightVector = TransformVector(bVec, this.rightVector);
         Float3 upVector = TransformVector(bVec, this.upVector);
-        Float3 backVector = TransformVector(bVec, this.backVector);
+        Float3 backVector = TransformVector(bVec, this.forwardVector);
 
         return (rightVector, upVector, backVector);
     }
@@ -129,12 +140,12 @@ public class Transform
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Float3 TransformVectorInv(Float3 point)
     {
-        return TransformVector((inv_rightVector, inv_upVector, inv_backVector), point);
+        return TransformVector((inv_rightVector, inv_upVector, inv_forwardVector), point);
     }
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Float3 TransformVector(Float3 point)
     {
-        return TransformVector((rightVector, upVector, backVector), point);
+        return TransformVector((rightVector, upVector, forwardVector), point);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

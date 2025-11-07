@@ -107,7 +107,7 @@ namespace ConsoleCommand
                 catch (Exception e)
                 {
                     Program.LogError($"[ERROR] Failed to invoke command '{commandFound.command}'!");
-                    Program.LogError($"Error: {e.Message}");
+                    Program.LogError($"Error: {e.InnerException}");
                 }
             }
         }

@@ -13,6 +13,7 @@
             this.name = name;
         }
 
+
         public T AddComponent<T>() where T : ObjectBehavior, new()
         {
             T t = new T
@@ -45,12 +46,21 @@
         }
         public void Destroy()
         {
+            connectedScene.DestroyObject(this);
+        }
+        public void DestroyImmediate()
+        {
             foreach (ObjectBehavior component in components.ToArray())
             {
-                component.Destroy();
+                component.DestroyImmediate();
             }
 
             connectedScene.RemoveObject(this);
+        }
+
+        public static GameObject Find(string name)
+        {
+            return SceneManager.currentScene?.Find(name);
         }
 
         /// <summary>

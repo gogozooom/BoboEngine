@@ -1,10 +1,18 @@
 TODO:
-	- [Mesh.cs] Add support for multiple object in a obj file
-	- [Renderer.cs] Fix triangles disappearing when slightly behind the camera.
-	- [Transform.cs] Optimize GetBasisVectors() Method.
-	- Decouple shaders into a Mesh Renderer class?
-	- Get rendering code running on GPU.
-	- Make window resizeable.
+	- Reimplement Textures!
+	- Refactor!
+		* Remove all old unused code
+		* Remove all old unused dependencies
+		* Add clear documentation to BoboEngine spesific methods and properties
+		* Add FindObjectOfType<>() + FindObject**s**OfType<>() to ObjectBehaivor class
+		* Add support for static objects caching their mesh with transforms applied
+		* Abstract shader class to a material to allow for easily adding differently textures objects with same shader object
+
+
+
+
+
+OLD:
 
 	- Create scene skyboxes
 	- [Transform.cs] Create parent and children relationships

@@ -10,32 +10,37 @@ namespace BoboEngine
         {
             if (currentScene != null)
             {
-                currentScene.Destroy();
+                currentScene.DestroyAll();
                 currentScene = null;
             }
 
-            List<GameObject> objects = new();
+            var shader = new Shader();
 
-            // Add Objects
+            List<GameObject> objects =
+            [
+                // Add Objects
+                CreateObject("Test", "House", shader),
+                //CreateObject("Test", "TestText", shader)
+            ];
 
             //* Minecraft Scene
-            Shader stoneShader = new ShaderLit(Program.GetLocalTexturePath("stone"));
+            //Shader stoneShader = new ShaderLit(Program.GetLocalTexturePath("stone"));
 
-            objects.Add(CreateObject("Stone1", "Cube", stoneShader, new(-1, 0, -1)));
-            //objects.Add(CreateObject("Stone2", "Cube", stoneShader, new(0, 0, -1)));
-            //objects.Add(CreateObject("Stone3", "Cube", stoneShader, new(1, 0, -1)));
+            objects.Add(CreateObject("Stone1", "Cube", shader, new(-1.5f, 0.8f, -2.0f), Float3.one, new(29.1f, 35.5f, -4.8f)));
+            //objects.Add(CreateObject("Stone2", "Cube", shader, new(0, 0, -1)));
+            //objects.Add(CreateObject("Stone3", "Cube", shader, new(1, 0, -1)));
 
             //Shader cobblestoneShader = new ShaderLit(Program.GetLocalTexturePath("cobblestone"));
 
-            //objects.Add(CreateObject("Cobblestone1", "Cube", cobblestoneShader, new(-1, 0, 0)));
-            objects.Add(CreateObject("Cobblestone2", "Cube", cobblestoneShader));
-            //objects.Add(CreateObject("Cobblestone3", "Cube", cobblestoneShader, new(1, 0, 0)));
+            objects.Add(CreateObject("Cobblestone1", "Cube", shader, new(-1, 0, 0)));
+            objects.Add(CreateObject("Cobblestone2", "Cube", shader));
+            objects.Add(CreateObject("Cobblestone3", "Cube", shader, new(1, 0, 0)));
 
             //Shader dirtShader = new ShaderLit(Program.GetLocalTexturePath("dirt"));
 
-            //objects.Add(CreateObject("Dirt1", "Cube", dirtShader, new(-1, 0, 1)));
-            //objects.Add(CreateObject("Dirt2", "Cube", dirtShader, new(0, 0, 1)));
-            //objects.Add(CreateObject("Dirt3", "Cube", dirtShader, new(1, 0, 1)));
+            //objects.Add(CreateObject("Dirt1", "Cube", shader, new(-1, 0, 1)));
+            //objects.Add(CreateObject("Dirt2", "Cube", shader, new(0, 0, 1)));
+            //objects.Add(CreateObject("Dirt3", "Cube", shader, new(1, 0, 1)));
 
             /*
             Shader noobShader = new ShaderLit(Program.GetLocalTexturePath("noob"));
@@ -62,14 +67,13 @@ namespace BoboEngine
             objects.Add(monkey);
             //*/
 
-            Scene scene = new(objects.ToArray());
+            Scene scene = new();
+            currentScene = scene;
+
+            scene.InitializeScene(objects.ToArray());
 
             // Create FreeCam Script
             scene.camera.gameObject.AddComponent<Move3DInput>();
-            scene.camera.transform.position = new(0, 2, 4);
-            scene.camera.transform.rotation = new(20, 180, 0);
-
-            currentScene = scene;
         }
         public static GameObject CreateObject(string objectName, string modelName, Shader shader, Float3 position, Float3 scale, Float3 rotation)
         {
@@ -94,9 +98,9 @@ namespace BoboEngine
             Shader shader;
 
             if (!string.IsNullOrEmpty(textureName))
-                shader = new ShaderLit(Program.GetLocalTexturePath(textureName));
+                throw new NotImplementedException("No textures yet!");
             else
-                shader = new ShaderLit();
+                shader = new Shader();
 
             return CreateObject(objectName, modelName, shader, position, scale, rotation);
         }

@@ -1,4 +1,5 @@
-﻿using static OpenGL.GL;
+﻿using System.Numerics;
+using static OpenGL.GL;
 
 namespace BoboEngine.Shaders;
 
@@ -9,13 +10,16 @@ public class Shader
 
     private uint programID;
 
-    public Shader(string _vertexFilepath, string _fragmentFilepath)
+    private string _vertexCode;
+    private string _fragmentCode;
+
+    public Shader(string _vertexFilepath = "Shader/modelShader.vert", string _fragmentFilepath = "Shader/modelShader.frag")
     {
         vertexFilepath = _vertexFilepath;
         fragmentFilepath = _fragmentFilepath;
 
-        string _vertexCode = "";
-        string _fragmentCode = "";
+        _vertexCode = "";
+        _fragmentCode = "";
 
         try
         {
@@ -28,8 +32,6 @@ public class Shader
             Environment.Exit(0);
             return;
         }
-
-        CreateShader(_vertexCode, _fragmentCode);
     }
 
     ~Shader()
@@ -37,8 +39,14 @@ public class Shader
         Delete();
     }
 
-    private void CreateShader(string _vertexCode, string _fragmentCode)
+    public void CreateShader()
     {
+        if (!WindowManager.Initialized)
+        {
+            Program.LogError("Cannot CreateShader without a window!");
+            return;
+        }
+
         programID = glCreateProgram();
         uint _vs = CompileShader(_vertexCode, GL_VERTEX_SHADER);
         uint _fs = CompileShader(_fragmentCode, GL_FRAGMENT_SHADER);
@@ -53,6 +61,8 @@ public class Shader
 
         glDeleteShader(_vs);
         glDeleteShader(_fs);
+
+        Program.Log($"[{this}] CreateShader Success");
     }
 
     private unsafe uint CompileShader(string _code, int _type)
@@ -78,6 +88,8 @@ public class Shader
 
     public void Bind()
     {
+        if (programID == 0) CreateShader();
+
         glUseProgram(programID);
     }
 
@@ -91,5 +103,18 @@ public class Shader
         glDeleteShader(programID);
     }
 
-    //public abstract Float3 PixelColor(Float2 pixelCoord, Float2 texCoord, Float3 normal, float depth, Transform transform = null);
+    public void SetMatrix4x4(string uniformName, Matrix4x4 mat)
+    {
+        int location = glGetUniformLocation(programID, uniformName);
+
+        glUniformMatrix4fv(location, 1, false, MatrixToData(mat));
+    }
+
+    public float[] MatrixToData(Matrix4x4 m) =>
+    [
+        m.M11, m.M12, m.M13, m.M14,
+        m.M21, m.M22, m.M23, m.M24,
+        m.M31, m.M32, m.M33, m.M34,
+        m.M41, m.M42, m.M43, m.M44
+    ];
 }
