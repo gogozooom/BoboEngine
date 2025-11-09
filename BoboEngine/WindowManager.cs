@@ -80,6 +80,7 @@ namespace BoboEngine
         {
             Glfw.DestroyWindow(Window);
             Glfw.Terminate();
+            Window = Window.None;
         }
 
         public static void ClearBuffer()

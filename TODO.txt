@@ -1,5 +1,5 @@
 TODO:
-	- Reimplement Textures!
+	- Implement Textures!
 	- Refactor!
 		* Remove all old unused code
 		* Remove all old unused dependencies
@@ -7,10 +7,7 @@ TODO:
 		* Add FindObjectOfType<>() + FindObject**s**OfType<>() to ObjectBehaivor class
 		* Add support for static objects caching their mesh with transforms applied
 		* Abstract shader class to a material to allow for easily adding differently textures objects with same shader object
-
-
-
-
+		* Redo GameObject deletion to be more stream lined (Be entirely done by the scene manager)
 
 OLD:
 

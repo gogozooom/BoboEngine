@@ -64,7 +64,7 @@
         }
 
         /// <summary>
-        /// Runs right after getting destroyed
+        /// Runs right before getting destroyed
         /// </summary>
         public virtual void OnDestroy()
         {

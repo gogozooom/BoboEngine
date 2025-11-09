@@ -52,9 +52,9 @@ public class Transform
 
     public void SetRotation(Float3 rotation)
     {
-        _pitch = rotation.x;
-        _yaw = rotation.y;
-        _roll = rotation.z;
+        _pitch = Maths.WrapAbs(rotation.x, 180);
+        _yaw = Maths.WrapAbs(rotation.y, 180);
+        _roll = Maths.WrapAbs(rotation.z, 180);
 
         (rightVector, upVector, forwardVector) = GetBasisVectors();
         (inv_rightVector, inv_upVector, inv_forwardVector) = GetInverseBasisVectors();

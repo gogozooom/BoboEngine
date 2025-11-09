@@ -32,6 +32,8 @@ public class Mesh : ObjectBehavior
     {
         base.OnDestroy();
 
+        Program.Log($"'{this}' Destroy!");
+
         Delete();
     }
 
@@ -235,6 +237,8 @@ public class Mesh : ObjectBehavior
     {
         //glDeleteBuffer(vbo);
         glDeleteVertexArray(vao);
+
+        shader.Delete();
 
         vao = 0;
         vbo = 0;

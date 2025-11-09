@@ -27,12 +27,7 @@
         /// </summary>
         public void Update()
         {
-            foreach (var obj in _objectsBufferedForRemoval)
-            {
-                RemoveObject(obj);
-            }
-
-            _objectsBufferedForRemoval.Clear();
+            DestroyBufferedObjects();
 
             foreach (var item in objects)
             {
@@ -51,19 +46,31 @@
             return null;
         }
         /// <summary>
-        /// Destroys all objects in scene
+        /// Destroys all objects in scene next frame
         /// </summary>
         public void DestroyAll()
         {
             foreach (var item in objects)
             {
-                item.Destroy();
+                DestroyObject(item);
             }
         }
+        /// <summary>
+        /// Destroys all buffered objects for removal
+        /// </summary>\
         public void DestroyObject(GameObject gameObject)
         {
             if(!_objectsBufferedForRemoval.Contains(gameObject))
                 _objectsBufferedForRemoval.Add(gameObject);
+        }
+        public void DestroyBufferedObjects()
+        {
+            foreach (var obj in _objectsBufferedForRemoval)
+            {
+                obj.DestroyImmediate();
+            }
+
+            _objectsBufferedForRemoval.Clear();
         }
         /// <summary>
         /// Adds an object to the scene

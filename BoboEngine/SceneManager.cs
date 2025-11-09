@@ -8,11 +8,7 @@ namespace BoboEngine
         public static Scene currentScene;
         public static void LoadScene()
         {
-            if (currentScene != null)
-            {
-                currentScene.DestroyAll();
-                currentScene = null;
-            }
+            UnloadScene(); // Unload Last Scene
 
             var shader = new Shader();
 
@@ -74,6 +70,15 @@ namespace BoboEngine
 
             // Create FreeCam Script
             scene.camera.gameObject.AddComponent<Move3DInput>();
+        }
+        public static void UnloadScene()
+        {
+            if (currentScene != null)
+            {
+                currentScene.DestroyAll();
+                currentScene.DestroyBufferedObjects();
+                currentScene = null;
+            }
         }
         public static GameObject CreateObject(string objectName, string modelName, Shader shader, Float3 position, Float3 scale, Float3 rotation)
         {

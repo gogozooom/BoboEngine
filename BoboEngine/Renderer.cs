@@ -35,17 +35,9 @@ public static class Renderer
         }
     }
 
-    [Command("BufferDelete")]
-    public static void Test()
-    {
-        _test = true;
-    }
-
-    static bool _test = false;
-
     static void RenderWindowLoopGL()
     {
-        WindowManager.SetClearColor(new Vector4(1, 1, 1, 1));
+        WindowManager.SetClearColor(new Vector4(0, 0, 0, 0));
 
         WindowManager.CreateWindow(renderFrameWidth, renderFrameHeight, Program.TITLE);
 
@@ -96,6 +88,7 @@ public static class Renderer
 
 
         WindowManager.CloseWindow();
+        SceneManager.UnloadScene();
     }
 
 

@@ -42,6 +42,18 @@ internal static class Program
         }
     }
 
+    public static void Test(float input, float expected)
+    {
+        if (input == expected)
+        {
+            Log($"Passed test!  E: '{expected}' == R: '{input}' !");
+        }
+        else
+        {
+            LogWarning($"Failed test! E: '{expected}' == R: '{input}' !");
+        }
+    }
+
     [Command("S", "[sepThread? (def = true)] Starts scene! Enter 'S true' if console is still desired to be used")]
     public static void StartProgram(bool sepThread)
     {

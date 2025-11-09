@@ -46,6 +46,59 @@ public static class Maths
         }
     }
 
+    
+    /// <summary>
+    /// Will wrap the input value to go between 0 and range; <br/>
+    /// (SAME AS MOD!)
+    /// </summary>
+    public static float Wrap(float input, float range) => Mod(input, range);
+
+    /// <summary>
+    /// Will wrap the input value to go between value1 and value2 <br/>
+    /// <br/>
+    /// e.g. <br/>
+    /// * WrapRange(1405, -8, 12) => 5 <br/>
+    /// * WrapRange(6.5f, 5, 8) => 6.5f <br/>
+    /// * WrapRange(-3, -3, 10) => -3 <br/>
+    /// * WrapRange(-3, 10, -3) => 10 <br/>
+    /// <br/>
+    /// Desmos: \operatorname{mod}\left(x-m,r-m\right)+m
+    /// </summary>
+    /// <param name="input"></param>
+    /// <param name="value1">The equal value to wrap by</param>
+    /// <param name="value2">The non equal value to wrap by</param>
+    /// <returns></returns>
+    public static float WrapRange(float input, float value1, float value2) => Mod(input - value1, value2 - value1) + value1;
+    /// <summary>
+    /// Will wrap the input value to go between the -absRange and +absRange <br/>
+    /// <br/>
+    /// e.g. <br/>
+    /// > Wrap(134, 180); => 134 <br/>
+    /// > Wrap(190, 180); => -170 <br/>
+    /// > Wrap(-360, 180); => 0 <br/>
+    /// <br/>
+    /// Desmos: \operatorname{mod}\left(x-r,2r\right)-r
+    /// </summary>
+    /// <param name="absRange">The positive and negative min and maxes of the output value</param>
+    public static float WrapAbs(float input, float absRange) => Mod(input - absRange, absRange * 2) - absRange;
+
+    /// <summary>
+    /// SLIGHTLY INACURATE! <br/>
+    /// <br/>
+    /// Sould be = mod(-10,10) => 0 <br/>
+    /// Function results in = mod(-10,10) => -10 <br/>
+    /// <br/>
+    /// Desmos: <br/>
+    /// r_{em}\left(x,r\right)=\operatorname{sign}\left(x\right)\cdot\operatorname{mod}\left(\operatorname{abs}\left(x\right),r\right) <br/>
+    /// ^ Works as % operator ^  <br/>
+    /// M_{od}\left(x,r\right)=r_{em}\left(x,r\right)+r\cdot N_{EG}\left(x\right) <br/>
+    /// ^ This equation ^  <br/>
+    /// Same as:  <br/>
+    /// \operatorname{mod}\left(x,r\right)  <br/>
+    /// In Desmos
+    /// </summary>
+    public static float Mod(float input1, float input2) => (input1 % input2) + input2 * (input1 < 0 ? 1 : 0);
+
     /// <summary>
     /// Sin in degrees
     /// </summary>

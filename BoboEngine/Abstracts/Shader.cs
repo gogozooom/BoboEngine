@@ -34,11 +34,6 @@ public class Shader
         }
     }
 
-    ~Shader()
-    {
-        Delete();
-    }
-
     public void CreateShader()
     {
         if (!WindowManager.Initialized)
