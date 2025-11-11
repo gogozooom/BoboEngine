@@ -29,14 +29,14 @@
         {
             DestroyBufferedObjects();
 
-            foreach (var item in objects)
+            foreach (var item in objects.ToArray())
             {
                 UpdateObject(item);
             }
         }
         public GameObject Find(string name)
         {
-            foreach (var obj in objects)
+            foreach (var obj in objects.ToArray())
             {
                 if (obj.name == name)
                 {

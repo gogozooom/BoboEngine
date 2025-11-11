@@ -61,6 +61,9 @@ namespace BoboEngine
             glEnable(GL_DEPTH_TEST);
             glEnable(GL_LEQUAL);
 
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
             Glfw.SetFramebufferSizeCallback(Window, framebuffer_size_callback);
 
             // Errors

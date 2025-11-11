@@ -1,6 +1,10 @@
 ﻿namespace BoboEngine;
+
+using System.Runtime.InteropServices;
+using static OpenGL.GL;
 public class Texture
 {
+
     public Float3[,] image { get; private set; }
     public bool loaded { get; private set; }
 
@@ -86,8 +90,102 @@ public class Texture
 
         loaded = true;
         UpdateImageProperties();
+
         return true;
     }
+
+
+    private uint textureRef;
+    public void BindOpenGL()
+    {
+        if (!WindowManager.Initialized)
+        {
+            Program.LogError("Cannot bind open gl without a window!");
+            return;
+        }
+
+        if (!loaded)
+        {
+            Program.LogError("Cannot bind open gl without a loaded texture!");
+            return;
+        }
+
+        // OpenGl Time
+
+        uint[] texData = new uint[width * height * 3];
+
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                var pixelData = image[x, y];
+
+                //texData[(y * width + x) * 3]     = (uint)(pixelData.r * 255);
+                //texData[(y * width + x) * 3 + 1] = (uint)(pixelData.g * 255);
+                //texData[(y * width + x) * 3 + 2] = (uint)(pixelData.b * 255);
+
+
+                texData[(y * width + x) * 3] =     255;
+                texData[(y * width + x) * 3 + 1] = 255;
+                texData[(y * width + x) * 3 + 2] = 255;
+            }
+        }
+
+        byte[] output = MemoryMarshal.Cast<uint, byte>(texData).ToArray(); 
+
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                int i = (y * width + x) * 3;
+
+
+                Program.LogMessage($"Pixel {x},{y} = R:{texData[i]} G:{texData[i + 1]} B:{texData[i + 2]}");
+            }
+        }
+
+        GCHandle gCHandle = GCHandle.Alloc(output.ToArray(), GCHandleType.Pinned);
+        IntPtr textureDataPointer = gCHandle.AddrOfPinnedObject();
+
+        textureRef = glGenTexture();
+
+        glBindTexture(GL_TEXTURE_2D, textureRef);
+
+        try
+        {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_FLOAT, textureDataPointer);
+        }
+        catch (Exception e)
+        {
+            Program.LogError("Failed to bind texture to OpenGL!");
+            Program.LogError("--- Exception: \n" + e.Message);
+            Program.LogError("--- Inner Exception: \n" + e.InnerException);
+        }
+        finally
+        {
+            gCHandle.Free();
+        }
+    }
+
+    public void BindTexture()
+    {
+        if (textureRef == 0) BindOpenGL();
+
+        glBindTexture(GL_TEXTURE_2D, textureRef);
+    }
+    public void UnbindTexture()
+    {
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+    public void Delete()
+    {
+        if (textureRef == 0) return;
+
+        glDeleteTexture(textureRef);
+        textureRef = 0;
+    }
+
+    /*
     public string GetNumberOfSpaces(int number)
     {
         string output = "";
@@ -99,6 +197,7 @@ public class Texture
 
         return output;
     }
+    */
     public Float3 Sample(Float2 texCoord)
     {
         // Render Nearest Neighbor

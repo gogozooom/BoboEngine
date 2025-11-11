@@ -65,9 +65,9 @@ internal static class Program
     {
         return Path.Combine(ProgramDirectory, "Models", model + ".obj");
     }
-    public static string GetLocalTexturePath(string model)
+    public static string GetLocalTexturePath(string texture)
     {
-        return Path.Combine(ProgramDirectory, "Textures", model + ".bmp");
+        return Path.Combine(ProgramDirectory, "Textures", texture + ".bmp");
     }
 
     #region ConsoleLogging

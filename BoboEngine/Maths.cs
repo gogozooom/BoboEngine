@@ -288,14 +288,9 @@ public struct Float3(float x = 0, float y = 0, float z = 0)
         return new((int)float.Round(x), (int)float.Round(y), (int)float.Round(z));
     }
 
-    public static explicit operator Float3(float[] f)
-    {
-        return new(f[0], f[1], f[2]);
-    }
-    public static implicit operator Float3(Int3 i)
-    {
-        return new(i.x, i.y, i.z);
-    }
+    public static explicit operator Float3(float[] f) => new(f[0], f[1], f[2]);
+
+    public static implicit operator Float3(Int3 i) => new(i.x, i.y, i.z);
 
     public static implicit operator Vector3(Float3 f) => new Vector3(f.x, f.y, f.z);
 }

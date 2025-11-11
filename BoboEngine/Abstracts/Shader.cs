@@ -5,33 +5,43 @@ namespace BoboEngine.Shaders;
 
 public class Shader
 {
+    public Texture texture; // TODO: put in material class
+
     public string vertexFilepath;
     public string fragmentFilepath;
 
-    private uint programID;
+    private uint shaderRef;
 
     private string _vertexCode;
     private string _fragmentCode;
 
-    public Shader(string _vertexFilepath = "Shader/modelShader.vert", string _fragmentFilepath = "Shader/modelShader.frag")
+    public Shader(string vertexCode, string fragmentCode)
+    {
+        _vertexCode = vertexCode;
+        _fragmentCode = fragmentCode;
+    }
+    public Shader(Texture texture = null, string _vertexFilepath = "Shader/modelShader.vert", string _fragmentFilepath = "Shader/modelShader.frag")
     {
         vertexFilepath = _vertexFilepath;
         fragmentFilepath = _fragmentFilepath;
 
         _vertexCode = "";
         _fragmentCode = "";
-
+        
         try
         {
             _vertexCode = File.ReadAllText(vertexFilepath);
             _fragmentCode = File.ReadAllText(fragmentFilepath);
 
-        } catch (Exception e)
+        }
+        catch (Exception e)
         {
             Console.WriteLine("Could not read shader files, program will exit\n\n{0}", e);
             Environment.Exit(0);
             return;
         }
+
+        this.texture = texture;
     }
 
     public void CreateShader()
@@ -42,17 +52,17 @@ public class Shader
             return;
         }
 
-        programID = glCreateProgram();
+        shaderRef = glCreateProgram();
         uint _vs = CompileShader(_vertexCode, GL_VERTEX_SHADER);
         uint _fs = CompileShader(_fragmentCode, GL_FRAGMENT_SHADER);
 
-        glAttachShader(programID, _vs);
-        glAttachShader(programID, _fs);
+        glAttachShader(shaderRef, _vs);
+        glAttachShader(shaderRef, _fs);
 
-        glLinkProgram(programID);
+        glLinkProgram(shaderRef);
 
-        glDetachShader(programID, _vs);
-        glDetachShader(programID, _fs);
+        glDetachShader(shaderRef, _vs);
+        glDetachShader(shaderRef, _fs);
 
         glDeleteShader(_vs);
         glDeleteShader(_fs);
@@ -83,9 +93,9 @@ public class Shader
 
     public void Bind()
     {
-        if (programID == 0) CreateShader();
+        if (shaderRef == 0) CreateShader();
 
-        glUseProgram(programID);
+        glUseProgram(shaderRef);
     }
 
     public void Unbind()
@@ -95,12 +105,12 @@ public class Shader
 
     public void Delete()
     {
-        glDeleteShader(programID);
+        glDeleteShader(shaderRef);
     }
 
     public void SetMatrix4x4(string uniformName, Matrix4x4 mat)
     {
-        int location = glGetUniformLocation(programID, uniformName);
+        int location = glGetUniformLocation(shaderRef, uniformName);
 
         glUniformMatrix4fv(location, 1, false, MatrixToData(mat));
     }

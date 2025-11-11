@@ -83,7 +83,7 @@ public class Mesh : ObjectBehavior
             }
             else if(line.StartsWith("vt ")) // Vertex Texture Chords
             {
-                float[] axes = line[3..].Split(' ').Select(float.Parse).ToArray(); // This one too???
+                float[] axes = line[3..].Split(' ').Select(float.Parse).ToArray(); // This one too????
                 textureCoords.Add(new(axes[0], axes[1]));
             }
             else if (line.StartsWith("f ")) // Face Info
@@ -114,15 +114,16 @@ public class Mesh : ObjectBehavior
 
         // OpenGl Time
 
-        var vertexData = new float[faces.Length * 18];
+        var vertexData = new float[faces.Length * 24];
 
         for (int i = 0; i < faces.Length; i++)
         {
             var face = faces[i];
 
-            var faceIndex = i * 18;
+            var faceIndex = i * 24;
 
             Float3 a = vertices[face.vertex_indexs[0]];
+            Float2 aT = textureCoords[face.texture_indexs[0]];
 
             vertexData[faceIndex + 0] = a.x;
             vertexData[faceIndex + 1] = a.y;
@@ -132,9 +133,13 @@ public class Mesh : ObjectBehavior
             vertexData[faceIndex + 4] = face.faceColor.g;
             vertexData[faceIndex + 5] = face.faceColor.b;
 
-            Float3 b = vertices[face.vertex_indexs[1]];
+            vertexData[faceIndex + 6] = aT.x;
+            vertexData[faceIndex + 7] = aT.y;
 
-            faceIndex += 6;
+            Float3 b = vertices[face.vertex_indexs[1]];
+            Float2 bT = textureCoords[face.texture_indexs[1]];
+
+            faceIndex += 8;
 
             vertexData[faceIndex + 0] = b.x;
             vertexData[faceIndex + 1] = b.y;
@@ -144,9 +149,13 @@ public class Mesh : ObjectBehavior
             vertexData[faceIndex + 4] = face.faceColor.g;
             vertexData[faceIndex + 5] = face.faceColor.b;
 
-            Float3 c = vertices[face.vertex_indexs[2]];
+            vertexData[faceIndex + 6] = bT.x;
+            vertexData[faceIndex + 7] = bT.y;
 
-            faceIndex += 6;
+            Float3 c = vertices[face.vertex_indexs[2]];
+            Float2 cT = textureCoords[face.texture_indexs[2]];
+
+            faceIndex += 8;
 
             vertexData[faceIndex + 0] = c.x;
             vertexData[faceIndex + 1] = c.y;
@@ -155,14 +164,17 @@ public class Mesh : ObjectBehavior
             vertexData[faceIndex + 3] = face.faceColor.r;
             vertexData[faceIndex + 4] = face.faceColor.g;
             vertexData[faceIndex + 5] = face.faceColor.b;
+
+            vertexData[faceIndex + 6] = cT.x;
+            vertexData[faceIndex + 7] = cT.y;
         }
 
-        // Vertex | Color
+        // Vertex | Color | UV
         /*
         vertexData = [
-            -0.5f, -0.5f, 0.0f,     1,1,1,
-            0.5f, -0.5f, 0.0f,      1,1,1,
-            0.0f,  0.5f, 0.0f,      1,1,1,
+            -0.5f, -0.5f, 0.0f,   1,1,1, -1f,  -1f,
+            0.5f, -0.5f, 0.0f,    1,1,1,  0f, 0.5f,
+            0.0f,  0.5f, 0.0f,    1,1,1,  0.5f, 1f,
         ];
         //*/
 
@@ -178,11 +190,12 @@ public class Mesh : ObjectBehavior
             ];
         //*/
 
-        /* Log Vertex Data
-        for (int g = 0; g < vertexData.Length / 6; g++)
+        //* Log Vertex Data
+        for (int g = 0; g < vertexData.Length / 8; g++)
         {
-            Program.Log("Pos: " + vertexData[g * 6 + 0] + ", " + vertexData[g * 6 + 1] + ", " + vertexData[g * 6 + 2]);
-            Program.Log("Col: " + vertexData[g * 6 + 3] + ", " + vertexData[g * 6 + 4] + ", " + vertexData[g * 6 + 5]);
+            Program.Log("Pos: " + vertexData[g * 8 + 0] + ", " + vertexData[g * 8 + 1] + ", " + vertexData[g * 8 + 2]);
+            Program.Log("Col: " + vertexData[g * 8 + 3] + ", " + vertexData[g * 8 + 4] + ", " + vertexData[g * 8 + 5]);
+            Program.Log("UV: " + vertexData[g * 8 + 6] + ", " + vertexData[g * 8 + 7]);
         }
         //*/
 
@@ -200,12 +213,16 @@ public class Mesh : ObjectBehavior
         }
 
         // Position (x,y,z)
-        glVertexAttribPointer(0, 3, GL_FLOAT, false, 6 * sizeof(float), (void*)0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)0);
         glEnableVertexAttribArray(0);
 
         // Color (r,g,b)
-        glVertexAttribPointer(1, 3, GL_FLOAT, false, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+        glVertexAttribPointer(1, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)(3 * sizeof(float)));
         glEnableVertexAttribArray(1);
+
+        // Vertex Texture Coords (u,v)
+        glVertexAttribPointer(2, 2, GL_FLOAT, false, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+        glEnableVertexAttribArray(2);
 
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
