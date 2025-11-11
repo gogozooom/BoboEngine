@@ -67,7 +67,7 @@
         {
             foreach (var obj in _objectsBufferedForRemoval)
             {
-                obj.DestroyImmediate();
+                obj.OnDestroy();
             }
 
             _objectsBufferedForRemoval.Clear();

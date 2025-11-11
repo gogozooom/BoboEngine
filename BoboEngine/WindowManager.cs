@@ -1,7 +1,6 @@
 ﻿using GLFW;
 using System.Drawing;
 using System.Numerics;
-using System.Runtime.CompilerServices;
 using static OpenGL.GL;
 
 namespace BoboEngine
@@ -21,8 +20,8 @@ namespace BoboEngine
 
             Glfw.Init();
 
-            Glfw.WindowHint(Hint.ContextVersionMajor, 3);
-            Glfw.WindowHint(Hint.ContextVersionMinor, 3);
+            Glfw.WindowHint(Hint.ContextVersionMajor, 4);
+            Glfw.WindowHint(Hint.ContextVersionMinor, 5);
             Glfw.WindowHint(Hint.OpenglProfile, Profile.Core);
 
             Glfw.WindowHint(Hint.Focused, true);
@@ -60,9 +59,6 @@ namespace BoboEngine
 
             glEnable(GL_DEPTH_TEST);
             glEnable(GL_LEQUAL);
-
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
             Glfw.SetFramebufferSizeCallback(Window, framebuffer_size_callback);
 

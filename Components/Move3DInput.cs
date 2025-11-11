@@ -1,5 +1,4 @@
 ﻿using BoboEngine;
-using ComputeSharp.Resources;
 using InputDevices;
 
 public class Move3DInput : ObjectBehavior
@@ -22,7 +21,7 @@ public class Move3DInput : ObjectBehavior
         bool isUpsideDown = transform.upVector.y < 0;
         bool isZFliped = transform.rotation.z < -90 || transform.rotation.z > 90;
 
-        transform.rotation += new Float3(rotInput.x * (isZFliped ? -1 : 1), rotInput.y * (isUpsideDown ? -1 : 1), rotInput.z) * rotationSpeed * Time.deltaTime; // -rotInput.z
+        transform.rotation += new Float3(rotInput.x * (isZFliped ? -1 : 1), rotInput.y * (isUpsideDown ? -1 : 1), 0) * rotationSpeed * Time.deltaTime; // -rotInput.z
 
 
         transform.position += SceneManager.currentScene.camera.transform.TransformVector(posInput) * speed * Time.deltaTime;

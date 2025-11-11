@@ -1,6 +1,6 @@
-TODO:
-	- Implement Textures!
-	- Refactor!
+﻿TODO:
+ √	- Add Textures!
+ *	- Refactor!
 		* Remove all old unused code
 		* Remove all old unused dependencies
 		* Add clear documentation to BoboEngine spesific methods and properties

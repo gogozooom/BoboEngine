@@ -25,21 +25,22 @@ internal static class Program
 
         ConsoleCmd.Initialize();
 
-        //TMP.NotMain(args);
-
-        StartProgram(true); // Testing
-
         // Read Console Loop
-        while (true) 
+        Task.Run(() =>
         {
-            Console.Write("> ");
-            string? input = Console.ReadLine();
-
-            if (input != null)
+            while (true)
             {
-                ConsoleInputted?.Invoke(input);
+                Console.Write("> ");
+                string? input = Console.ReadLine();
+
+                if (input != null)
+                {
+                    ConsoleInputted?.Invoke(input);
+                }
             }
-        }
+        });
+
+        StartProgram(false);
     }
 
     public static void Test(float input, float expected)

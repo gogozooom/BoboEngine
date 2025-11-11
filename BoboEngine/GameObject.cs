@@ -1,79 +1,66 @@
-﻿namespace BoboEngine
+﻿namespace BoboEngine;
+public class GameObject
 {
-    public class GameObject
+    public string name;
+    public Transform transform = new();
+    public Scene connectedScene;
+
+    public List<ObjectBehavior> components = new();
+
+    public GameObject(string name = "GameObject")
     {
-        public string name;
-        public Transform transform = new();
-        public Scene connectedScene;
+        this.name = name;
+    }
 
-        public List<ObjectBehavior> components = new();
-
-        public GameObject(string name = "GameObject")
+    public T AddComponent<T>() where T : ObjectBehavior, new()
+    {
+        T t = new T
         {
-            this.name = name;
-        }
+            gameObject = this
+        };
 
+        components.Add(t);
+        t.Start();
 
-        public T AddComponent<T>() where T : ObjectBehavior, new()
+        return t;
+    }
+    public T GetComponent<T>() where T : ObjectBehavior
+    {
+        foreach (var com in components)
         {
-            T t = new T
+            if (com.GetType() == typeof(T))
             {
-                gameObject = this
-            };
-
-            components.Add(t);
-            t.Start();
-
-            return t;
-        }
-        public T GetComponent<T>() where T : ObjectBehavior
-        {
-            foreach (var com in components)
-            {
-                if (com.GetType() == typeof(T))
-                {
-                    return (T)com;
-                }
+                return (T)com;
             }
-
-            return null;
         }
-        public void RemoveComponent(ObjectBehavior component)
+
+        return null;
+    }
+    public void RemoveComponent(ObjectBehavior component)
+    {
+        components.Remove(component);
+
+        component.OnDestroy();
+    }
+
+    public static GameObject Find(string name)
+    {
+        return SceneManager.currentScene?.Find(name);
+    }
+
+    /// <summary>
+    /// Runs right before getting destroyed
+    /// </summary>
+    public void OnDestroy()
+    {
+        foreach (ObjectBehavior component in components.ToArray())
         {
-            components.Remove(component);
-
-            component.OnDestroy();
+            RemoveComponent(component);
         }
-        public void Destroy()
-        {
-            connectedScene.DestroyObject(this);
-        }
-        public void DestroyImmediate()
-        {
-            foreach (ObjectBehavior component in components.ToArray())
-            {
-                component.DestroyImmediate();
-            }
+    }
 
-            connectedScene.RemoveObject(this);
-        }
-
-        public static GameObject Find(string name)
-        {
-            return SceneManager.currentScene?.Find(name);
-        }
-
-        /// <summary>
-        /// Runs right before getting destroyed
-        /// </summary>
-        public virtual void OnDestroy()
-        {
-
-        }
-
-        public override string ToString()
-        {
-            return $"GameObject '{name}'";
-        }
+    public override string ToString()
+    {
+        return $"GameObject '{name}'";
     }
 }

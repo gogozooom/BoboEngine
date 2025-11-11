@@ -8,32 +8,17 @@
         /// <summary>
         /// Runs on scene initalization
         /// </summary>
-        public virtual void Start()
-        {
-            Program.Log($"'{gameObject}' Start");
-        }
+        public virtual void Start(){}
+
         /// <summary>
         /// Runs every frame
         /// </summary>
-        public virtual void Update()
-        {
-
-        }
+        public virtual void Update(){}
 
         /// <summary>
         /// Runs right after getting destroyed
         /// </summary>
-        public virtual void OnDestroy()
-        {
-
-        }
-        /// <summary>
-        /// Destroys the component
-        /// </summary>
-        public void DestroyImmediate()
-        {
-            gameObject.RemoveComponent(this);
-        }
+        public virtual void OnDestroy(){}
 
         /// <summary>
         /// parents to be implemented

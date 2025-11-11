@@ -58,12 +58,7 @@ public static class _3DMouse
 
     static Thread readInputLoop;
 
-    [Command("GetMouse", "Prints the current input")]
-    public static void GetInput()
-    {
-        Program.LogMessage(input);
-    }
-    [Command("ReadMouse", "Reads mouse input")]
+    [Command("ReadMouse", "Starts reading mouse input")]
     public static void StartReadingInput()
     {
         if (readInputLoop != null)

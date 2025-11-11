@@ -1,10 +1,11 @@
-﻿namespace BoboEngine;
-
+﻿//using StbImageSharp;
 using System.Runtime.InteropServices;
 using static OpenGL.GL;
+
+namespace BoboEngine;
 public class Texture
 {
-
+    //public ImageResult imageR { get; private set; }
     public Float3[,] image { get; private set; }
     public bool loaded { get; private set; }
 
@@ -33,6 +34,14 @@ public class Texture
     }
     void UpdateImageProperties()
     {
+        /*
+        width = imageR.Width;
+        height = imageR.Height;
+        wscale = width - 1;
+        hscale = height - 1;
+        */
+        if (image == null) return;
+
         width = image.GetLength(0);
         height = image.GetLength(1);
         wscale = width - 1;
@@ -54,6 +63,14 @@ public class Texture
             return false;
         }
 
+        /*
+        using (var stream = File.OpenRead(filePath))
+        {
+            imageR = ImageResult.FromStream(stream);
+        }
+        */
+
+        //* Manual BMP importer
         byte[] data = File.ReadAllBytes(filePath);
 
         byte[] header = data[..2];
@@ -69,6 +86,11 @@ public class Texture
 
         uint width = BitConverter.ToUInt32(data[18..22]);
         uint height = BitConverter.ToUInt32(data[22..26]);
+
+        if (width <= 2 || height <= 2)
+        {
+            Program.LogWarning($"Texture is very small, may look buggy! '{filePath}'");
+        }
 
         Float3[,] image = new Float3[width, height];
 
@@ -87,13 +109,13 @@ public class Texture
         }
 
         this.image = image;
+        //*/
 
         loaded = true;
         UpdateImageProperties();
 
         return true;
     }
-
 
     private uint textureRef;
     public void BindOpenGL()
@@ -112,7 +134,7 @@ public class Texture
 
         // OpenGl Time
 
-        uint[] texData = new uint[width * height * 3];
+        byte[] texData = new byte[width * height * 3];
 
         for (int y = 0; y < height; y++)
         {
@@ -120,40 +142,31 @@ public class Texture
             {
                 var pixelData = image[x, y];
 
-                //texData[(y * width + x) * 3]     = (uint)(pixelData.r * 255);
-                //texData[(y * width + x) * 3 + 1] = (uint)(pixelData.g * 255);
-                //texData[(y * width + x) * 3 + 2] = (uint)(pixelData.b * 255);
+                texData[(y * width + x) * 3]     = (byte)(pixelData.r * 255);
+                texData[(y * width + x) * 3 + 1] = (byte)(pixelData.g * 255);
+                texData[(y * width + x) * 3 + 2] = (byte)(pixelData.b * 255);
 
 
-                texData[(y * width + x) * 3] =     255;
-                texData[(y * width + x) * 3 + 1] = 255;
-                texData[(y * width + x) * 3 + 2] = 255;
+                //texData[(y * width + x) * 3] =     255;
+                //texData[(y * width + x) * 3 + 1] = 255;
+                //texData[(y * width + x) * 3 + 2] = 255;
             }
         }
 
-        byte[] output = MemoryMarshal.Cast<uint, byte>(texData).ToArray(); 
-
-        for (int y = 0; y < height; y++)
-        {
-            for (int x = 0; x < width; x++)
-            {
-                int i = (y * width + x) * 3;
-
-
-                Program.LogMessage($"Pixel {x},{y} = R:{texData[i]} G:{texData[i + 1]} B:{texData[i + 2]}");
-            }
-        }
-
-        GCHandle gCHandle = GCHandle.Alloc(output.ToArray(), GCHandleType.Pinned);
+        GCHandle gCHandle = GCHandle.Alloc(texData, GCHandleType.Pinned);
         IntPtr textureDataPointer = gCHandle.AddrOfPinnedObject();
 
         textureRef = glGenTexture();
 
         glBindTexture(GL_TEXTURE_2D, textureRef);
 
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
         try
         {
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_FLOAT, textureDataPointer);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, textureDataPointer);
+            glGenerateMipmap(GL_TEXTURE_2D);
         }
         catch (Exception e)
         {
@@ -165,6 +178,8 @@ public class Texture
         {
             gCHandle.Free();
         }
+
+        glUniform1i(glGetUniformLocation(textureRef, "mainTexture"), 0);
     }
 
     public void BindTexture()

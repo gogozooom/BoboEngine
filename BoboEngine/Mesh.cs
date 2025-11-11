@@ -190,7 +190,7 @@ public class Mesh : ObjectBehavior
             ];
         //*/
 
-        //* Log Vertex Data
+        /* Log Vertex Data
         for (int g = 0; g < vertexData.Length / 8; g++)
         {
             Program.Log("Pos: " + vertexData[g * 8 + 0] + ", " + vertexData[g * 8 + 1] + ", " + vertexData[g * 8 + 2]);

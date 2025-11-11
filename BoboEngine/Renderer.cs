@@ -128,10 +128,12 @@ public static class Renderer
 
             Matrix4x4 cameraMatrix = Camera.main.GetProjectionMatrix();
 
+
             //cameraMatrix = Matrix4x4.Identity;
 
             foreach (var obj in SceneManager.currentScene.objects)
             {
+
                 Mesh targetMesh = obj.GetComponent<Mesh>();
 
                 if (!targetMesh) continue;
