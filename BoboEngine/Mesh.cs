@@ -1,5 +1,4 @@
 ﻿using BoboEngine.Shaders;
-using OpenGL;
 using static OpenGL.GL;
 
 namespace BoboEngine;
@@ -13,7 +12,8 @@ public class Mesh : ObjectBehavior
     /// Vertex Buffer Object Reference
     /// </summary>
     private uint vbo;
-    private uint vertexBufferSize;
+
+    public uint vertexBufferSize { get; private set; }
 
     public Float3[] vertices;
     public FaceInfo[] faces;
@@ -227,7 +227,7 @@ public class Mesh : ObjectBehavior
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
 
-        Program.Log($"[{this}] BindOpenGL Success");
+        //Program.Log($"[{this}] BindOpenGL Success");
     }
 
     /// <summary>
@@ -245,10 +245,6 @@ public class Mesh : ObjectBehavior
     public void UnBindVAO()
     {
         glBindVertexArray(0);
-    }
-    public uint GetVertexBufferSize()
-    {
-        return vertexBufferSize;
     }
     public void Delete()
     {

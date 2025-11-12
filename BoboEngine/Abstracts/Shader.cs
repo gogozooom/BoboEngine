@@ -67,7 +67,7 @@ public class Shader
         glDeleteShader(_vs);
         glDeleteShader(_fs);
 
-        Program.Log($"[{this}] CreateShader Success");
+        //Program.Log($"[{this}] CreateShader Success");
     }
 
     private unsafe uint CompileShader(string _code, int _type)

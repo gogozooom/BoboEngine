@@ -1,6 +1,4 @@
-﻿using Raylib_cs;
-using System.Numerics;
-using System.Runtime.CompilerServices;
+﻿using System.Numerics;
 
 namespace BoboEngine;
 public static class Maths
@@ -254,7 +252,6 @@ public struct Float3(float x = 0, float y = 0, float z = 0)
     public static Float3 random => new(Maths.Random(75), Maths.Random(75), Maths.Random(75));
     #endregion
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public float Length() => MathF.Sqrt(Dot(this, this));
     public Float3 Normalized()
     {
@@ -271,15 +268,14 @@ public struct Float3(float x = 0, float y = 0, float z = 0)
     public static Float3 operator +(Float3 a, Float3 b) => new(a.x + b.x, a.y + b.y, a.z + b.z); // Vector Adding
     public static Float3 operator -(Float3 a, Float3 b) => new(a.x - b.x, a.y - b.y, a.z - b.z); // Vector Subracting
     public static Float3 operator -(float a, Float3 b) => new(a - b.x, a - b.y, a - b.z); // Subracting
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+
     public static Float3 operator *(Float3 a, Float3 b) => new(a.x * b.x, a.y * b.y, a.z * b.y); // Vector Multiplication
     public static Float3 operator /(Float3 a, Float3 b) => new(a.x / b.x, a.y / b.y, a.z / b.y); // Vector Division
     public static Float3 operator *(Float3 v, float f) => new(v.x * f, v.y * f, v.z * f); // Vector Length Multiplication
     public static Float3 operator /(Float3 v, float f) => new(v.x / f, v.y / f, v.z / f); // Vector Length Division
     public static Float3 operator /(float f, Float3 v) => new(f / v.x, f / v.y, f / v.z); // Vector Division
     public static Float3 operator -(Float3 a) => new(-a.x, -a.y, -a.z); // Negative Vector
-
-    public Color ToColor() => new((int)(x * 255), (int)(y * 255), (int)(z * 255));
+    
     public override string ToString() => $"({x.ToString()},{y.ToString()},{z.ToString()})";
     public static Float3 Parse(string s) => (Float3)s.Split(',').Select(float.Parse).ToArray();
 
@@ -312,6 +308,7 @@ public struct Float2(float x = 0, float y = 0)
     /// Random cords from 0f - 1f
     /// </summary>
     public static Float2 random => new(Maths.Random(0), Maths.Random(1));
+
     #endregion
 
     public float Length() => MathF.Sqrt(x * x + y * y);

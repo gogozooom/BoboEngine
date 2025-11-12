@@ -1,15 +1,24 @@
-﻿namespace BoboEngine;
+﻿using JetBrains.Annotations;
+
+namespace BoboEngine;
 public class GameObject
 {
     public string name;
-    public Transform transform = new();
+    public readonly bool isStatic;
+    public Transform transform;
     public Scene connectedScene;
 
     public List<ObjectBehavior> components = new();
 
-    public GameObject(string name = "GameObject")
+    public GameObject(string name = "GameObject", bool isStatic = false)
     {
         this.name = name;
+
+        transform = new();
+        components.Add(transform);
+        transform.gameObject = this;
+
+        this.isStatic = isStatic;
     }
 
     public T AddComponent<T>() where T : ObjectBehavior, new()
@@ -63,4 +72,6 @@ public class GameObject
     {
         return $"GameObject '{name}'";
     }
+
+    public static implicit operator bool (GameObject o) => o != null;
 }

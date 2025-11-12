@@ -57,7 +57,7 @@
         }
         /// <summary>
         /// Destroys all buffered objects for removal
-        /// </summary>\
+        /// </summary>
         public void DestroyObject(GameObject gameObject)
         {
             if(!_objectsBufferedForRemoval.Contains(gameObject))
@@ -93,6 +93,9 @@
 
             _object.OnDestroy();
         }
+        // TODO: Will be used when separated with an AWAKE method
+        // Awake method will be run as soon as a compoment is added,
+        // Start is run after all objects in the scene are finnished loading
         void StartObject(GameObject gObject)
         {
             foreach (var component in gObject.components)

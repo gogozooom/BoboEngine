@@ -11,10 +11,13 @@ public static class SceneManager
 
         var shader = new Shader(new Texture(Program.GetLocalTexturePath("NULL")));
 
+        var cube = CreateObjectModel("Cube", "Cube", shader);
+        cube.AddComponent<Rotater>();
+
         List<GameObject> objects =
         [
             // Add Objects
-            CreateObject("Cube", "Cube", shader, new Float3(0)),
+            cube,
             //CreateObject("Test", "House", shader),
             //CreateObject("Test", "TestText", shader),
         ];
@@ -38,9 +41,9 @@ public static class SceneManager
             currentScene = null;
         }
     }
-    public static GameObject CreateObject(string objectName, string modelName, Shader shader, Float3 position, Float3 scale, Float3 rotation)
+    public static GameObject CreateObjectModel(string objectName, string modelName, Shader shader, Float3 position, Float3 scale, Float3 rotation)
     {
-        GameObject @object = new(objectName);
+        GameObject @object = new(objectName, true);
         @object.transform.position = position;
         @object.transform.scale = scale;
         @object.transform.rotation = rotation;
@@ -53,10 +56,10 @@ public static class SceneManager
         return @object;
     }
         
-    public static GameObject CreateObject(string objectName, string modelName, Shader shader) => CreateObject(objectName, modelName, shader, Float3.zero, Float3.one, Float3.zero);
-    public static GameObject CreateObject(string objectName, string modelName, Shader shader, Float3 position) => CreateObject(objectName, modelName, shader, position, Float3.one, Float3.zero);
-    public static GameObject CreateObject(string objectName, string modelName, Shader shader, Float3 position, Float3 scale) => CreateObject(objectName, modelName, shader, position, scale, Float3.zero);
-    public static GameObject CreateObject(string objectName, string modelName, string textureName, Float3 position, Float3 scale, Float3 rotation)
+    public static GameObject CreateObjectModel(string objectName, string modelName, Shader shader) => CreateObjectModel(objectName, modelName, shader, Float3.zero, Float3.one, Float3.zero);
+    public static GameObject CreateObjectModel(string objectName, string modelName, Shader shader, Float3 position) => CreateObjectModel(objectName, modelName, shader, position, Float3.one, Float3.zero);
+    public static GameObject CreateObjectModel(string objectName, string modelName, Shader shader, Float3 position, Float3 scale) => CreateObjectModel(objectName, modelName, shader, position, scale, Float3.zero);
+    public static GameObject CreateObjectModel(string objectName, string modelName, string textureName, Float3 position, Float3 scale, Float3 rotation)
     {
         Shader shader;
 
@@ -69,7 +72,7 @@ public static class SceneManager
         else
             shader = new Shader();
 
-        return CreateObject(objectName, modelName, shader, position, scale, rotation);
+        return CreateObjectModel(objectName, modelName, shader, position, scale, rotation);
     }
 
         
@@ -95,7 +98,7 @@ public static class SceneManager
     [Command("SpawnMesh", "['name', 'textureName', x, y, z] Creates a new mesh object at the specified position")]
     public static void SpawnObject(string modelName, string textureName, float x, float y, float z)
     {
-        currentScene.AddObject(CreateObject(modelName, modelName, textureName, new(x, y, z), Float3.one, Float3.zero));
+        currentScene.AddObject(CreateObjectModel(modelName, modelName, textureName, new(x, y, z), Float3.one, Float3.zero));
     }
 
     [Command("RotateObject", "['name', x, y, z] Sets the selected model to the specified rotation")]

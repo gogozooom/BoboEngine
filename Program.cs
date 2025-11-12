@@ -40,7 +40,7 @@ internal static class Program
             }
         });
 
-        StartProgram(false);
+        StartProgram();
     }
 
     public static void Test(float input, float expected)
@@ -55,11 +55,10 @@ internal static class Program
         }
     }
 
-    [Command("S", "[sepThread? (def = true)] Starts scene! Enter 'S true' if console is still desired to be used")]
-    public static void StartProgram(bool sepThread)
+    public static void StartProgram()
     {
         SceneManager.LoadScene();
-        Renderer.Initalize(sepThread);
+        WindowManager.InitializeRenderLoop(800, 600);
     }
 
     public static string GetLocalModelPath(string model)

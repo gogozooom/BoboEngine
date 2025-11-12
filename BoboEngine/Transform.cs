@@ -1,9 +1,8 @@
 ﻿using System.Numerics;
-using System.Runtime.CompilerServices;
 
 namespace BoboEngine;
 
-public class Transform
+public class Transform : ObjectBehavior
 {
     Float3 _position;
     Float3 _scale = Float3.one;
@@ -35,8 +34,6 @@ public class Transform
 
     public Matrix4x4 Matrix => MatrixScale * MatrixRot * MatrixTrans;
     
-
-
     public Transform()
     {
         SetPosition(_position);
@@ -45,13 +42,15 @@ public class Transform
     }
     public Transform(Float3 position, Float3 rotation, Float3 scale)
     {
-        this.position = position;
-        this.rotation = rotation;
-        this.scale = scale;
+        SetPosition(position);
+        SetRotation(rotation);
+        SetScale(scale);
     }
 
     public void SetRotation(Float3 rotation)
     {
+        if (gameObject && gameObject.isStatic) return;
+
         _pitch = Maths.WrapAbs(rotation.x, 180);
         _yaw = Maths.WrapAbs(rotation.y, 180);
         _roll = Maths.WrapAbs(rotation.z, 180);
@@ -61,6 +60,8 @@ public class Transform
     }
     public void SetPosition(Float3 position)
     {
+        if (gameObject && gameObject.isStatic) return;
+
         _position = position;
     }
     public void SetScale(Float3 scale)
@@ -72,11 +73,6 @@ public class Transform
         _position = new(0, 0, 0);
         rotation = new(0, 0, 0);
     }
-    Float3 GetRotationFromBasisVectors((Float3 rightVector, Float3 upVector, Float3 backVector) bVec)
-    {
-        throw new NotImplementedException(); // Math too big brain for me...
-        return new();
-    }
     (Float3 rightVector, Float3 upVector, Float3 backVector) GetInverseBasisVectors()
     {
         return (new(rightVector.x, upVector.x, forwardVector.x),
@@ -87,7 +83,28 @@ public class Transform
     {
         return GetBasisVectors(rotation);
     }
-    (Float3 rightVector, Float3 upVector, Float3 backVector) GetBasisVectors(Float3 rotation)
+
+    public Float3 ToWorldPoint(Float3 point)
+    {
+        return TransformVector(point * scale) + new Float3(position.x, position.y, position.z);
+    }
+
+    public Float3 ToLocalPoint(Float3 point)
+    {
+        return TransformVectorInv((point / scale) - position);
+    }
+
+    public Float3 TransformVectorInv(Float3 point)
+    {
+        return TransformVector((inv_rightVector, inv_upVector, inv_forwardVector), point);
+    }
+
+    public Float3 TransformVector(Float3 point)
+    {
+        return TransformVector((rightVector, upVector, forwardVector), point);
+    }
+
+    public static (Float3 rightVector, Float3 upVector, Float3 backVector) GetBasisVectors(Float3 rotation)
     {
         // --- Apply Y Rotation ---
         Float3 ihat_Y = new Float3(Maths.Cos(rotation.y), 0, -Maths.Sin(rotation.y));
@@ -112,47 +129,11 @@ public class Transform
 
         return (rightVector, upVector, backVector);
     }
-    (Float3 rightVector, Float3 upVector, Float3 backVector) RotateBasisVectors((Float3 rightVector, Float3 upVector, Float3 backVector) bVec)
-    {
-        Float3 rightVector = TransformVector(bVec, this.rightVector);
-        Float3 upVector = TransformVector(bVec, this.upVector);
-        Float3 backVector = TransformVector(bVec, this.forwardVector);
-
-        return (rightVector, upVector, backVector);
-    }
-    
-    public void RotateWorldAxis(Float3 rotation)
-    {
-        rotation = GetRotationFromBasisVectors(RotateBasisVectors(GetBasisVectors(rotation)));
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public Float3 ToWorldPoint(Float3 point)
-    {
-        return TransformVector(point * scale) + new Float3(position.x, position.y, position.z);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public Float3 ToLocalPoint(Float3 point)
-    {
-        return TransformVectorInv((point / scale) - position);
-    }
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public Float3 TransformVectorInv(Float3 point)
-    {
-        return TransformVector((inv_rightVector, inv_upVector, inv_forwardVector), point);
-    }
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public Float3 TransformVector(Float3 point)
-    {
-        return TransformVector((rightVector, upVector, forwardVector), point);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Float3 TransformVector((Float3 rightVector, Float3 upVector, Float3 backVector) bVec, Float3 point)
     {
         return bVec.rightVector * point.x + bVec.upVector * point.y + bVec.backVector * point.z;
     }
+
 
     public override string ToString()
     {

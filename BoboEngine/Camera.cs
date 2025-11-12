@@ -45,6 +45,30 @@ namespace BoboEngine
             return orthoMatrix * zoomMatrix;
         }
 
+        // May be usefull for some effects later idk
+        public Float3 VertexToScreen(Float3 vertex, Transform transform = null)
+        {
+            if (!WindowManager.Initialized)
+            {
+                Program.LogError("Cannot use VertexToScreen() without a window!");
+                return Float3.zero;
+            }
+
+            Float3 vertex_world = vertex;
+            if (transform != null) vertex_world = transform.ToWorldPoint(vertex);
+            Float3 vertex_camera = transform.ToLocalPoint(vertex_world);
+
+            vertex_camera.y = -vertex_camera.y; // Fix top bottom rendering
+
+            float screenHeight_world = Maths.Tan(fov / 2) * 2;
+            float pixelsPerWorldUnit = WindowManager.WindowSize.x / screenHeight_world / vertex_camera.z;
+
+            Float2 pixelOffset = (Float2)vertex_camera * pixelsPerWorldUnit;
+            Float2 vertex_screen = pixelOffset + WindowManager.WindowSize / 2f;
+
+            return new Float3(vertex_screen.x, vertex_screen.y, vertex_camera.z); // Center 0,0 (And mirror for top bottom rendering)
+        }
+
         public override void OnDestroy()
         {
             base.OnDestroy();
