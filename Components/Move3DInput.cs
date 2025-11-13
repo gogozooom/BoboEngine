@@ -23,7 +23,6 @@ public class Move3DInput : ObjectBehavior
 
         transform.rotation += new Float3(rotInput.x * (isZFliped ? -1 : 1), rotInput.y * (isUpsideDown ? -1 : 1), 0) * rotationSpeed * Time.deltaTime; // -rotInput.z
 
-
         transform.position += SceneManager.currentScene.camera.transform.TransformVector(posInput) * speed * Time.deltaTime;
 
         //Program.Log(transform.position);

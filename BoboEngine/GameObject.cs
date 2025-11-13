@@ -12,6 +12,11 @@ public class GameObject
 
     public GameObject(string name = "GameObject", bool isStatic = false)
     {
+        if(SceneManager.currentScene != null)
+        {
+            SceneManager.currentScene.AddObject(this);
+        }
+
         this.name = name;
 
         transform = new();

@@ -6,6 +6,7 @@ namespace BoboEngine;
 public class Texture
 {
     //public ImageResult imageR { get; private set; }
+    public string name { get; private set; }
     public Float3[,] image { get; private set; }
     public bool loaded { get; private set; }
 
@@ -28,9 +29,10 @@ public class Texture
         }
     }
 
-    public Texture(Float3[,] image)
+    public Texture(Float3[,] image, string name)
     {
         this.image = image;
+        this.name = name;
         loaded = true;
 
         UpdateImageProperties();
@@ -77,6 +79,8 @@ public class Texture
             imageR = ImageResult.FromStream(stream);
         }
         */
+
+        name = Path.GetFileNameWithoutExtension(filePath);
 
         //* Manual BMP importer
         byte[] data = File.ReadAllBytes(filePath);

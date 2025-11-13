@@ -335,3 +335,12 @@ public struct Float2(float x = 0, float y = 0)
         return new(v.x, v.y);
     }
 }
+public struct UVRect(float uMin = 0, float vMin = 0, float uMax = 1, float vMax = 1)
+{
+    public float uMin = uMin;
+    public float vMin = vMin;
+    public float uMax = uMax;
+    public float vMax = vMax;
+    public Float2 GetMin() => new(uMin, vMin);
+    public Float2 GetMax() => new(uMax, vMax);
+}

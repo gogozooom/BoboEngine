@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System.Diagnostics;
+using System.Numerics;
 
 namespace BoboEngine;
 
@@ -18,17 +19,17 @@ public class Transform : ObjectBehavior
     public float yaw { get => _yaw; set => SetRotation(new(_pitch, value, _roll)); }
     public float roll { get => _roll; set => SetRotation(new(_pitch, _yaw, value)); }
 
-    public Float3 rightVector { get; private set; }
+    public Float3 leftVector { get; private set; }
     public Float3 upVector { get; private set; }
     public Float3 forwardVector { get; private set; }
 
-    public Float3 inv_rightVector { get; private set; }
+    public Float3 inv_leftVector { get; private set; }
     public Float3 inv_upVector { get; private set; }
     public Float3 inv_forwardVector { get; private set; }
 
     // TODO: Cache Matrix! Add support for static objects!
-    public Matrix4x4 MatrixTrans => Matrix4x4.CreateTranslation(new Vector3(-position.x, position.y, position.z)); // Invert x to align with unity
-    public Matrix4x4 MatrixScale => Matrix4x4.CreateScale(scale);
+    public Matrix4x4 MatrixTrans => Matrix4x4.CreateTranslation(new Vector3(position.x, position.y, position.z)); // Invert x to align with unity
+    public Matrix4x4 MatrixScale => Matrix4x4.CreateScale(new Vector3(1, 1, 1)) * Matrix4x4.CreateScale(scale);
     public Matrix4x4 MatrixRot => Matrix4x4.CreateRotationZ(Maths.ToRad(-roll)) * Matrix4x4.CreateRotationX(Maths.ToRad(pitch)) * Matrix4x4.CreateRotationY(Maths.ToRad(-yaw));
     public Matrix4x4 MatrixInverseRot => Matrix4x4.CreateRotationY(Maths.ToRad(yaw)) * Matrix4x4.CreateRotationX(Maths.ToRad(-pitch)) * Matrix4x4.CreateRotationZ(Maths.ToRad(roll));
 
@@ -55,8 +56,8 @@ public class Transform : ObjectBehavior
         _yaw = Maths.WrapAbs(rotation.y, 180);
         _roll = Maths.WrapAbs(rotation.z, 180);
 
-        (rightVector, upVector, forwardVector) = GetBasisVectors();
-        (inv_rightVector, inv_upVector, inv_forwardVector) = GetInverseBasisVectors();
+        (leftVector, upVector, forwardVector) = GetBasisVectors();
+        (inv_leftVector, inv_upVector, inv_forwardVector) = GetInverseBasisVectors();
     }
     public void SetPosition(Float3 position)
     {
@@ -73,13 +74,13 @@ public class Transform : ObjectBehavior
         _position = new(0, 0, 0);
         rotation = new(0, 0, 0);
     }
-    (Float3 rightVector, Float3 upVector, Float3 backVector) GetInverseBasisVectors()
+    (Float3 leftVector, Float3 upVector, Float3 forwardVector) GetInverseBasisVectors()
     {
-        return (new(rightVector.x, upVector.x, forwardVector.x),
-                new(rightVector.y, upVector.y, forwardVector.y),
-                new(rightVector.z, upVector.z, forwardVector.z));
+        return (new(leftVector.x, upVector.x, forwardVector.x),
+                new(leftVector.y, upVector.y, forwardVector.y),
+                new(leftVector.z, upVector.z, forwardVector.z));
     }
-    (Float3 rightVector, Float3 upVector, Float3 backVector) GetBasisVectors()
+    (Float3 leftVector, Float3 upVector, Float3 forwardVector) GetBasisVectors()
     {
         return GetBasisVectors(rotation);
     }
@@ -96,20 +97,20 @@ public class Transform : ObjectBehavior
 
     public Float3 TransformVectorInv(Float3 point)
     {
-        return TransformVector((inv_rightVector, inv_upVector, inv_forwardVector), point);
+        return TransformVector((inv_leftVector, inv_upVector, inv_forwardVector), point);
     }
 
     public Float3 TransformVector(Float3 point)
     {
-        return TransformVector((rightVector, upVector, forwardVector), point);
+        return TransformVector((leftVector, upVector, forwardVector), point);
     }
 
-    public static (Float3 rightVector, Float3 upVector, Float3 backVector) GetBasisVectors(Float3 rotation)
+    public static (Float3 leftVector, Float3 upVector, Float3 forwardVector) GetBasisVectors(Float3 rotation)
     {
         // --- Apply Y Rotation ---
-        Float3 ihat_Y = new Float3(Maths.Cos(rotation.y), 0, -Maths.Sin(rotation.y));
+        Float3 ihat_Y = new Float3(Maths.Cos(rotation.y), 0, Maths.Sin(rotation.y));
         Float3 jhat_Y = Float3.yAxis;
-        Float3 khat_Y = new(Maths.Sin(rotation.y), 0, Maths.Cos(rotation.y));
+        Float3 khat_Y = new(Maths.Sin(-rotation.y), 0, Maths.Cos(rotation.y));
 
         // --- Apply X Rotation ---
         Float3 ihat_X = Float3.xAxis;
@@ -123,15 +124,15 @@ public class Transform : ObjectBehavior
 
         // --- Combied Vectors ---
 
-        Float3 rightVector = TransformVector((ihat_Y, jhat_Y, khat_Y), TransformVector((ihat_X, jhat_X, khat_X), ihat_Z));
+        Float3 leftVector = TransformVector((ihat_Y, jhat_Y, khat_Y), TransformVector((ihat_X, jhat_X, khat_X), ihat_Z));
         Float3 upVector = TransformVector((ihat_Y, jhat_Y, khat_Y), TransformVector((ihat_X, jhat_X, khat_X), jhat_Z));
-        Float3 backVector = TransformVector((ihat_Y, jhat_Y, khat_Y), TransformVector((ihat_X, jhat_X, khat_X), khat_Z));
+        Float3 forwardVector = TransformVector((ihat_Y, jhat_Y, khat_Y), TransformVector((ihat_X, jhat_X, khat_X), khat_Z));
 
-        return (rightVector, upVector, backVector);
+        return (leftVector, upVector, forwardVector);
     }
-    public static Float3 TransformVector((Float3 rightVector, Float3 upVector, Float3 backVector) bVec, Float3 point)
+    public static Float3 TransformVector((Float3 leftVector, Float3 upVector, Float3 forwardVector) bVec, Float3 point)
     {
-        return bVec.rightVector * point.x + bVec.upVector * point.y + bVec.backVector * point.z;
+        return bVec.leftVector * point.x + bVec.upVector * point.y + bVec.forwardVector * point.z;
     }
 
 

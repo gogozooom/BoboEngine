@@ -1,8 +1,8 @@
 ﻿TODO:
 *	- Texture Atlas Manager
 √		* Atlas Generator
-		* UV Cordinate Dictionary
-		* Dynamic Mesh With Specified UVs
+√		* UV Cordinate Dictionary
+√		* Dynamic Mesh With Specified UVs
 	- BlockData Manager
 		* BlockData struct with everything to know about a block type!
 			1. id "minecraft:stone"

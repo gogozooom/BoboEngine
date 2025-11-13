@@ -29,8 +29,8 @@ public static class SceneManager
 
         // Create FreeCam Script
         scene.camera.gameObject.AddComponent<Move3DInput>();
-        scene.camera.transform.SetRotation(new Float3(0, 180, 0));
-        scene.camera.transform.position = new Float3(0, 0, 1);
+        scene.camera.transform.SetRotation(new Float3(0, 0, 0));
+        scene.camera.transform.position = new Float3(0, 1, -5);
     }
     public static void UnloadScene()
     {

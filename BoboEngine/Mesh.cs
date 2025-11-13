@@ -37,7 +37,7 @@ public class Mesh : ObjectBehavior
         Delete();
     }
 
-    public unsafe bool LoadObjFile(string filePath)
+    public bool LoadObjFile(string filePath)
     {
         // -- Error Checks --
         if (string.IsNullOrEmpty(filePath))
@@ -103,7 +103,162 @@ public class Mesh : ObjectBehavior
 
         return true;
     }
+    
+    public void LoadCubeBaseMesh()
+    {
+        vertices =
+        [
+            new(0, 0, 0),
+            new(0, 0, 1),
+            new(0, 1, 1),
+            new(0, 1, 0),
+            new(1, 0, 0),
+            new(1, 1, 0),
+            new(1, 1, 1),
+            new(1, 0, 1),
+        ];
+        
+        normals =
+        [
+            // Right Face
+            new(-1, 0, 0),
+            // Left Face
+            new(1, 0, 0),
+            // Bottom Face
+            new(0, -1, 0),
+            // Top Face
+            new(0, 1, 0),
+            // Back Face
+            new(0, 0, -1),
+            // Front Face
+            new(0, 0, 1),
+        ];
+        faceColors =
+        [
+            Float3.one,
+            Float3.one,
+            Float3.one,
+            Float3.one,
+            Float3.one,
+            Float3.one,
+        ];
 
+        textureCoords =
+        [
+            // Right Face
+            new(0, 0),
+            new(1, 0),
+            new(1, 1),
+            new(0, 1),
+
+            // Left Face
+            new(0, 0),
+            new(1, 0),
+            new(1, 1),
+            new(0, 1),
+
+            // Bottom Face
+            new(0, 0),
+            new(1, 0),
+            new(1, 1),
+            new(0, 1),
+
+            // Top Face
+            new(0, 0),
+            new(1, 0),
+            new(1, 1),
+            new(0, 1),
+            
+            // Back Face
+            new(0, 0),
+            new(1, 0),
+            new(1, 1),
+            new(0, 1),
+
+            // Front Face
+            new(0, 0),
+            new(1, 0),
+            new(1, 1),
+            new(0, 1),
+
+        ];
+
+        List<string> squareFaces =
+        [
+            "f 1/1/1 2/2/1 3/3/1 4/4/1", // Right Face
+            "f 8/5/2 5/6/2 6/7/2 7/8/2", // Left Face
+            "f 1/9/3 5/10/3 8/11/3 2/12/3", // Bottom Face
+            "f 3/13/4 7/14/4 6/15/4 4/16/4", // Top Face
+            "f 5/21/6 1/22/6 4/23/6 6/24/6", // Back Face
+            "f 2/17/5 8/18/5 7/19/5 3/20/5", // Front Face
+        ];
+
+        var faces = new List<FaceInfo>();
+
+        foreach (var face in squareFaces)
+        {
+            foreach (var item in FaceInfo.GetTriangulatedFaces(face))
+            {
+                faces.Add(item);
+            }
+        }
+            
+
+        this.faces = faces.ToArray();
+
+    }
+    public void LoadPlaneBaseMesh()
+    {
+        vertices =
+        [
+            new(-0.5f, 0, -0.5f),
+            new(-0.5f, 0, 0.5f),
+            new(0.5f, 0, 0.5f),
+            new(0.5f, 0, -0.5f),
+        ];
+
+        normals =
+        [
+            new(0, 1, 0),
+        ];
+
+        faceColors =
+        [
+            Float3.one,
+            Float3.one,
+        ];
+
+        textureCoords =
+        [
+            new(0, 1),
+            new(0, 0),
+            new(1, 0),
+            new(1, 1),
+        ];
+
+        var faces = new List<FaceInfo>();
+        foreach (var item in FaceInfo.GetTriangulatedFaces("f 1/1/1 2/2/1 3/3/1 4/4/1"))
+        {
+            faces.Add(item);
+        }
+
+        this.faces = faces.ToArray();
+    }
+    public void LoadCubeID(string blockID)
+    {
+        LoadCubeBaseMesh();
+
+        Float2[] newTextureCoords = new Float2[textureCoords.Length];
+
+        int i = 0;
+        foreach (var cords in textureCoords)
+        {
+            newTextureCoords[i++] = TextureAtlasManager.GetUVPositionOnTexture(blockID, cords);
+        }
+
+        textureCoords = newTextureCoords;
+    }
+    
     public unsafe void BindOpenGL()
     {
         if (!WindowManager.Initialized)

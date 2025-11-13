@@ -142,8 +142,7 @@ public static class _3DMouse
                         {
                             if (posInput) // Hacky solution TODO: (Has problem of X inputs randomly getting swapped, better distinction solution to be found)
                             {
-                                // Negative x to align with left hand basis vectors // Unity rotations
-                                Float3 pos = new(-ConvertInput(data[0].GetLogicalValue()), ConvertInput(data[4].GetLogicalValue()), ConvertInput(data[3].GetLogicalValue())); // [6,7] Are still readable?
+                                Float3 pos = new(ConvertInput(data[0].GetLogicalValue()), ConvertInput(data[4].GetLogicalValue()), ConvertInput(data[3].GetLogicalValue())); // [6,7] Are still readable?
 
                                 input.SetPositionInput(pos);
                                 posInput = false;

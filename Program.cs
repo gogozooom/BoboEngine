@@ -1,4 +1,5 @@
 ﻿using BoboEngine;
+using BoboEngine.Shaders;
 using ConsoleCommand;
 using System.Diagnostics;
 using System.Reflection;
@@ -59,7 +60,34 @@ internal static class Program
     {
         TextureAtlasManager.GenerateAtlas();
         SceneManager.LoadScene();
+
+        var shader = new Shader(TextureAtlasManager.blockTextureAtlas);
+
+        var grassBlock = GenerateTestCube("iron_ore", shader);
+        grassBlock.transform.position = new(3, 0, 0);
+
+        var dirtBlock = GenerateTestCube("dirt", shader);
+        dirtBlock.transform.position = new(-3, 0, 0);
+
+        var stoneBlock = GenerateTestCube("stone", shader);
+        stoneBlock.transform.position = new(0, 0, 3);
+
+        var nullBlock = GenerateTestCube("NULL", shader);
+        nullBlock.transform.position = new(3, 3, 3);
+
+
         WindowManager.InitializeRenderLoop(800, 600);
+    }
+
+    public static GameObject GenerateTestCube(string id, Shader shader)
+    {
+        var testPlane = new GameObject(id);
+
+        var testPlaneMesh = testPlane.AddComponent<Mesh>();
+        testPlaneMesh.LoadCubeID(id);
+        testPlaneMesh.shader = shader;
+
+        return testPlane;
     }
 
     public static string GetLocalModelPath(string model = null)

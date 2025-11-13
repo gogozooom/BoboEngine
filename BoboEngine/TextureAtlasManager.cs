@@ -2,19 +2,17 @@
 
 public static class TextureAtlasManager
 {
+    private const int GridSize = 16; // Assumed to be 16x16 textures for now
     public static Texture blockTextureAtlas { get; private set; }
-
+    public static Dictionary<string, UVRect> blockUVs { get; private set; } = new();
     public static void GenerateAtlas()
     {
-
         var blockTexturePath = Path.Combine(Program.GetLocalTexturePath(), "Blocks");
 
         List<Texture> textures = new();
 
         foreach (var file in Directory.GetFiles(blockTexturePath))
         {
-            Program.Log("Loading Block Texture: " + file);
-
             textures.Add(new Texture(file));
         }
 
@@ -23,14 +21,29 @@ public static class TextureAtlasManager
         textures.Add(nullT); // Guarantee null texture!
 
         blockTextureAtlas = GenerateAtlas(textures, nullT);
+        DrawToBMP(blockTextureAtlas.image, "BlockTextureAtlas");
     }
 
     public static Texture GenerateAtlas(List<Texture> textures, Texture backgroundTexture)
     {
-        const int GridSize = 16; // Assumed to be 16x16 textures for now
-
         int indexWH = (int)MathF.Ceiling(MathF.Sqrt(textures.Count));
         int gridWH = indexWH * GridSize;
+
+        // UVS
+        blockUVs.Clear();
+        
+        int i = 0;
+        foreach (var texture in textures)
+        {
+            var floorIndex = MathF.Floor((float)i / indexWH);
+
+            var uvS = new Float2((float)i / indexWH - floorIndex, floorIndex / indexWH);
+
+            var uvPosition = new UVRect(uvS.x, uvS.y, uvS.x + 1f / indexWH, uvS.y + 1f / indexWH);
+
+            blockUVs.Add(texture.name, uvPosition); // Change to block id
+            i++;
+        }
 
         Float3[,] output = new Float3[gridWH, gridWH];
 
@@ -58,12 +71,32 @@ public static class TextureAtlasManager
         }
 
 
-        return new Texture(output);
+        return new Texture(output, "atlas");
+    }
+
+    public static Float2 GetUVPositionOnTexture(string textureName, Float2 uv)
+    {
+        if (!blockUVs.ContainsKey(textureName))
+        {
+            Program.LogError("TextureAtlasManager: Requested UVs for non-existent texture: " + textureName);
+            textureName = "NULL";
+        }
+
+        var baseUV = blockUVs[textureName];
+
+        Float2 outputUV = new Float2(
+            baseUV.uMin + uv.x * (baseUV.uMax - baseUV.uMin),
+            baseUV.vMin + uv.y * (baseUV.vMax - baseUV.vMin)
+        );
+
+        return outputUV;
     }
 
     public static void DrawToBMP(Float3[,] image, string fileName) // Borrowed from Sebastian Lague
     {
         string outputPath = Path.Combine(Program.ProgramDirectory, "Output", fileName.Split('.')[0] + ".bmp");
+
+        Directory.CreateDirectory(Path.GetDirectoryName(outputPath));
 
         using BinaryWriter writer = new(File.Open(outputPath, FileMode.Create));
         uint[] ByteCounts = { 14, 40, (uint)image.Length * 4 }; // BMP header, DIP header, data
