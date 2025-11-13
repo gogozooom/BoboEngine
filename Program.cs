@@ -57,16 +57,21 @@ internal static class Program
 
     public static void StartProgram()
     {
+        TextureAtlasManager.GenerateAtlas();
         SceneManager.LoadScene();
         WindowManager.InitializeRenderLoop(800, 600);
     }
 
-    public static string GetLocalModelPath(string model)
+    public static string GetLocalModelPath(string model = null)
     {
+        if (model == null) return Path.Combine(ProgramDirectory, "Models");
+
         return Path.Combine(ProgramDirectory, "Models", model + ".obj");
     }
-    public static string GetLocalTexturePath(string texture)
+    public static string GetLocalTexturePath(string texture = null)
     {
+        if (texture == null) return Path.Combine(ProgramDirectory, "Textures");
+
         return Path.Combine(ProgramDirectory, "Textures", texture + ".bmp");
     }
 

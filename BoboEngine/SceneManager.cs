@@ -9,7 +9,7 @@ public static class SceneManager
     {
         UnloadScene(); // Unload Last Scene
 
-        var shader = new Shader(new Texture(Program.GetLocalTexturePath("NULL")));
+        var shader = new Shader(TextureAtlasManager.blockTextureAtlas);
 
         var cube = CreateObjectModel("Cube", "Cube", shader);
         cube.AddComponent<Rotater>();

@@ -21,7 +21,7 @@ namespace BoboEngine
         /// </summary>
         public static unsafe void InitializeRenderLoop(int windowWidth, int windowHeight)
         {
-            SetClearColor(new Vector4(0.2f, 0.2f, 0.4f, 1f));
+            SetClearColor(new Vector4(0.2f,0.2f,0.4f, 1f));
 
             CreateWindow(windowWidth, windowHeight, Program.TITLE);
 
@@ -93,7 +93,7 @@ namespace BoboEngine
             """);
 
             // Start Render
-            while (!Glfw.WindowShouldClose(WindowManager.Window))
+            while (!Glfw.WindowShouldClose(Window))
             {
                 Time.deltaTime = Time.time - timeLastFrame;
                 timeLastFrame = Time.time;
@@ -106,7 +106,7 @@ namespace BoboEngine
 
                 // render
 
-                WindowManager.ClearBuffer();
+                ClearBuffer();
 
                 Matrix4x4 cameraMatrix = Camera.main.GetProjectionMatrix();
 
@@ -149,11 +149,11 @@ namespace BoboEngine
                 glBindVertexArray(0);
                 gridShader.Unbind();
 
-                Glfw.SwapBuffers(WindowManager.Window);
+                Glfw.SwapBuffers(Window);
             }
 
 
-            WindowManager.CloseWindow();
+            CloseWindow();
             SceneManager.UnloadScene();
         }
 

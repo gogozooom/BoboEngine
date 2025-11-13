@@ -28,6 +28,14 @@ public class Texture
         }
     }
 
+    public Texture(Float3[,] image)
+    {
+        this.image = image;
+        loaded = true;
+
+        UpdateImageProperties();
+    }
+
     void LoadNullTexture()
     {
         LoadImageFile(Program.GetLocalTexturePath("NULL"));
