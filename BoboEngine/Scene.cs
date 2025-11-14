@@ -11,15 +11,16 @@
 
         public void InitializeScene(GameObject[] objects)
         {
+            GameObject cameraObject = new("Camera");
+            camera = cameraObject.AddComponent<Camera>();
+
+            GameObject cmdConsoleBuffer = new("CmdConsoleBuffer", true);
+            cmdConsoleBuffer.AddComponent<CmdConsoleBuffer>();
+
             foreach (var obj in objects)
             {
                 AddObject(obj);
             }
-
-            GameObject cameraObject = new("Camera");
-            camera = cameraObject.AddComponent<Camera>();
-
-            AddObject(cameraObject);
         }
 
         /// <summary>
@@ -79,6 +80,12 @@
         public void AddObject(GameObject _object)
         {
             if (_object == null) return;
+            if (objects.Contains(_object))
+            {
+                Program.LogWarning($"Already have '{_object}' !");
+                return;
+            }
+
 
             objects.Add(_object);
 

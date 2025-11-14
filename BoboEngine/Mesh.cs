@@ -34,7 +34,7 @@ public class Mesh : ObjectBehavior
 
         Program.Log($"'{this}' Destroy!");
 
-        Delete();
+        DeleteMesh();
     }
 
     public bool LoadObjFile(string filePath)
@@ -103,8 +103,59 @@ public class Mesh : ObjectBehavior
 
         return true;
     }
-    
-    public void LoadCubeBaseMesh()
+    public void LoadRawData(Float3[] vertices, FaceInfo[] faces, Float3[] normals, Float2[] textureCoords)
+    {
+        if (!IsEmpty())
+        {
+            Program.LogWarning("Cannot load data! Data is already loaded!");
+            return;
+        }
+
+        this.vertices = vertices;
+        this.faces = faces;
+        this.normals = normals;
+        this.textureCoords = textureCoords;
+    }
+
+    public void LoadCube(BlockType blockData)
+    {
+        LoadCubeBaseMesh();
+
+        Float2[] newTextureCoords = new Float2[textureCoords.Length];
+
+        int i = 0;
+        foreach (var cords in textureCoords)
+        {
+            if(i < 4) // Right Face
+            {
+                newTextureCoords[i++] = TextureAtlasManager.GetUVPositionOnTexture(blockData.rightTexture, cords);
+            }
+            else if (i < 8) // Left Face
+            {
+                newTextureCoords[i++] = TextureAtlasManager.GetUVPositionOnTexture(blockData.leftTexture, cords);
+            }
+            else if (i < 12) // Bottom Face
+            {
+                newTextureCoords[i++] = TextureAtlasManager.GetUVPositionOnTexture(blockData.bottomTexture, cords);
+            }
+            else if (i < 16) // Top Face
+            {
+                newTextureCoords[i++] = TextureAtlasManager.GetUVPositionOnTexture(blockData.topTexture, cords);
+            }
+            else if (i < 20) // Back Face
+            {
+                newTextureCoords[i++] = TextureAtlasManager.GetUVPositionOnTexture(blockData.backTexture, cords);
+            }
+            else // Front Face
+            {
+                newTextureCoords[i++] = TextureAtlasManager.GetUVPositionOnTexture(blockData.frontTexture, cords);
+            }
+        }
+
+        textureCoords = newTextureCoords;
+    }
+
+    private void LoadCubeBaseMesh()
     {
         vertices =
         [
@@ -117,7 +168,7 @@ public class Mesh : ObjectBehavior
             new(1, 1, 1),
             new(1, 0, 1),
         ];
-        
+
         normals =
         [
             // Right Face
@@ -202,12 +253,10 @@ public class Mesh : ObjectBehavior
                 faces.Add(item);
             }
         }
-            
 
         this.faces = faces.ToArray();
-
     }
-    public void LoadPlaneBaseMesh()
+    private void LoadPlaneBaseMesh()
     {
         vertices =
         [
@@ -244,23 +293,18 @@ public class Mesh : ObjectBehavior
 
         this.faces = faces.ToArray();
     }
-    public void LoadCubeID(string blockID)
-    {
-        LoadCubeBaseMesh();
 
-        Float2[] newTextureCoords = new Float2[textureCoords.Length];
-
-        int i = 0;
-        foreach (var cords in textureCoords)
-        {
-            newTextureCoords[i++] = TextureAtlasManager.GetUVPositionOnTexture(blockID, cords);
-        }
-
-        textureCoords = newTextureCoords;
-    }
-    
+    #region OpenGL Stuff
     public unsafe void BindOpenGL()
     {
+        if (IsEmpty())
+        {
+            Program.LogWarning("Mesh Empty! Skipping OpenGl Binding");
+            return;
+        }
+
+        Program.Log($"Binding OpenGL on mesh '{gameObject}'");
+
         if (!WindowManager.Initialized)
         {
             Program.LogError("Cannot bind open gl without a window!");
@@ -401,17 +445,25 @@ public class Mesh : ObjectBehavior
     {
         glBindVertexArray(0);
     }
-    public void Delete()
-    {
-        //glDeleteBuffer(vbo);
-        glDeleteVertexArray(vao);
+    #endregion
 
-        shader.Delete();
+    public void DeleteMesh()
+    {
+        if (vao != 0)
+        {
+            glDeleteBuffer(vbo);
+            glDeleteVertexArray(vao);
+        }
+
+        vertices = null;
+        faces = null;
+        normals = null;
+        faceColors = null;
+        textureCoords = null;
 
         vao = 0;
         vbo = 0;
     }
-
     public bool IsEmpty()
     {
         if (vertices == null) return true;

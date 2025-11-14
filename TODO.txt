@@ -1,23 +1,10 @@
 ﻿TODO:
-*	- Texture Atlas Manager
-√		* Atlas Generator
-√		* UV Cordinate Dictionary
-√		* Dynamic Mesh With Specified UVs
-	- BlockData Manager
-		* BlockData struct with everything to know about a block type!
-			1. id "minecraft:stone"
-			2. hardness '1'
-			3. blastResistance '1'
-			4. blockModel
-			5. textures
-			.. etc...
-		* Interface with Texture Atlas Manager to fetch UVs
-	- WorldData Manager
-		* Create indexed chunks and allow for block ids to be placed at any position
-		* CompileChunkMesh() => Generate mesh with proper textures to be sent to the gpu (Maybe make the calling of this method automatic, and scrap the cache once a block has changed)
-			and now hopfully I will be able to use the BlockData to retrive the uv of the texture stuff!
-			and then I'll have to do face culling!
-		* SetBlock() and Fill() functions
+√	- WorldData Manager
+√		* Create indexed chunks and allow for block ids to be placed at any position
+√		* CompileChunkMesh() => Generate mesh with proper textures to be sent to the gpu (Maybe make the calling of this method automatic, and scrap the cache once a block has changed)
+√			and now hopfully I will be able to use the BlockData to retrive the uv of the texture stuff!
+*			and then I'll have to do face culling!
+√		* SetBlock() and Fill() functions
 		* Maybe even add some kind of grid based raycaster from the camera position to light up the current block being looked at!
 	- Keyboard Input System!
 	- GameData Manager
@@ -50,6 +37,22 @@ FINNISHED:
 		* Remove all old unused dependencies
 		* Add clear documentation to BoboEngine spesific methods and properties
 		* Redo GameObject deletion to be more streamlined (Be entirely done by the scene manager)
+	
+	- Texture Atlas Manager
+		* Atlas Generator
+		* UV Cordinate Dictionary
+		* Dynamic Mesh With Specified UVs
+
+	- BlockData Manager
+		* BlockData struct with everything to know about a block type!
+			1. id "minecraft:stone"
+			2. hardness '1'
+			3. blastResistance '1'
+			4. blockModel
+			5. textures
+			.. etc...
+		* Interface with Texture Atlas Manager to fetch UVs
+
 
 OLD:
 

@@ -43,7 +43,7 @@ public static class SceneManager
     }
     public static GameObject CreateObjectModel(string objectName, string modelName, Shader shader, Float3 position, Float3 scale, Float3 rotation)
     {
-        GameObject @object = new(objectName, true);
+        GameObject @object = new(objectName);
         @object.transform.position = position;
         @object.transform.scale = scale;
         @object.transform.rotation = rotation;

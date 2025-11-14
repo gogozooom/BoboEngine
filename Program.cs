@@ -31,7 +31,6 @@ internal static class Program
         {
             while (true)
             {
-                Console.Write("> ");
                 string? input = Console.ReadLine();
 
                 if (input != null)
@@ -60,32 +59,21 @@ internal static class Program
     {
         TextureAtlasManager.GenerateAtlas();
         SceneManager.LoadScene();
-
-        var shader = new Shader(TextureAtlasManager.blockTextureAtlas);
-
-        var grassBlock = GenerateTestCube("iron_ore", shader);
-        grassBlock.transform.position = new(3, 0, 0);
-
-        var dirtBlock = GenerateTestCube("dirt", shader);
-        dirtBlock.transform.position = new(-3, 0, 0);
-
-        var stoneBlock = GenerateTestCube("stone", shader);
-        stoneBlock.transform.position = new(0, 0, 3);
-
-        var nullBlock = GenerateTestCube("NULL", shader);
-        nullBlock.transform.position = new(3, 3, 3);
-
+        BlockTypeManager.GenerateBlockData();
+        WorldDataManager.GenerateTestChunk();
 
         WindowManager.InitializeRenderLoop(800, 600);
     }
 
     public static GameObject GenerateTestCube(string id, Shader shader)
     {
-        var testPlane = new GameObject(id);
+        var blockData = BlockTypeManager.GetBlockData(id);
 
-        var testPlaneMesh = testPlane.AddComponent<Mesh>();
-        testPlaneMesh.LoadCubeID(id);
-        testPlaneMesh.shader = shader;
+        var testPlane = new GameObject(blockData.name);
+
+        var testCubeMesh = testPlane.AddComponent<Mesh>();
+        testCubeMesh.LoadCube(blockData);
+        testCubeMesh.shader = shader;
 
         return testPlane;
     }

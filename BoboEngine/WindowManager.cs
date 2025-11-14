@@ -1,4 +1,5 @@
 ﻿using BoboEngine.Shaders;
+using ConsoleCommand;
 using GLFW;
 using System.Drawing;
 using System.Numerics;
@@ -115,7 +116,6 @@ namespace BoboEngine
 
                 foreach (var obj in SceneManager.currentScene.objects)
                 {
-
                     Mesh targetMesh = obj.GetComponent<Mesh>();
 
                     if (!targetMesh) continue;
@@ -256,6 +256,26 @@ namespace BoboEngine
         public static void SetClearColor(Vector4 _clearColor)
         {
             ClearColor = _clearColor;
+        }
+
+
+        [Command("RenderMode", "['renderMode'] 'default' | 'wireframe' ")]
+        public static void SetRenderMode(string mode)
+        {
+            if (mode == null) mode = "default";
+
+            switch (mode.ToLower())
+            {
+                case "default":
+                    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+                    break;
+                case "wireframe":
+                    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+                    break;
+                default:
+                    Program.Log($"Invalid mode: '{mode}'");
+                    break;
+            }
         }
     }
 }

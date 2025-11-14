@@ -54,8 +54,6 @@ namespace ConsoleCommand
                 CreateCommand(attr.command, attr.description, method, attr.combineParams);
             }
 
-            Program.ConsoleInputted += HandleConsoleInput;
-
 
             Console.WriteLine("""
                    ______                  ______                       __   
@@ -72,7 +70,7 @@ namespace ConsoleCommand
         }
         
         // -- Inputs --
-        static void HandleConsoleInput(string input)
+        public static void HandleConsoleInput(string input)
         {
             if (string.IsNullOrWhiteSpace(input)) return;
 

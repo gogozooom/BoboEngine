@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using System.Numerics;
+﻿using System.Numerics;
 
 namespace BoboEngine;
 
@@ -61,7 +60,10 @@ public class Transform : ObjectBehavior
     }
     public void SetPosition(Float3 position)
     {
-        if (gameObject && gameObject.isStatic) return;
+        if (gameObject && gameObject.isStatic)
+        {
+            return;
+        }
 
         _position = position;
     }

@@ -1,6 +1,4 @@
-﻿using JetBrains.Annotations;
-
-namespace BoboEngine;
+﻿namespace BoboEngine;
 public class GameObject
 {
     public string name;
@@ -15,6 +13,10 @@ public class GameObject
         if(SceneManager.currentScene != null)
         {
             SceneManager.currentScene.AddObject(this);
+        }
+        else
+        {
+            Program.LogWarning($"Adding Object '{name}'!");
         }
 
         this.name = name;
