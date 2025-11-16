@@ -142,7 +142,7 @@ public static class Maths
     public static float SinedTriangleArea(Float2 a, Float2 b, Float2 c)
     {
         Float2 ac = a - c;
-        Float2 abPerp = (b - a).CrossProduct();
+        Float2 abPerp = (b - a).Cross;
 
         return -(Float2.Dot(ac, abPerp) / 2);
     }
@@ -179,6 +179,35 @@ public static class Maths
     public static float UnitClamp(this float f)
     {
         return Math.Clamp(f, 0, 1);
+    }
+
+    public static Float3 PlanePointIntersection(Float3 p, Float3 v, Axis axis, float planeOffset = 0)
+    {
+        switch (axis)
+        {
+            case Axis.Xaxis:
+                p = new(p.y, p.x, p.z);
+                v = new(v.y, v.x, v.z);
+                break;
+            case Axis.Zaxis:
+                p = new(p.x, p.z, p.y);
+                v = new(v.x, v.z, v.y);
+                break;
+        }
+
+        float slope = (planeOffset - p.y) / v.y;
+
+        Float3 result = new (slope * v.x + p.x, planeOffset, slope * v.z + p.z);
+
+        switch (axis)
+        {
+            case Axis.Xaxis:
+                return new(result.y, result.x, result.z);
+            case Axis.Zaxis:
+                return new(result.x, result.z, result.y);
+        }
+
+        return result;
     }
 }
 
@@ -259,19 +288,21 @@ public struct Float3(float x = 0, float y = 0, float z = 0)
     public static Float3 random => new(Maths.Random(75), Maths.Random(75), Maths.Random(75));
     #endregion
 
-    public float Length() => MathF.Sqrt(Dot(this, this));
+    public float Length => MathF.Sqrt(Dot(this, this));
     public Float3 Normalized()
     {
-        float l = Length();
+        float l = Length;
 
         if (l == 0) // Prevent NAN
         {
             return zero;
         }
 
-        return this / Length();
+        return this / Length;
     }
     public static float Dot(Float3 a, Float3 b) => a.x * b.x + a.y * b.y + a.z * b.z;
+    public static Float3 CrossProduct(Float3 a, Float3 b) => new(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
+
     public static Float3 operator +(Float3 a, Float3 b) => new(a.x + b.x, a.y + b.y, a.z + b.z); // Vector Adding
     public static Float3 operator -(Float3 a, Float3 b) => new(a.x - b.x, a.y - b.y, a.z - b.z); // Vector Subracting
     public static Float3 operator -(float a, Float3 b) => new(a - b.x, a - b.y, a - b.z); // Subracting
@@ -302,7 +333,6 @@ public struct Float2(float x = 0, float y = 0)
     public float x = x;
     public float y = y;
 
-
     #region variants
 
     public static Float2 xAxis => new(1, 0);
@@ -318,10 +348,11 @@ public struct Float2(float x = 0, float y = 0)
 
     #endregion
 
-    public float Length() => MathF.Sqrt(x * x + y * y);
-    public Float2 Normalized() => this / Length();
-    public Float2 CrossProduct() => new (y, -x);
+    public float Length => MathF.Sqrt(x * x + y * y);
+    public Float2 Normalized() => this / Length;
+    public Float2 Cross => new (y, -x);
     public static float Dot(Float2 a, Float2 b) => a.x * b.x + a.y * b.y;
+    public static float Determinant(Float2 a, Float2 b) => a.x * b.y - a.y * b.x;
 
     public static Float2 operator +(Float2 a, Float2 b) => new(a.x + b.x, a.y + b.y); // Vector Adding
     public static Float2 operator -(Float2 a, Float2 b) => new(a.x - b.x, a.y - b.y); // Vector Subracting
@@ -350,4 +381,11 @@ public struct UVRect(float uMin = 0, float vMin = 0, float uMax = 1, float vMax 
     public float vMax = vMax;
     public Float2 GetMin() => new(uMin, vMin);
     public Float2 GetMax() => new(uMax, vMax);
+}
+
+public enum Axis
+{
+    Yaxis,
+    Xaxis,
+    Zaxis
 }

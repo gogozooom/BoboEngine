@@ -4,7 +4,7 @@ public static class TextureAtlasManager
 {
     private const int GridSize = 16; // Assumed to be 16x16 textures for now
     public static Texture blockTextureAtlas { get; private set; }
-    public static Dictionary<string, UVRect> blockUVs { get; private set; } = new();
+    public static Dictionary<string, int> blockTextureIds { get; private set; } = new();
     public static void GenerateAtlas()
     {
         var blockTexturePath = Path.Combine(Program.GetLocalTexturePath(), "Blocks");
@@ -21,7 +21,6 @@ public static class TextureAtlasManager
         textures.Add(nullT); // Guarantee null texture!
 
         blockTextureAtlas = GenerateAtlas(textures, nullT);
-        DrawToBMP(blockTextureAtlas.image, "BlockTextureAtlas");
     }
 
     public static Texture GenerateAtlas(List<Texture> textures, Texture backgroundTexture)
@@ -30,66 +29,31 @@ public static class TextureAtlasManager
         int gridWH = indexWH * GridSize;
 
         // UVS
-        blockUVs.Clear();
-        
+        blockTextureIds.Clear();
+
+        List<Float3[,]> output = new();
+
         int i = 0;
         foreach (var texture in textures)
         {
-            var floorIndex = MathF.Floor((float)i / indexWH);
+            output.Add(texture.images[0]);
 
-            var uvS = new Float2((float)i / indexWH - floorIndex, floorIndex / indexWH);
-
-            var uvPosition = new UVRect(uvS.x, uvS.y, uvS.x + 1f / indexWH, uvS.y + 1f / indexWH);
-
-            blockUVs.Add(texture.name, uvPosition); // Change to block id
+            blockTextureIds.Add(texture.name, i); // Change to block id
             i++;
         }
-
-        Float3[,] output = new Float3[gridWH, gridWH];
-
-        for (int y = 0; y < gridWH; y++)
-        {
-            for (int x = 0; x < gridWH; x++)
-            {
-                int xIndex = (int)MathF.Floor((float)x / GridSize);
-                int yIndex = (int)MathF.Floor((float)y / GridSize);
-
-                int localX = x - (xIndex * GridSize);
-                int localY = y - (yIndex * GridSize);
-
-                int textureIndex = yIndex * indexWH + xIndex;
-
-                Texture selectedTexture = backgroundTexture;
-
-                if(textureIndex < textures.Count)
-                {
-                    selectedTexture = textures[textureIndex];
-                }
-
-                output[x, y] = selectedTexture.image[localX, localY];
-            }
-        }
-
 
         return new Texture(output, "atlas");
     }
 
-    public static Float2 GetUVPositionOnTexture(string textureName, Float2 uv)
+    public static int GetTextureID(string textureName)
     {
-        if (!blockUVs.ContainsKey(textureName))
+        if (!blockTextureIds.ContainsKey(textureName))
         {
             Program.LogError("TextureAtlasManager: Requested UVs for non-existent texture: " + textureName);
             textureName = "NULL";
         }
 
-        var baseUV = blockUVs[textureName];
-
-        Float2 outputUV = new Float2(
-            baseUV.uMin + uv.x * (baseUV.uMax - baseUV.uMin),
-            baseUV.vMin + uv.y * (baseUV.vMax - baseUV.vMin)
-        );
-
-        return outputUV;
+        return blockTextureIds[textureName];
     }
 
     public static void DrawToBMP(Float3[,] image, string fileName) // Borrowed from Sebastian Lague

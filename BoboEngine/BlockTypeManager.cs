@@ -5,7 +5,7 @@ public static class BlockTypeManager
 
     public static BlockType GetBlockData(string id)
     {
-        if (blockData.ContainsKey(id))
+        if (id != null && blockData.ContainsKey(id))
         {
             return blockData[id];
         }
@@ -33,6 +33,40 @@ public static class BlockTypeManager
             );
 
         AddBlockData(
+            "minecraft:cobblestone",
+            "Cobblestone",
+
+            "cobblestone"
+            );
+
+        AddBlockData(
+            "minecraft:iron_ore",
+            "Iron Ore",
+
+            "iron_ore"
+            );
+
+        AddBlockData(
+            "minecraft:oak_planks",
+            "Oak Planks",
+
+            "oak_planks"
+            );
+
+
+        AddBlockData(
+            "minecraft:oak_log",
+            "Oak Log",
+
+            "oak_log",
+            "oak_log",
+            "oak_log_top",
+            "oak_log_top",
+            "oak_log",
+            "oak_log"
+            );
+
+        AddBlockData(
             "minecraft:grass_block",
             "Grass Block",
 
@@ -42,6 +76,18 @@ public static class BlockTypeManager
             "dirt",
             "grass_block",
             "grass_block"
+            );
+
+        AddBlockData(
+            "minecraft:crafting_table",
+            "Crafting Table",
+
+            "crafting_table_side",
+            "crafting_table_side",
+            "crafting_table_top",
+            "crafting_table_top",
+            "crafting_table_front",
+            "crafting_table_front"
             );
     }
 

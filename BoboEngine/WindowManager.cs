@@ -22,9 +22,9 @@ namespace BoboEngine
         /// </summary>
         public static unsafe void InitializeRenderLoop(int windowWidth, int windowHeight)
         {
-            SetClearColor(new Vector4(0.2f,0.2f,0.4f, 1f));
-
             CreateWindow(windowWidth, windowHeight, Program.TITLE);
+
+            SetClearColor(new Vector4(0.2f,0.2f,0.4f, 1f));
 
             float timeLastFrame = Time.time;
 
@@ -246,7 +246,6 @@ namespace BoboEngine
                 return;
             }
 
-            glClearColor(ClearColor.X, ClearColor.Y, ClearColor.Z, ClearColor.W);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         }
 
@@ -256,6 +255,7 @@ namespace BoboEngine
         public static void SetClearColor(Vector4 _clearColor)
         {
             ClearColor = _clearColor;
+            if (Initialized) glClearColor(ClearColor.X, ClearColor.Y, ClearColor.Z, ClearColor.W);
         }
 
 

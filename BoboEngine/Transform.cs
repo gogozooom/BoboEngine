@@ -49,8 +49,6 @@ public class Transform : ObjectBehavior
 
     public void SetRotation(Float3 rotation)
     {
-        if (gameObject && gameObject.isStatic) return;
-
         _pitch = Maths.WrapAbs(rotation.x, 180);
         _yaw = Maths.WrapAbs(rotation.y, 180);
         _roll = Maths.WrapAbs(rotation.z, 180);
@@ -60,11 +58,6 @@ public class Transform : ObjectBehavior
     }
     public void SetPosition(Float3 position)
     {
-        if (gameObject && gameObject.isStatic)
-        {
-            return;
-        }
-
         _position = position;
     }
     public void SetScale(Float3 scale)

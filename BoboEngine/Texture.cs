@@ -7,14 +7,14 @@ public class Texture
 {
     //public ImageResult imageR { get; private set; }
     public string name { get; private set; }
-    public Float3[,] image { get; private set; }
+    public List<Float3[,]> images { get; private set; }
+    public bool isTextureArray => images.Count > 1;
+
     public bool loaded { get; private set; }
 
     public int width { get; private set; }
     public int height { get; private set; }
 
-    int wscale;
-    int hscale;
 
     public Texture()
     {
@@ -23,6 +23,7 @@ public class Texture
 
     public Texture(string filePath)
     {
+        images = new();
         if (!LoadImageFile(filePath)) // Failed to load texture
         {
             LoadNullTexture();
@@ -31,8 +32,19 @@ public class Texture
 
     public Texture(Float3[,] image, string name)
     {
-        this.image = image;
+        images = [image];
         this.name = name;
+
+        loaded = true;
+
+        UpdateImageProperties();
+    }
+
+    public Texture(List<Float3[,]> images, string name)
+    {
+        this.images = images;
+        this.name = name;
+
         loaded = true;
 
         UpdateImageProperties();
@@ -50,12 +62,10 @@ public class Texture
         wscale = width - 1;
         hscale = height - 1;
         */
-        if (image == null) return;
+        if (images.Count == 0) return;
 
-        width = image.GetLength(0);
-        height = image.GetLength(1);
-        wscale = width - 1;
-        hscale = height - 1;
+        width = images[0].GetLength(0);
+        height = images[0].GetLength(1);
     }
 
     readonly byte[] bmpHeader = [66, 77];
@@ -72,6 +82,8 @@ public class Texture
             Program.LogError($"Could find model file '{filePath}'");
             return false;
         }
+
+        images.Clear();
 
         /*
         using (var stream = File.OpenRead(filePath))
@@ -120,7 +132,8 @@ public class Texture
             }
         }
 
-        this.image = image;
+
+        images.Add(image);
         //*/
 
         loaded = true;
@@ -146,23 +159,25 @@ public class Texture
 
         // OpenGl Time
 
-        byte[] texData = new byte[width * height * 3];
+        byte[] texData = new byte[width * height * 3 * images.Count];
 
-        for (int y = 0; y < height; y++)
+        int textureIndex = 0;
+        foreach (var image in images)
         {
-            for (int x = 0; x < width; x++)
+            for (int y = 0; y < height; y++)
             {
-                var pixelData = image[x, y];
+                for (int x = 0; x < width; x++)
+                {
+                    var pixelData = image[x, y];
 
-                texData[(y * width + x) * 3]     = (byte)(pixelData.r * 255);
-                texData[(y * width + x) * 3 + 1] = (byte)(pixelData.g * 255);
-                texData[(y * width + x) * 3 + 2] = (byte)(pixelData.b * 255);
+                    var offset = (textureIndex * width * height * 3) + (y * width + x) * 3;
 
-
-                //texData[(y * width + x) * 3] =     255;
-                //texData[(y * width + x) * 3 + 1] = 255;
-                //texData[(y * width + x) * 3 + 2] = 255;
+                    texData[offset] = (byte)(pixelData.r * 255);
+                    texData[offset + 1] = (byte)(pixelData.g * 255);
+                    texData[offset + 2] = (byte)(pixelData.b * 255);
+                }
             }
+            textureIndex++;
         }
 
         GCHandle gCHandle = GCHandle.Alloc(texData, GCHandleType.Pinned);
@@ -170,15 +185,54 @@ public class Texture
 
         textureRef = glGenTexture();
 
-        glBindTexture(GL_TEXTURE_2D, textureRef);
+        glBindTexture(GL_TEXTURE_2D_ARRAY, textureRef);
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        /* (Context - Minecraft):
+            * GL_LINEAR:
+                X Do not use, looks bad with pixel art textures
+            * GL_NEAREST:
+                - Full resolution constantly 
+                X Causes pixely artifacts far away
+
+            * GL_NEAREST_MIPMAP_NEAREST: 
+                - takes the nearest mipmap to match the pixel size and uses nearest neighbor interpolation for texture sampling.
+                X Causes noticable pink haze on ground far away
+            * GL_LINEAR_MIPMAP_NEAREST: 
+                - takes the nearest mipmap level and samples that level using linear interpolation.
+                X Causes intrusive artifacts on the edges of block textures far away
+            * GL_NEAREST_MIPMAP_LINEAR: 
+                - linearly interpolates between the two mipmaps that most closely match the size of a pixel and samples the interpolated level via nearest neighbor interpolation.
+                X DITTO to GL_NEAREST_MIPMAP_NEAREST
+            * GL_LINEAR_MIPMAP_LINEAR:
+                - linearly interpolates between the two closest mipmaps and samples the interpolated level via linear interpolation.
+                X DITTO to GL_LINEAR_MIPMAP_NEAREST
+        */
+
+        glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+        glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+        // Set to higher value depending on how big the texture atlas is
+        //glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_LEVEL, 1); 
+
 
         try
         {
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, textureDataPointer);
-            glGenerateMipmap(GL_TEXTURE_2D);
+            /*
+            if (isTextureArray)
+            {
+                glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, width, height, images.Count, GL_RGB, GL_UNSIGNED_BYTE, textureDataPointer);
+            }
+            else
+            {
+                glTexImage2D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, textureDataPointer);
+            }*/
+
+            //glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, width, height, images.Count, GL_RGB, GL_UNSIGNED_BYTE, textureDataPointer);
+            glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB, width, height, images.Count, 0, GL_RGB, GL_UNSIGNED_BYTE, textureDataPointer);
+            glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
         }
         catch (Exception e)
         {
@@ -198,11 +252,11 @@ public class Texture
     {
         if (textureRef == 0) BindOpenGL();
 
-        glBindTexture(GL_TEXTURE_2D, textureRef);
+        glBindTexture(GL_TEXTURE_2D_ARRAY, textureRef);
     }
     public void UnbindTexture()
     {
-        glBindTexture(GL_TEXTURE_2D, 0);
+        glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
     }
     public void Delete()
     {
@@ -210,52 +264,5 @@ public class Texture
 
         glDeleteTexture(textureRef);
         textureRef = 0;
-    }
-
-    /*
-    public string GetNumberOfSpaces(int number)
-    {
-        string output = "";
-
-        for (int i = 0; i < number; i++)
-        {
-            output += " ";
-        }
-
-        return output;
-    }
-    */
-    public Float3 Sample(Float2 texCoord)
-    {
-        // Render Nearest Neighbor
-
-        float xMap = texCoord.x;
-        float yMap = texCoord.y;
-
-        // Texture Wrapping X
-
-        if (xMap > 1f)
-        {
-            xMap -= MathF.Floor(xMap);
-        }
-        else if (xMap < 0f)
-        {
-            xMap += MathF.Floor(-xMap) + 1;
-        }
-
-        // Texture Wrapping Y
-        if (yMap > 1f)
-        {
-            yMap -= MathF.Floor(yMap);
-        }
-        else if (yMap < 0f)
-        {
-            yMap += MathF.Floor(-yMap) + 1;
-        }
-
-        int x = (int)(xMap * wscale);
-        int y = (int)(yMap * hscale);
-
-        return image[x, y];
     }
 }

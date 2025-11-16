@@ -35,7 +35,14 @@ internal static class Program
 
                 if (input != null)
                 {
-                    ConsoleInputted?.Invoke(input);
+                    if(SceneManager.currentScene == null)
+                    {
+                        ConsoleCmd.HandleConsoleInput(input);
+                    }
+                    else // !! FW Use better implementation down the line
+                    {
+                        ConsoleInputted?.Invoke(input);
+                    }
                 }
             }
         });
@@ -63,19 +70,6 @@ internal static class Program
         WorldDataManager.GenerateTestChunk();
 
         WindowManager.InitializeRenderLoop(800, 600);
-    }
-
-    public static GameObject GenerateTestCube(string id, Shader shader)
-    {
-        var blockData = BlockTypeManager.GetBlockData(id);
-
-        var testPlane = new GameObject(blockData.name);
-
-        var testCubeMesh = testPlane.AddComponent<Mesh>();
-        testCubeMesh.LoadCube(blockData);
-        testCubeMesh.shader = shader;
-
-        return testPlane;
     }
 
     public static string GetLocalModelPath(string model = null)

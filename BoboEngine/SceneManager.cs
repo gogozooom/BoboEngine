@@ -9,15 +9,10 @@ public static class SceneManager
     {
         UnloadScene(); // Unload Last Scene
 
-        var shader = new Shader(TextureAtlasManager.blockTextureAtlas);
-
-        var cube = CreateObjectModel("Cube", "Cube", shader);
-        cube.AddComponent<Rotater>();
 
         List<GameObject> objects =
         [
             // Add Objects
-            cube,
             //CreateObject("Test", "House", shader),
             //CreateObject("Test", "TestText", shader),
         ];
@@ -30,7 +25,63 @@ public static class SceneManager
         // Create FreeCam Script
         scene.camera.gameObject.AddComponent<Move3DInput>();
         scene.camera.transform.SetRotation(new Float3(0, 0, 0));
-        scene.camera.transform.position = new Float3(0, 1, -5);
+        scene.camera.transform.position = new Float3(0, 1.1f, -5.5f);
+        
+        /* Block Look Direction Testing
+        var obj = new GameObject("Debug");
+        obj.transform.scale = -Float3.one;
+        obj.transform.position = new(-0.5f, 1.5f, 0.5f);
+
+        var mesh = obj.AddComponent<Mesh>();
+
+        mesh.LoadObjFile(Program.GetLocalModelPath("Cube"));
+        mesh.shader = new Shader(new Texture(Program.GetLocalTexturePath("NULL")));
+        */
+
+        /* Texture Array Testing
+        // Test 1
+        var test1 = new GameObject("TextureArrayTest1");
+        test1.transform.position = new(-2, 3, 0);
+
+        var test1Mesh = test1.AddComponent<Mesh>();
+        test1Mesh.LoadObjFile(Program.GetLocalModelPath("Cube"));
+
+        var image = new Float3[,]
+        {
+            { new(1, 0, 0), new(0, 0, 0), new(0, 0, 0), new(0.25f, 0.25f, 0.25f) },
+            { new(0, 0, 0), new(0, 1, 0), new(0, 0, 0), new(0.5f, 0.5f, 0.5f) },
+            { new(0, 0, 0), new(0, 0, 0), new(0, 0, 1), new(0.75f, 0.75f, 0.75f) },
+            { new(0.25f, 0.25f, 0.25f), new(0.5f, 0.5f, 0.5f), new(0.75f, 0.75f, 0.75f), new(1, 1, 1) }
+        };
+
+        var texture = new Texture(image, "test1");
+
+        var shader = new Shader(texture);
+
+        test1Mesh.shader = shader;
+
+
+        // Test 2
+        var test2 = new GameObject("TextureArrayTest2");
+        test2.transform.position = new(2, 3, 0);
+
+        var test2Mesh = test2.AddComponent<Mesh>();
+        test2Mesh.LoadObjFile(Program.GetLocalModelPath("Cube"), 1);
+
+        var image2 = new Float3[,]
+{
+            { new(1, 0, 1), new(0, 0, 1), new(0, 0, 1), new(0.25f, 0.25f, 0.25f) },
+            { new(0, 0, 1), new(0, 1, 1), new(0, 0, 1), new(0.5f, 0.5f, 0.5f) },
+            { new(0, 0, 1), new(0, 0, 1), new(0, 0, 1), new(0.75f, 0.75f, 0.75f) },
+            { new(0.25f, 0.25f, 0.25f), new(0.5f, 0.5f, 0.5f), new(0.75f, 0.75f, 0.75f), new(1, 1, 1) }
+        };
+
+        var texture2 = new Texture([image, image2], "test2");
+
+        var shader2 = new Shader(texture2);
+
+        test2Mesh.shader = shader2;
+        */
     }
     public static void UnloadScene()
     {

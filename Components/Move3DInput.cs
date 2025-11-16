@@ -1,4 +1,5 @@
 ﻿using BoboEngine;
+using BoboEngine.Shaders;
 using InputDevices;
 
 public class Move3DInput : ObjectBehavior
@@ -8,9 +9,23 @@ public class Move3DInput : ObjectBehavior
 
     public GameObject obj;
 
+    public BlockRaycastHit lastHit;
+    public string blockSelected = "minecraft:dirt";
+
     public override void Start()
     {
         _3DMouse.StartReadingInput();
+
+        _3DMouse.input.onRightInput += RightPressed;
+        _3DMouse.input.onLeftInput += LeftPressed;
+
+        obj = new GameObject("Debug");
+        obj.transform.scale = Float3.one / 5;
+
+        var mesh = obj.AddComponent<Mesh>();
+
+        mesh.LoadObjFile(Program.GetLocalModelPath("Cube"));
+        mesh.shader = new Shader(new Texture(Program.GetLocalTexturePath("NULL")));
     }
 
     public override void Update()
@@ -25,11 +40,34 @@ public class Move3DInput : ObjectBehavior
 
         transform.position += SceneManager.currentScene.camera.transform.TransformVector(posInput) * speed * Time.deltaTime;
 
-        //Program.Log(transform.position);
+        lastHit = WorldDataManager.Raycast(transform.position, transform.forwardVector, 16);
 
-        if (_3DMouse.input.rightPressed)
+        obj.transform.position = lastHit.hitPosition;
+
+        //Program.Log(result);
+
+
+        //Program.Log(transform.position);
+    }
+
+    private void RightPressed(bool down)
+    {
+        if (down && lastHit)
         {
-            transform.Reset();
+            Int3 blockToChange = lastHit.blockPosition;
+
+            WorldDataManager.SetBlock("minecraft:air", lastHit.blockPosition);
+        }
+    }
+    private void LeftPressed(bool down) 
+    {
+        if (down && lastHit)
+        {
+            Program.Log(lastHit.blockFace);
+
+            Int3 blockToChange = (Int3)(lastHit.blockPosition + lastHit.blockFace.GetNormal());
+
+            WorldDataManager.SetBlock(blockSelected, blockToChange);
         }
     }
 }

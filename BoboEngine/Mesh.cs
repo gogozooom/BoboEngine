@@ -37,7 +37,7 @@ public class Mesh : ObjectBehavior
         DeleteMesh();
     }
 
-    public bool LoadObjFile(string filePath)
+    public bool LoadObjFile(string filePath, int textureID = 0)
     {
         // -- Error Checks --
         if (string.IsNullOrEmpty(filePath))
@@ -88,8 +88,11 @@ public class Mesh : ObjectBehavior
             }
             else if (line.StartsWith("f ")) // Face Info
             {
-                foreach (var item in FaceInfo.GetTriangulatedFaces(line))
+                foreach (var f in FaceInfo.GetTriangulatedFaces(line))
                 {
+                    var item = f;
+
+                    item.texture_id = textureID;
                     faces.Add(item);
                 }
             }
@@ -117,183 +120,6 @@ public class Mesh : ObjectBehavior
         this.textureCoords = textureCoords;
     }
 
-    public void LoadCube(BlockType blockData)
-    {
-        LoadCubeBaseMesh();
-
-        Float2[] newTextureCoords = new Float2[textureCoords.Length];
-
-        int i = 0;
-        foreach (var cords in textureCoords)
-        {
-            if(i < 4) // Right Face
-            {
-                newTextureCoords[i++] = TextureAtlasManager.GetUVPositionOnTexture(blockData.rightTexture, cords);
-            }
-            else if (i < 8) // Left Face
-            {
-                newTextureCoords[i++] = TextureAtlasManager.GetUVPositionOnTexture(blockData.leftTexture, cords);
-            }
-            else if (i < 12) // Bottom Face
-            {
-                newTextureCoords[i++] = TextureAtlasManager.GetUVPositionOnTexture(blockData.bottomTexture, cords);
-            }
-            else if (i < 16) // Top Face
-            {
-                newTextureCoords[i++] = TextureAtlasManager.GetUVPositionOnTexture(blockData.topTexture, cords);
-            }
-            else if (i < 20) // Back Face
-            {
-                newTextureCoords[i++] = TextureAtlasManager.GetUVPositionOnTexture(blockData.backTexture, cords);
-            }
-            else // Front Face
-            {
-                newTextureCoords[i++] = TextureAtlasManager.GetUVPositionOnTexture(blockData.frontTexture, cords);
-            }
-        }
-
-        textureCoords = newTextureCoords;
-    }
-
-    private void LoadCubeBaseMesh()
-    {
-        vertices =
-        [
-            new(0, 0, 0),
-            new(0, 0, 1),
-            new(0, 1, 1),
-            new(0, 1, 0),
-            new(1, 0, 0),
-            new(1, 1, 0),
-            new(1, 1, 1),
-            new(1, 0, 1),
-        ];
-
-        normals =
-        [
-            // Right Face
-            new(-1, 0, 0),
-            // Left Face
-            new(1, 0, 0),
-            // Bottom Face
-            new(0, -1, 0),
-            // Top Face
-            new(0, 1, 0),
-            // Back Face
-            new(0, 0, -1),
-            // Front Face
-            new(0, 0, 1),
-        ];
-        faceColors =
-        [
-            Float3.one,
-            Float3.one,
-            Float3.one,
-            Float3.one,
-            Float3.one,
-            Float3.one,
-        ];
-
-        textureCoords =
-        [
-            // Right Face
-            new(0, 0),
-            new(1, 0),
-            new(1, 1),
-            new(0, 1),
-
-            // Left Face
-            new(0, 0),
-            new(1, 0),
-            new(1, 1),
-            new(0, 1),
-
-            // Bottom Face
-            new(0, 0),
-            new(1, 0),
-            new(1, 1),
-            new(0, 1),
-
-            // Top Face
-            new(0, 0),
-            new(1, 0),
-            new(1, 1),
-            new(0, 1),
-            
-            // Back Face
-            new(0, 0),
-            new(1, 0),
-            new(1, 1),
-            new(0, 1),
-
-            // Front Face
-            new(0, 0),
-            new(1, 0),
-            new(1, 1),
-            new(0, 1),
-
-        ];
-
-        List<string> squareFaces =
-        [
-            "f 1/1/1 2/2/1 3/3/1 4/4/1", // Right Face
-            "f 8/5/2 5/6/2 6/7/2 7/8/2", // Left Face
-            "f 1/9/3 5/10/3 8/11/3 2/12/3", // Bottom Face
-            "f 3/13/4 7/14/4 6/15/4 4/16/4", // Top Face
-            "f 5/21/6 1/22/6 4/23/6 6/24/6", // Back Face
-            "f 2/17/5 8/18/5 7/19/5 3/20/5", // Front Face
-        ];
-
-        var faces = new List<FaceInfo>();
-
-        foreach (var face in squareFaces)
-        {
-            foreach (var item in FaceInfo.GetTriangulatedFaces(face))
-            {
-                faces.Add(item);
-            }
-        }
-
-        this.faces = faces.ToArray();
-    }
-    private void LoadPlaneBaseMesh()
-    {
-        vertices =
-        [
-            new(-0.5f, 0, -0.5f),
-            new(-0.5f, 0, 0.5f),
-            new(0.5f, 0, 0.5f),
-            new(0.5f, 0, -0.5f),
-        ];
-
-        normals =
-        [
-            new(0, 1, 0),
-        ];
-
-        faceColors =
-        [
-            Float3.one,
-            Float3.one,
-        ];
-
-        textureCoords =
-        [
-            new(0, 1),
-            new(0, 0),
-            new(1, 0),
-            new(1, 1),
-        ];
-
-        var faces = new List<FaceInfo>();
-        foreach (var item in FaceInfo.GetTriangulatedFaces("f 1/1/1 2/2/1 3/3/1 4/4/1"))
-        {
-            faces.Add(item);
-        }
-
-        this.faces = faces.ToArray();
-    }
-
     #region OpenGL Stuff
     public unsafe void BindOpenGL()
     {
@@ -313,59 +139,33 @@ public class Mesh : ObjectBehavior
 
         // OpenGl Time
 
-        var vertexData = new float[faces.Length * 24];
+        var vertexData = new float[faces.Length * 27];
 
         for (int i = 0; i < faces.Length; i++)
         {
             var face = faces[i];
 
-            var faceIndex = i * 24;
+            var faceIndex = i * 27;
 
-            Float3 a = vertices[face.vertex_indexs[0]];
-            Float2 aT = textureCoords[face.texture_indexs[0]];
+            for (int vertexI = 0; vertexI < 3; vertexI++)
+            {
+                Float3 position = vertices[face.vertex_indexs[vertexI]];
+                Float2 uv = textureCoords[face.texture_indexs[vertexI]];
 
-            vertexData[faceIndex + 0] = a.x;
-            vertexData[faceIndex + 1] = a.y;
-            vertexData[faceIndex + 2] = a.z;
+                vertexData[faceIndex + 0] = position.x;
+                vertexData[faceIndex + 1] = position.y;
+                vertexData[faceIndex + 2] = position.z;
 
-            vertexData[faceIndex + 3] = face.faceColor.r;
-            vertexData[faceIndex + 4] = face.faceColor.g;
-            vertexData[faceIndex + 5] = face.faceColor.b;
+                vertexData[faceIndex + 3] = face.faceColor.r;
+                vertexData[faceIndex + 4] = face.faceColor.g;
+                vertexData[faceIndex + 5] = face.faceColor.b;
 
-            vertexData[faceIndex + 6] = aT.x;
-            vertexData[faceIndex + 7] = aT.y;
+                vertexData[faceIndex + 6] = uv.x;
+                vertexData[faceIndex + 7] = uv.y;
+                vertexData[faceIndex + 8] = face.texture_id;
 
-            Float3 b = vertices[face.vertex_indexs[1]];
-            Float2 bT = textureCoords[face.texture_indexs[1]];
-
-            faceIndex += 8;
-
-            vertexData[faceIndex + 0] = b.x;
-            vertexData[faceIndex + 1] = b.y;
-            vertexData[faceIndex + 2] = b.z;
-
-            vertexData[faceIndex + 3] = face.faceColor.r;
-            vertexData[faceIndex + 4] = face.faceColor.g;
-            vertexData[faceIndex + 5] = face.faceColor.b;
-
-            vertexData[faceIndex + 6] = bT.x;
-            vertexData[faceIndex + 7] = bT.y;
-
-            Float3 c = vertices[face.vertex_indexs[2]];
-            Float2 cT = textureCoords[face.texture_indexs[2]];
-
-            faceIndex += 8;
-
-            vertexData[faceIndex + 0] = c.x;
-            vertexData[faceIndex + 1] = c.y;
-            vertexData[faceIndex + 2] = c.z;
-
-            vertexData[faceIndex + 3] = face.faceColor.r;
-            vertexData[faceIndex + 4] = face.faceColor.g;
-            vertexData[faceIndex + 5] = face.faceColor.b;
-
-            vertexData[faceIndex + 6] = cT.x;
-            vertexData[faceIndex + 7] = cT.y;
+                faceIndex += 9;
+            }
         }
 
         // Vertex | Color | UV
@@ -412,15 +212,15 @@ public class Mesh : ObjectBehavior
         }
 
         // Position (x,y,z)
-        glVertexAttribPointer(0, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, false, 9 * sizeof(float), (void*)0);
         glEnableVertexAttribArray(0);
 
         // Color (r,g,b)
-        glVertexAttribPointer(1, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+        glVertexAttribPointer(1, 3, GL_FLOAT, false, 9 * sizeof(float), (void*)(3 * sizeof(float)));
         glEnableVertexAttribArray(1);
 
-        // Vertex Texture Coords (u,v)
-        glVertexAttribPointer(2, 2, GL_FLOAT, false, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+        // Vertex Texture Coords (u,v,i)
+        glVertexAttribPointer(2, 3, GL_FLOAT, false, 9 * sizeof(float), (void*)(6 * sizeof(float)));
         glEnableVertexAttribArray(2);
 
         glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -483,6 +283,7 @@ public struct FaceInfo
     public List<int> vertex_indexs = new();
     public List<int> texture_indexs = new();
     public List<int> normal_indexs = new();
+    public int texture_id;
     public Float3 faceColor;
 
     public FaceInfo(string objFaceElements)

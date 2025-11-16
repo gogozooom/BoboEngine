@@ -2,13 +2,12 @@
 public class GameObject
 {
     public string name;
-    public readonly bool isStatic;
     public Transform transform;
     public Scene connectedScene;
 
     public List<ObjectBehavior> components = new();
 
-    public GameObject(string name = "GameObject", bool isStatic = false)
+    public GameObject(string name = "GameObject")
     {
         if(SceneManager.currentScene != null)
         {
@@ -24,8 +23,6 @@ public class GameObject
         transform = new();
         components.Add(transform);
         transform.gameObject = this;
-
-        this.isStatic = isStatic;
     }
 
     public T AddComponent<T>() where T : ObjectBehavior, new()

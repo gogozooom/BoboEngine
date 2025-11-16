@@ -1,12 +1,14 @@
-﻿TODO:
-√	- WorldData Manager
-√		* Create indexed chunks and allow for block ids to be placed at any position
-√		* CompileChunkMesh() => Generate mesh with proper textures to be sent to the gpu (Maybe make the calling of this method automatic, and scrap the cache once a block has changed)
-√			and now hopfully I will be able to use the BlockData to retrive the uv of the texture stuff!
-*			and then I'll have to do face culling!
-√		* SetBlock() and Fill() functions
-		* Maybe even add some kind of grid based raycaster from the camera position to light up the current block being looked at!
+﻿!REMINDER! :
+	- Use Nsight Graphics to easily debug graphical errors!
+	- It also allows for quick shader testing!
+
+Known Issues:
+	- Placing a block at the edge of a chunk does not update that chunk's culling
+
+TODO:
+	- Simple block raycast selection outline (Look at minecraft for "inspiration!")
 	- Keyboard Input System!
+
 	- GameData Manager
 		* Load data from Minecraft 1.8 (Eventually support latest version)
 			1. Textures
@@ -16,6 +18,24 @@
 			5. Item Drops
 			6. ?? Shaders ??
 		* Implement data!
+	- Tick Based System!
+	- Do some research on UVs and Arrays for glsl vertex shaders possibly enabling seamless animated blocks
+	- Maybe frag shader too? To help with artifacts far away
+
+	- REFACTOR!
+		* Move cs file locations to better match their purpose
+		* Add proper namespaces and distinctions betweem BoboEngine and Minecraft
+		* Remove old useless commands and add new ones to add full realtime control, avoiding restarting every time
+			1. Property Read Commands (Probably need to use reflection)
+			2. + Wanted control commands
+		* Separate Texture2D and Texture2DArray with a Texture base class!
+		* Create a ShaderManager.cs and Material.cs files to reduce duplication
+			1. Mesh.cs will have an id reference to the shader, and an object reference to the Material
+			2. Material.cs will have streamlined shader attribute get and set functions
+		* SET EVERYTHING TO NULL (And implement checks and give proper error feedback to avoid confusion)
+			1. Null shader reference check (Will probably be fixed with ShaderManager)
+			2. 
+
 	- Collision!
 	- Entity Base Class!
 	- Player Controller!
@@ -25,7 +45,6 @@
 
 
 	- Extra Features When Needed:
-		* Abstract shader class to a material to allow for easily adding differently textures objects with same shader object
 		* Add FindObjectOfType<>() + FindObject**s**OfType<>() to ObjectBehaivor class
 		* [Transform.cs] [Mesh.cs] [WindowManager.cs] Add support for static objects and caching their mesh with transforms applied + General Matrix caching
 
@@ -53,6 +72,14 @@ FINNISHED:
 			.. etc...
 		* Interface with Texture Atlas Manager to fetch UVs
 
+	- WorldData Manager
+		* Create indexed chunks and allow for block ids to be placed at any position
+		* CompileChunkMesh() => Generate mesh with proper textures to be sent to the gpu (Maybe make the calling of this method automatic, and scrap the cache once a block has changed)
+			and now hopfully I will be able to use the BlockData to retrive the uv of the texture stuff!
+			and then I'll have to do face culling!
+		* SetBlock() and Fill() functions
+		* Array Textures !!!!
+		* Maybe even add some kind of grid based raycaster from the camera position to light up the current block being looked at!
 
 OLD:
 
