@@ -8,7 +8,7 @@ Known Issues:
 TODO:
 	- Simple block raycast selection outline (Look at minecraft for "inspiration!")
 	- Keyboard Input System!
-
+		
 	- GameData Manager
 		* Load data from Minecraft 1.8 (Eventually support latest version)
 			1. Textures
