@@ -1,9 +1,12 @@
 ﻿using BoboEngine;
 using BoboEngine.Shaders;
+using ConsoleCommand;
 using InputDevices;
 
 public class Move3DInput : ObjectBehavior
 {
+    public static Move3DInput Instance { get; private set; }
+
     public float speed = 10f;
     public float rotationSpeed = 75f;
 
@@ -15,6 +18,7 @@ public class Move3DInput : ObjectBehavior
 
     public override void Start()
     {
+        Instance = this;
         _3DMouse.StartReadingInput();
 
         _3DMouse.input.onRightInput += RightPressed;
@@ -73,20 +77,32 @@ public class Move3DInput : ObjectBehavior
     {
         if (down && lastHit)
         {
-            Int3 blockToChange = lastHit.blockPosition;
+            Int3 blockToChange = (Int3)(lastHit.blockPosition + lastHit.blockFace.GetNormal());
 
-            WorldDataManager.SetBlock("minecraft:air", lastHit.blockPosition);
+            WorldDataManager.SetBlock(blockSelected, blockToChange);
         }
     }
     private void LeftPressed(bool down) 
     {
         if (down && lastHit)
         {
-            Program.Log(lastHit.blockFace);
+            Int3 blockToChange = lastHit.blockPosition;
 
-            Int3 blockToChange = (Int3)(lastHit.blockPosition + lastHit.blockFace.GetNormal());
-
-            WorldDataManager.SetBlock(blockSelected, blockToChange);
+            WorldDataManager.SetBlock("minecraft:air", lastHit.blockPosition);
         }
+    }
+
+    [Command("Block", "['blockID'] Sets the block to place")]
+    public static void ChangeBlock(string type)
+    {
+        Instance.blockSelected = type;
+        Program.Log($"Selected: '{type}'");
+    }
+
+    [Command("Pick", "Sets the block to place to whatever you're looking at!")]
+    public static void PickBlock()
+    {
+        Instance.blockSelected = Instance.lastHit.blockHit.block_id;
+        Program.Log($"Selected: '{Instance.blockSelected}'");
     }
 }

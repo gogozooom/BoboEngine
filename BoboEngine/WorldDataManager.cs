@@ -335,8 +335,8 @@ public static class WorldDataManager
         chunk.SetBlockAtLocalPosition(chunk.WorldPositionToLocal(position), new(block_id));
     }
 
-    [Command("SetBlock", "['block_id', #x, #y, #z]")]
-    public static void SetBlock(string block_id, int x, int y, int z)
+    [Command("SetBlock", "[#x, #y, #z, 'block_id']")]
+    public static void SetBlock(int x, int y, int z, string block_id)
     {
         SetBlock(block_id, new(x, y, z));
 
