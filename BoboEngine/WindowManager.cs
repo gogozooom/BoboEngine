@@ -111,11 +111,10 @@ namespace BoboEngine
 
                 Matrix4x4 cameraMatrix = Camera.main.GetProjectionMatrix();
 
-
-                //cameraMatrix = Matrix4x4.Identity;
-
                 foreach (var obj in SceneManager.currentScene.objects)
                 {
+                    if (!obj.enabled) continue;
+
                     Mesh targetMesh = obj.GetComponent<Mesh>();
 
                     if (!targetMesh) continue;
@@ -125,15 +124,30 @@ namespace BoboEngine
                     targetMesh.shader.SetMatrix4x4("projection", cameraMatrix);
                     targetMesh.shader.SetMatrix4x4("model", targetMesh.transform.Matrix);
 
-                    targetMesh.shader.texture.BindTexture();
+                    targetMesh.shader.texture?.BindTexture();
 
                     targetMesh.BindVAO();
 
-                    glDrawArrays(GL_TRIANGLES, 0, (int)targetMesh.vertexBufferSize);
+                    int RENDER_MODE = GL_TRIANGLES;
+
+                    switch (targetMesh.shader.renderMode)
+                    {
+                        case RenderMode.lines:
+                            RENDER_MODE = GL_LINES;
+                            break;
+                        case RenderMode.lineStrip:
+                            RENDER_MODE = GL_LINE_STRIP;
+                            break;
+                        case RenderMode.points:
+                            RENDER_MODE |= GL_POINTS;
+                            break;
+                    }
+
+                    glDrawArrays(RENDER_MODE, 0, (int)targetMesh.vertexBufferSize);
 
                     targetMesh.UnBindVAO();
 
-                    targetMesh.shader.texture.UnbindTexture();
+                    targetMesh.shader.texture?.UnbindTexture();
 
                     targetMesh.shader.Unbind();
                 }

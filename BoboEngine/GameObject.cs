@@ -1,6 +1,7 @@
 ﻿namespace BoboEngine;
 public class GameObject
 {
+    public bool enabled = true;
     public string name;
     public Transform transform;
     public Scene connectedScene;
@@ -19,6 +20,7 @@ public class GameObject
         }
 
         this.name = name;
+        enabled = true;
 
         transform = new();
         components.Add(transform);

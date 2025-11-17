@@ -8,6 +8,7 @@ public class Move3DInput : ObjectBehavior
     public float rotationSpeed = 75f;
 
     public GameObject obj;
+    public GameObject boxSelectionMesh;
 
     public BlockRaycastHit lastHit;
     public string blockSelected = "minecraft:dirt";
@@ -26,6 +27,15 @@ public class Move3DInput : ObjectBehavior
 
         mesh.LoadObjFile(Program.GetLocalModelPath("Cube"));
         mesh.shader = new Shader(new Texture(Program.GetLocalTexturePath("NULL")));
+
+
+        boxSelectionMesh = new GameObject("BoxSelection");
+        
+        var boxMesh = boxSelectionMesh.AddComponent<Mesh>();
+
+        boxMesh.LoadObjFile(Program.GetLocalModelPath("Cube"));
+        boxMesh.shader = new Shader(null, "Shader/boxSelectionShader.vert", "Shader/boxSelectionShader.frag");
+        boxMesh.shader.renderMode = RenderMode.lineStrip;
     }
 
     public override void Update()
@@ -44,8 +54,17 @@ public class Move3DInput : ObjectBehavior
 
         obj.transform.position = lastHit.hitPosition;
 
-        //Program.Log(result);
+        if (lastHit)
+        {
+            boxSelectionMesh.enabled = true;
+            boxSelectionMesh.transform.position = lastHit.blockPosition + new Float3(0.5f, 0.5f, 0.5f);
+        }
+        else
+        {
+            boxSelectionMesh.enabled = false;
+        }
 
+        //Program.Log(result);
 
         //Program.Log(transform.position);
     }

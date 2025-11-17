@@ -5,7 +5,9 @@ namespace BoboEngine.Shaders;
 
 public class Shader
 {
-    public Texture texture; // TODO: put in material class
+    // TODO: put in material class
+    public Texture texture;
+    public RenderMode renderMode;
 
     public string vertexFilepath;
     public string fragmentFilepath;
@@ -122,4 +124,12 @@ public class Shader
         m.M31, m.M32, m.M33, m.M34,
         m.M41, m.M42, m.M43, m.M44
     ];
+}
+
+public enum RenderMode
+{
+    normal,
+    lines,
+    lineStrip,
+    points,
 }

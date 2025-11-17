@@ -4,6 +4,9 @@
 
 Known Issues:
 	- Placing a block at the edge of a chunk does not update that chunk's culling
+		* Solution: After proper block updates are implemented, if mesh changes are detected, set 'meshChanged' to true regenerating the mesh next frame
+	- 3DConnexion input being handeled on a separate thread causing errors when accessing data used by the window thread
+		* Solution: Create beforeRender and afterRender event actions and use those to update the 3D mouse input *(And the same for the CMDConsoleBuffer making the ObjectBehavior script reduntant)*
 
 TODO:
 	- Simple block raycast selection outline (Look at minecraft for "inspiration!")
