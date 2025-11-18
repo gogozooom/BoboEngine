@@ -1,16 +1,19 @@
 ﻿using BoboEngine;
+using BoboEngine.Input;
 using BoboEngine.Shaders;
 using ConsoleCommand;
+using GLFW;
 using InputDevices;
+using Cursor = BoboEngine.Input.Cursor;
 
 public class Move3DInput : ObjectBehavior
 {
     public static Move3DInput Instance { get; private set; }
 
-    public float speed = 10f;
+    public float movementSpeed = 10f;
     public float rotationSpeed = 75f;
+    public float sensitivity = 3f;
 
-    public GameObject obj;
     public GameObject boxSelectionMesh;
 
     public BlockRaycastHit lastHit;
@@ -21,25 +24,21 @@ public class Move3DInput : ObjectBehavior
         Instance = this;
         _3DMouse.StartReadingInput();
 
-        _3DMouse.input.onRightInput += RightPressed;
-        _3DMouse.input.onLeftInput += LeftPressed;
+        _3DMouse.input.onRightInput += Mouse3DRightInput;
+        _3DMouse.input.onLeftInput += Mouse3DLeftInput;
 
-        obj = new GameObject("Debug");
-        obj.transform.scale = Float3.one / 5;
-
-        var mesh = obj.AddComponent<Mesh>();
-
-        mesh.LoadObjFile(Program.GetLocalModelPath("Cube"));
-        mesh.shader = new Shader(new Texture(Program.GetLocalTexturePath("NULL")));
-
+        Cursor.onMouseButtonChanged += OnMouseButtonPressed;
 
         boxSelectionMesh = new GameObject("BoxSelection");
         
         var boxMesh = boxSelectionMesh.AddComponent<Mesh>();
+        boxMesh.tmpRenderOrder = 1;
 
-        boxMesh.LoadObjFile(Program.GetLocalModelPath("Cube"));
+        boxMesh.LoadObjFile(Program.GetLocalModelPath("CubeOutline"));
         boxMesh.shader = new Shader(null, "Shader/boxSelectionShader.vert", "Shader/boxSelectionShader.frag");
-        boxMesh.shader.renderMode = RenderMode.lineStrip;
+        boxMesh.shader.cullBackFaces = false;
+
+        Cursor.mode = CursorMode.Disabled;
     }
 
     public override void Update()
@@ -47,16 +46,55 @@ public class Move3DInput : ObjectBehavior
         Float3 posInput = _3DMouse.input.position;
         Float3 rotInput = _3DMouse.input.rotation;
 
+        var w = InputSystem.GetKey(Keys.W);
+        var a = InputSystem.GetKey(Keys.A);
+        var s = InputSystem.GetKey(Keys.S);
+        var d = InputSystem.GetKey(Keys.D);
+        var space = InputSystem.GetKey(Keys.Space);
+        var shift = InputSystem.GetKey(Keys.LeftShift);
+
+        if(posInput == Float3.zero)
+        {
+            posInput = Float3.zero;
+
+            if (w)
+            {
+                posInput += Float3.zAxis;
+            }
+            if (s)
+            {
+                posInput -= Float3.zAxis;
+            }
+            if (a)
+            {
+                posInput += Float3.xAxis;
+            }
+            if (d)
+            {
+                posInput -= Float3.xAxis;
+            }
+            if (space)
+            {
+                posInput += Float3.yAxis;
+            }
+            if (shift)
+            {
+                posInput -= Float3.yAxis;
+            }
+
+            rotInput = new(Cursor.delta.y * sensitivity, Cursor.delta.x * sensitivity, 0);
+        }
+
+
+
         bool isUpsideDown = transform.upVector.y < 0;
         bool isZFliped = transform.rotation.z < -90 || transform.rotation.z > 90;
 
         transform.rotation += new Float3(rotInput.x * (isZFliped ? -1 : 1), rotInput.y * (isUpsideDown ? -1 : 1), 0) * rotationSpeed * Time.deltaTime; // -rotInput.z
 
-        transform.position += SceneManager.currentScene.camera.transform.TransformVector(posInput) * speed * Time.deltaTime;
+        transform.position += SceneManager.currentScene.camera.transform.TransformVector(posInput) * movementSpeed * Time.deltaTime;
 
-        lastHit = WorldDataManager.Raycast(transform.position, transform.forwardVector, 16);
-
-        obj.transform.position = lastHit.hitPosition;
+        lastHit = WorldDataManager.Raycast(transform.position, transform.forwardVector, 5);
 
         if (lastHit)
         {
@@ -73,24 +111,56 @@ public class Move3DInput : ObjectBehavior
         //Program.Log(transform.position);
     }
 
-    private void RightPressed(bool down)
+    private void OnMouseButtonPressed(MouseInputState state)
     {
-        if (down && lastHit)
+        if(state.state == GLFW.InputState.Press)
         {
-            Int3 blockToChange = (Int3)(lastHit.blockPosition + lastHit.blockFace.GetNormal());
-
-            WorldDataManager.SetBlock(blockSelected, blockToChange);
+            switch (state.button)
+            {
+                case MouseButton.Left:
+                    DestroyBlock();
+                    break;
+                case MouseButton.Right:
+                    PlaceBlock();
+                    break;
+                case MouseButton.Middle:
+                    PickBlock();
+                    break;
+            }
         }
     }
-    private void LeftPressed(bool down) 
+    private void Mouse3DRightInput(bool down)
     {
-        if (down && lastHit)
+        if (down)
         {
-            Int3 blockToChange = lastHit.blockPosition;
-
-            WorldDataManager.SetBlock("minecraft:air", lastHit.blockPosition);
+            PlaceBlock();
         }
     }
+    private void Mouse3DLeftInput(bool down) 
+    {
+        if (down)
+        {
+            DestroyBlock();
+        }
+    }
+
+    private void PlaceBlock()
+    {
+        if (!lastHit) return;
+
+        Int3 blockToChange = (Int3)(lastHit.blockPosition + lastHit.blockFace.GetNormal());
+
+        WorldDataManager.SetBlock(blockSelected, blockToChange);
+    }
+    private void DestroyBlock()
+    {
+        if (!lastHit) return;
+
+        Int3 blockToChange = lastHit.blockPosition;
+
+        WorldDataManager.SetBlock("minecraft:air", lastHit.blockPosition);
+    }
+
 
     [Command("Block", "['blockID'] Sets the block to place")]
     public static void ChangeBlock(string type)

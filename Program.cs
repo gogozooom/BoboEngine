@@ -1,4 +1,5 @@
 ﻿using BoboEngine;
+using BoboEngine.Input;
 using BoboEngine.Shaders;
 using ConsoleCommand;
 using System.Diagnostics;
@@ -64,11 +65,6 @@ internal static class Program
 
     public static void StartProgram()
     {
-        TextureAtlasManager.GenerateAtlas();
-        SceneManager.LoadScene();
-        BlockTypeManager.GenerateBlockData();
-        WorldDataManager.GenerateTestChunk();
-
         WindowManager.InitializeRenderLoop(800, 600);
     }
 

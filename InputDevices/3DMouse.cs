@@ -194,6 +194,7 @@ public class _3DInput
     public Float3 rotation { get; private set; }
     public bool leftPressed { get; private set; }
     public bool rightPressed { get; private set; }
+
     public Action<bool> onLeftInput;
     public Action<bool> onRightInput;
 

@@ -7,24 +7,10 @@ Known Issues:
 		* Solution: After proper block updates are implemented, if mesh changes are detected, set 'meshChanged' to true regenerating the mesh next frame
 	- 3DConnexion input being handeled on a separate thread causing errors when accessing data used by the window thread
 		* Solution: Create beforeRender and afterRender event actions and use those to update the 3D mouse input *(And the same for the CMDConsoleBuffer making the ObjectBehavior script reduntant)*
+	- Selection Outline clipping issues near corners and back of block
+		* Solution: Check for what the clear flags do in the origonal minecraft, presumably the depth gets set to a spesific value allowing only certain parts of the world to be culled
 
 TODO:
-	- Simple block raycast selection outline (Look at minecraft for "inspiration!")
-	- Keyboard Input System!
-		
-	- GameData Manager
-		* Load data from Minecraft 1.8 (Eventually support latest version)
-			1. Textures
-			2. Block Models
-			3. Tags
-			4. Recipies
-			5. Item Drops
-			6. ?? Shaders ??
-		* Implement data!
-	- Tick Based System!
-	- Do some research on UVs and Arrays for glsl vertex shaders possibly enabling seamless animated blocks
-	- Maybe frag shader too? To help with artifacts far away
-
 	- REFACTOR!
 		* Move cs file locations to better match their purpose
 		* Add proper namespaces and distinctions betweem BoboEngine and Minecraft
@@ -38,6 +24,20 @@ TODO:
 		* SET EVERYTHING TO NULL (And implement checks and give proper error feedback to avoid confusion)
 			1. Null shader reference check (Will probably be fixed with ShaderManager)
 			2. 
+
+	- GameData Manager
+		* Load data from Minecraft 1.8 (Eventually support latest version)
+			1. Textures
+			2. Block Models
+			3. Tags
+			4. Recipies
+			5. Item Drops
+			6. ?? Shaders ??
+		* Implement data!
+	- Tick Based System!
+	- Do some research on UVs and Arrays for glsl vertex shaders possibly enabling seamless animated blocks
+	- Maybe frag shader too? To help with artifacts far away
+
 
 	- Collision!
 	- Entity Base Class!
@@ -83,7 +83,10 @@ FINNISHED:
 		* SetBlock() and Fill() functions
 		* Array Textures !!!!
 		* Maybe even add some kind of grid based raycaster from the camera position to light up the current block being looked at!
-
+		
+	- Simple block raycast selection outline (Look at minecraft for "inspiration!")
+	
+	- Input System!
 OLD:
 
 	- Create scene skyboxes

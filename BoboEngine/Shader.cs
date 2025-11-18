@@ -7,7 +7,7 @@ public class Shader
 {
     // TODO: put in material class
     public Texture texture;
-    public RenderMode renderMode;
+    public bool cullBackFaces = true;
 
     public string vertexFilepath;
     public string fragmentFilepath;
@@ -21,6 +21,7 @@ public class Shader
     {
         _vertexCode = vertexCode;
         _fragmentCode = fragmentCode;
+        cullBackFaces = true;
     }
     public Shader(Texture texture = null, string _vertexFilepath = "Shader/modelShader.vert", string _fragmentFilepath = "Shader/modelShader.frag")
     {
@@ -44,6 +45,7 @@ public class Shader
         }
 
         this.texture = texture;
+        cullBackFaces = true;
     }
 
     public void CreateShader()
@@ -110,11 +112,18 @@ public class Shader
         glDeleteShader(shaderRef);
     }
 
-    public void SetMatrix4x4(string uniformName, Matrix4x4 mat)
+    public void SetMatrix4x4(string uniformName, Matrix4x4 input)
     {
         int location = glGetUniformLocation(shaderRef, uniformName);
 
-        glUniformMatrix4fv(location, 1, false, MatrixToData(mat));
+        glUniformMatrix4fv(location, 1, false, MatrixToData(input));
+    }
+
+    public void SetVec2(string uniformName, Float2 input)
+    {
+        int location = glGetUniformLocation(shaderRef, uniformName);
+
+        glUniform2f(location, input.x, input.y);
     }
 
     public float[] MatrixToData(Matrix4x4 m) =>
@@ -124,12 +133,4 @@ public class Shader
         m.M31, m.M32, m.M33, m.M34,
         m.M41, m.M42, m.M43, m.M44
     ];
-}
-
-public enum RenderMode
-{
-    normal,
-    lines,
-    lineStrip,
-    points,
 }

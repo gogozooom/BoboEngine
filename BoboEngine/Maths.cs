@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
 
 namespace BoboEngine;
 public static class Maths
@@ -243,6 +244,7 @@ public struct Int2(int x = 0, int y = 0)
     public int y = y;
 
     public static Int2 operator +(Int2 a, Int2 b) => new(a.x + b.x, a.y + b.y); // Adding
+    public static Int2 operator -(Int2 a, Int2 b) => new(a.x - b.x, a.y - b.y); // Subtracting
 
     public override string ToString() => $"({x},{y})";
     public static explicit operator Int2(int[] n)
@@ -313,9 +315,12 @@ public struct Float3(float x = 0, float y = 0, float z = 0)
     public static Float3 operator /(Float3 v, float f) => new(v.x / f, v.y / f, v.z / f); // Vector Length Division
     public static Float3 operator /(float f, Float3 v) => new(f / v.x, f / v.y, f / v.z); // Vector Division
     public static Float3 operator -(Float3 a) => new(-a.x, -a.y, -a.z); // Negative Vector
-    
+    public static bool operator ==(Float3 a, Float3 b) => a.x == b.x && a.y == b.y && a.z == b.z;
+    public static bool operator !=(Float3 a, Float3 b) => a.x != b.x || a.y != b.y || a.z != b.z;
+
     public override string ToString() => $"({x.ToString()},{y.ToString()},{z.ToString()})";
     public static Float3 Parse(string s) => (Float3)s.Split(',').Select(float.Parse).ToArray();
+
 
     public Int3 RoundToInt3()
     {

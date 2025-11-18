@@ -1863,6 +1863,11 @@ namespace GLFW
             throw new Exception(Util.PtrToStringUTF8(message));
         }
 
+        internal static void SetCursor(Window window, object cursor_callback)
+        {
+            throw new NotImplementedException();
+        }
+
         #endregion
     }
 }

@@ -1,9 +1,10 @@
-﻿using BoboEngine.Shaders;
+﻿using BoboEngine.Input;
 using ConsoleCommand;
 using GLFW;
 using System.Drawing;
 using System.Numerics;
 using static OpenGL.GL;
+using Cursor = BoboEngine.Input.Cursor;
 
 namespace BoboEngine
 {
@@ -16,6 +17,9 @@ namespace BoboEngine
         public static float WindowAspectRatio => WindowSize.x / WindowSize.y;
         public static Vector4 ClearColor { get; private set; }
 
+        public static Action beforeRender;
+        public static Action afterRender;
+
         /// <summary>
         /// Opens a window and starts rendering the currently loaded scene
         /// Returns once window is closed
@@ -24,9 +28,18 @@ namespace BoboEngine
         {
             CreateWindow(windowWidth, windowHeight, Program.TITLE);
 
+            // After window creation to prevent errors
+            TextureAtlasManager.GenerateAtlas();
+            SceneManager.LoadScene();
+            BlockTypeManager.GenerateBlockData();
+            WorldDataManager.GenerateTestChunk();
+
             SetClearColor(new Vector4(0.2f,0.2f,0.4f, 1f));
 
             float timeLastFrame = Time.time;
+
+
+            /* 3D point grid
 
             // Define Grid
 
@@ -93,6 +106,8 @@ namespace BoboEngine
             }
             """);
 
+            */
+
             // Start Render
             while (!Glfw.WindowShouldClose(Window))
             {
@@ -105,45 +120,44 @@ namespace BoboEngine
 
                 SceneManager.currentScene.Update();
 
+                beforeRender?.Invoke();
+
                 // render
 
                 ClearBuffer();
 
                 Matrix4x4 cameraMatrix = Camera.main.GetProjectionMatrix();
 
+                List<Mesh> targetMeshes = new();
+
                 foreach (var obj in SceneManager.currentScene.objects)
                 {
                     if (!obj.enabled) continue;
 
-                    Mesh targetMesh = obj.GetComponent<Mesh>();
+                    var mesh = obj.GetComponent<Mesh>();
 
-                    if (!targetMesh) continue;
-                    if (targetMesh.IsEmpty()) continue;
+                    if (!mesh) continue;
+                    if (mesh.IsEmpty()) continue;
 
+                    if (mesh) targetMeshes.Add(mesh);
+                }
+
+                targetMeshes.Sort();
+
+                foreach (Mesh targetMesh in targetMeshes)
+                {
                     targetMesh.shader.Bind();
                     targetMesh.shader.SetMatrix4x4("projection", cameraMatrix);
                     targetMesh.shader.SetMatrix4x4("model", targetMesh.transform.Matrix);
+                    targetMesh.shader.SetVec2("ScreenSize", WindowSize);
 
                     targetMesh.shader.texture?.BindTexture();
 
                     targetMesh.BindVAO();
 
-                    int RENDER_MODE = GL_TRIANGLES;
+                    if (targetMesh.shader.cullBackFaces) glEnable(GL_CULL_FACE); else glDisable(GL_CULL_FACE);
 
-                    switch (targetMesh.shader.renderMode)
-                    {
-                        case RenderMode.lines:
-                            RENDER_MODE = GL_LINES;
-                            break;
-                        case RenderMode.lineStrip:
-                            RENDER_MODE = GL_LINE_STRIP;
-                            break;
-                        case RenderMode.points:
-                            RENDER_MODE |= GL_POINTS;
-                            break;
-                    }
-
-                    glDrawArrays(RENDER_MODE, 0, (int)targetMesh.vertexBufferSize);
+                    glDrawArrays(GL_TRIANGLES, 0, (int)targetMesh.vertexBufferSize);
 
                     targetMesh.UnBindVAO();
 
@@ -152,7 +166,7 @@ namespace BoboEngine
                     targetMesh.shader.Unbind();
                 }
 
-                // Draw Grid
+                /*// Draw Grid
 
                 gridShader.Bind();
                 gridShader.SetMatrix4x4("projection", cameraMatrix);
@@ -162,14 +176,20 @@ namespace BoboEngine
 
                 glBindVertexArray(0);
                 gridShader.Unbind();
+                */
 
                 Glfw.SwapBuffers(Window);
+
+                afterRender?.Invoke();
+                Cursor.Reset();
             }
 
 
             CloseWindow();
             SceneManager.UnloadScene();
         }
+
+
 
         /// <summary>
         /// Creates a window to be used by RenderLoop() 
@@ -221,6 +241,9 @@ namespace BoboEngine
             glEnable(GL_LEQUAL);
 
             Glfw.SetFramebufferSizeCallback(Window, framebuffer_size_callback);
+            Glfw.SetKeyCallback(Window, InputSystem.key_callback);
+            Glfw.SetCursorPositionCallback(Window, Cursor.cursor_position_callback);
+            Glfw.SetMouseButtonCallback(Window, Cursor.mouse_button_callback);
 
             // Errors
             Glfw.SetErrorCallback((code, message) =>

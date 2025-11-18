@@ -2,7 +2,7 @@
 using static OpenGL.GL;
 
 namespace BoboEngine;
-public class Mesh : ObjectBehavior
+public class Mesh : ObjectBehavior, IComparable<Mesh>
 {
     /// <summary>
     /// Vertex Array Object Reference
@@ -13,6 +13,8 @@ public class Mesh : ObjectBehavior
     /// </summary>
     private uint vbo;
 
+    public int tmpRenderOrder = 0;
+
     public uint vertexBufferSize { get; private set; }
 
     public Float3[] vertices;
@@ -22,11 +24,6 @@ public class Mesh : ObjectBehavior
     public Float2[] textureCoords;
 
     public Shader shader;
-
-    public Mesh()
-    {
-
-    }
 
     public override void OnDestroy()
     {
@@ -150,15 +147,19 @@ public class Mesh : ObjectBehavior
             for (int vertexI = 0; vertexI < 3; vertexI++)
             {
                 Float3 position = vertices[face.vertex_indexs[vertexI]];
-                Float2 uv = textureCoords[face.texture_indexs[vertexI]];
+                Float3 normal = normals[face.normal_indexs[vertexI]];
+                Float2 uv = new(0, 0);
+
+                if (textureCoords.Length > 0)
+                    uv = textureCoords[face.texture_indexs[vertexI]];
 
                 vertexData[faceIndex + 0] = position.x;
                 vertexData[faceIndex + 1] = position.y;
                 vertexData[faceIndex + 2] = position.z;
 
-                vertexData[faceIndex + 3] = face.faceColor.r;
-                vertexData[faceIndex + 4] = face.faceColor.g;
-                vertexData[faceIndex + 5] = face.faceColor.b;
+                vertexData[faceIndex + 3] = normal.x;
+                vertexData[faceIndex + 4] = normal.y;
+                vertexData[faceIndex + 5] = normal.z;
 
                 vertexData[faceIndex + 6] = uv.x;
                 vertexData[faceIndex + 7] = uv.y;
@@ -215,7 +216,7 @@ public class Mesh : ObjectBehavior
         glVertexAttribPointer(0, 3, GL_FLOAT, false, 9 * sizeof(float), (void*)0);
         glEnableVertexAttribArray(0);
 
-        // Color (r,g,b)
+        // Normals (x,y,z)
         glVertexAttribPointer(1, 3, GL_FLOAT, false, 9 * sizeof(float), (void*)(3 * sizeof(float)));
         glEnableVertexAttribArray(1);
 
@@ -275,6 +276,13 @@ public class Mesh : ObjectBehavior
         // Face colors not nessesary 
 
         return false;
+    }
+
+    public int CompareTo(Mesh other)
+    {
+        if (!other) return 1;
+
+        return tmpRenderOrder.CompareTo(other.tmpRenderOrder);
     }
 }
 
