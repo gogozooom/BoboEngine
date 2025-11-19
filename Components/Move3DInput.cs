@@ -5,6 +5,7 @@ using ConsoleCommand;
 using GLFW;
 using InputDevices;
 using Cursor = BoboEngine.Input.Cursor;
+using Minecraft;
 
 public class Move3DInput : ObjectBehavior
 {
@@ -32,11 +33,13 @@ public class Move3DInput : ObjectBehavior
         boxSelectionMesh = new GameObject("BoxSelection");
         
         var boxMesh = boxSelectionMesh.AddComponent<Mesh>();
-        boxMesh.tmpRenderOrder = 1;
-
         boxMesh.LoadObjFile(Program.GetLocalModelPath("CubeOutline"));
-        boxMesh.shader = new Shader(null, "Shader/boxSelectionShader.vert", "Shader/boxSelectionShader.frag");
-        boxMesh.shader.cullBackFaces = false;
+
+        string shaderID = "boxSelect";
+
+        ShaderManager.EnsureShader(shaderID, "Shader/boxSelectionShader.vert", "Shader/boxSelectionShader.frag");
+
+        boxMesh.material = new Material(shaderID, cullBackFaces: false, renderOrder: 1);
 
         Cursor.mode = CursorMode.Disabled;
     }
@@ -160,19 +163,18 @@ public class Move3DInput : ObjectBehavior
 
         WorldDataManager.SetBlock("minecraft:air", lastHit.blockPosition);
     }
+    private static void PickBlock()
+    {
+        if (!Instance.lastHit) return;
 
+        Instance.blockSelected = Instance.lastHit.blockHit.block_id;
+        Program.Log($"Selected: '{Instance.blockSelected}'");
+    }
 
     [Command("Block", "['blockID'] Sets the block to place")]
     public static void ChangeBlock(string type)
     {
         Instance.blockSelected = type;
         Program.Log($"Selected: '{type}'");
-    }
-
-    [Command("Pick", "Sets the block to place to whatever you're looking at!")]
-    public static void PickBlock()
-    {
-        Instance.blockSelected = Instance.lastHit.blockHit.block_id;
-        Program.Log($"Selected: '{Instance.blockSelected}'");
     }
 }

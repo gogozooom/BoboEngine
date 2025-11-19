@@ -1,14 +1,16 @@
 ﻿using BoboEngine.Input;
+using Minecraft;
 using ConsoleCommand;
 using GLFW;
 using System.Drawing;
 using System.Numerics;
 using static OpenGL.GL;
 using Cursor = BoboEngine.Input.Cursor;
+using BoboEngine.Shaders;
 
 namespace BoboEngine
 {
-    internal static class WindowManager
+    public static class WindowManager
     {
         public static bool Initialized => Window != Window.None;
 
@@ -29,7 +31,7 @@ namespace BoboEngine
             CreateWindow(windowWidth, windowHeight, Program.TITLE);
 
             // After window creation to prevent errors
-            TextureAtlasManager.GenerateAtlas();
+            TextureManager.GenerateAtlas();
             SceneManager.LoadScene();
             BlockTypeManager.GenerateBlockData();
             WorldDataManager.GenerateTestChunk();
@@ -139,6 +141,9 @@ namespace BoboEngine
                     if (!mesh) continue;
                     if (mesh.IsEmpty()) continue;
 
+                    if (mesh.material.shader == null) continue;
+                    if (!mesh.material.shader.isLoaded) continue;
+
                     if (mesh) targetMeshes.Add(mesh);
                 }
 
@@ -146,24 +151,26 @@ namespace BoboEngine
 
                 foreach (Mesh targetMesh in targetMeshes)
                 {
-                    targetMesh.shader.Bind();
-                    targetMesh.shader.SetMatrix4x4("projection", cameraMatrix);
-                    targetMesh.shader.SetMatrix4x4("model", targetMesh.transform.Matrix);
-                    targetMesh.shader.SetVec2("ScreenSize", WindowSize);
+                    Shader targetShader = targetMesh.material.shader;
 
-                    targetMesh.shader.texture?.BindTexture();
+                    targetShader.Bind();
+                    targetShader.SetMatrix4x4("projection", cameraMatrix);
+                    targetShader.SetMatrix4x4("model", targetMesh.transform.Matrix);
+                    targetShader.SetVec2("ScreenSize", WindowSize);
+
+                    targetMesh.material.texture?.BindTexture();
 
                     targetMesh.BindVAO();
 
-                    if (targetMesh.shader.cullBackFaces) glEnable(GL_CULL_FACE); else glDisable(GL_CULL_FACE);
+                    if (targetMesh.material.cullBackFaces) glEnable(GL_CULL_FACE); else glDisable(GL_CULL_FACE);
 
                     glDrawArrays(GL_TRIANGLES, 0, (int)targetMesh.vertexBufferSize);
 
                     targetMesh.UnBindVAO();
 
-                    targetMesh.shader.texture?.UnbindTexture();
+                    targetMesh.material.texture?.UnbindTexture();
 
-                    targetMesh.shader.Unbind();
+                    targetShader.Unbind();
                 }
 
                 /*// Draw Grid

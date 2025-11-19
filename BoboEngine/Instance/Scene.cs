@@ -14,9 +14,6 @@
             GameObject cameraObject = new("Camera");
             camera = cameraObject.AddComponent<Camera>();
 
-            GameObject cmdConsoleBuffer = new("CmdConsoleBuffer");
-            cmdConsoleBuffer.AddComponent<CmdConsoleBuffer>();
-
             foreach (var obj in objects)
             {
                 AddObject(obj);

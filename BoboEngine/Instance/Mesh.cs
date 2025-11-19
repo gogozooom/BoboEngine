@@ -1,5 +1,4 @@
-﻿using BoboEngine.Shaders;
-using static OpenGL.GL;
+﻿using static OpenGL.GL;
 
 namespace BoboEngine;
 public class Mesh : ObjectBehavior, IComparable<Mesh>
@@ -13,8 +12,6 @@ public class Mesh : ObjectBehavior, IComparable<Mesh>
     /// </summary>
     private uint vbo;
 
-    public int tmpRenderOrder = 0;
-
     public uint vertexBufferSize { get; private set; }
 
     public Float3[] vertices;
@@ -23,15 +20,11 @@ public class Mesh : ObjectBehavior, IComparable<Mesh>
     public Float3[] faceColors;
     public Float2[] textureCoords;
 
-    public Shader shader;
+    public Material material;
 
-    public override void OnDestroy()
+    public Mesh()
     {
-        base.OnDestroy();
-
-        Program.Log($"'{this}' Destroy!");
-
-        DeleteMesh();
+        material = new();
     }
 
     public bool LoadObjFile(string filePath, int textureID = 0)
@@ -126,13 +119,13 @@ public class Mesh : ObjectBehavior, IComparable<Mesh>
             return;
         }
 
-        Program.Log($"Binding OpenGL on mesh '{gameObject}'");
-
         if (!WindowManager.Initialized)
         {
             Program.LogError("Cannot bind open gl without a window!");
             return;
         }
+
+        //Program.Log($"Binding OpenGL on mesh '{gameObject}'");
 
         // OpenGl Time
 
@@ -278,11 +271,20 @@ public class Mesh : ObjectBehavior, IComparable<Mesh>
         return false;
     }
 
+    public override void OnDestroy()
+    {
+        base.OnDestroy();
+
+        Program.Log($"'{this}' Destroy!");
+
+        DeleteMesh();
+    }
+
     public int CompareTo(Mesh other)
     {
         if (!other) return 1;
 
-        return tmpRenderOrder.CompareTo(other.tmpRenderOrder);
+        return material.renderOrder.CompareTo(other.material.renderOrder);
     }
 }
 

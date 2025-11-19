@@ -1,20 +1,21 @@
 ﻿using BoboEngine;
 using ConsoleCommand;
 
-internal class CmdConsoleBuffer : ObjectBehavior
+internal static class CmdConsoleBuffer
 {
-    private List<string> bufferedCommands = new List<string>();
+    private static readonly List<string> bufferedCommands = new();
 
-    public override void Start()
+    public static void Initialize()
     {
+        WindowManager.beforeRender += BeforeRender;
         Program.ConsoleInputted += ConsoleInput;
     }
-    private void ConsoleInput(string input)
+    private static void ConsoleInput(string input)
     {
         bufferedCommands.Add(input);
     }
 
-    public override void Update()
+    private static void BeforeRender()
     {
         foreach (var command in bufferedCommands)
         {

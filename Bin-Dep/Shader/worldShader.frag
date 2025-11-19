@@ -2,9 +2,9 @@
 layout(location = 0) out vec4 f_color;
 
 in vec3 v_Normal;
-in vec2 v_TexCoord;
+in vec3 v_TexCoord;
 
-uniform sampler2D mainTexture;
+uniform sampler2DArray mainTexture;
 
 void main()
 {

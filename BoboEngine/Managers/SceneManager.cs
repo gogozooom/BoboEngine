@@ -26,7 +26,16 @@ public static class SceneManager
         scene.camera.gameObject.AddComponent<Move3DInput>();
         scene.camera.transform.SetRotation(new Float3(0, 0, 0));
         scene.camera.transform.position = new Float3(0, 1.1f, -5.5f);
-        
+
+        var newObject = new GameObject();
+        var mesh = newObject.AddComponent<Mesh>();
+        mesh.LoadObjFile(Program.GetLocalModelPath("Cube"));
+
+        ShaderManager.CreateShader("cube", "Shader", "Shader");
+
+        var material = new Material("cube", null);
+        mesh.material = material;
+
         /* Block Look Direction Testing
         var obj = new GameObject("Debug");
         obj.transform.scale = -Float3.one;
@@ -36,51 +45,6 @@ public static class SceneManager
 
         mesh.LoadObjFile(Program.GetLocalModelPath("Cube"));
         mesh.shader = new Shader(new Texture(Program.GetLocalTexturePath("NULL")));
-        */
-
-        /* Texture Array Testing
-        // Test 1
-        var test1 = new GameObject("TextureArrayTest1");
-        test1.transform.position = new(-2, 3, 0);
-
-        var test1Mesh = test1.AddComponent<Mesh>();
-        test1Mesh.LoadObjFile(Program.GetLocalModelPath("Cube"));
-
-        var image = new Float3[,]
-        {
-            { new(1, 0, 0), new(0, 0, 0), new(0, 0, 0), new(0.25f, 0.25f, 0.25f) },
-            { new(0, 0, 0), new(0, 1, 0), new(0, 0, 0), new(0.5f, 0.5f, 0.5f) },
-            { new(0, 0, 0), new(0, 0, 0), new(0, 0, 1), new(0.75f, 0.75f, 0.75f) },
-            { new(0.25f, 0.25f, 0.25f), new(0.5f, 0.5f, 0.5f), new(0.75f, 0.75f, 0.75f), new(1, 1, 1) }
-        };
-
-        var texture = new Texture(image, "test1");
-
-        var shader = new Shader(texture);
-
-        test1Mesh.shader = shader;
-
-
-        // Test 2
-        var test2 = new GameObject("TextureArrayTest2");
-        test2.transform.position = new(2, 3, 0);
-
-        var test2Mesh = test2.AddComponent<Mesh>();
-        test2Mesh.LoadObjFile(Program.GetLocalModelPath("Cube"), 1);
-
-        var image2 = new Float3[,]
-{
-            { new(1, 0, 1), new(0, 0, 1), new(0, 0, 1), new(0.25f, 0.25f, 0.25f) },
-            { new(0, 0, 1), new(0, 1, 1), new(0, 0, 1), new(0.5f, 0.5f, 0.5f) },
-            { new(0, 0, 1), new(0, 0, 1), new(0, 0, 1), new(0.75f, 0.75f, 0.75f) },
-            { new(0.25f, 0.25f, 0.25f), new(0.5f, 0.5f, 0.5f), new(0.75f, 0.75f, 0.75f), new(1, 1, 1) }
-        };
-
-        var texture2 = new Texture([image, image2], "test2");
-
-        var shader2 = new Shader(texture2);
-
-        test2Mesh.shader = shader2;
         */
     }
     public static void UnloadScene()
@@ -92,7 +56,7 @@ public static class SceneManager
             currentScene = null;
         }
     }
-    public static GameObject CreateObjectModel(string objectName, string modelName, Shader shader, Float3 position, Float3 scale, Float3 rotation)
+    public static GameObject CreateObjectModel(string objectName, string modelName, Material material, Float3 position, Float3 scale, Float3 rotation)
     {
         GameObject @object = new(objectName);
         @object.transform.position = position;
@@ -100,30 +64,30 @@ public static class SceneManager
         @object.transform.rotation = rotation;
 
         Mesh mesh = @object.AddComponent<Mesh>();
-        mesh.shader = shader;
+        mesh.material = material;
 
         if (!mesh.LoadObjFile(Program.GetLocalModelPath(modelName))) return null; // If model fails to load
 
         return @object;
     }
         
-    public static GameObject CreateObjectModel(string objectName, string modelName, Shader shader) => CreateObjectModel(objectName, modelName, shader, Float3.zero, Float3.one, Float3.zero);
-    public static GameObject CreateObjectModel(string objectName, string modelName, Shader shader, Float3 position) => CreateObjectModel(objectName, modelName, shader, position, Float3.one, Float3.zero);
-    public static GameObject CreateObjectModel(string objectName, string modelName, Shader shader, Float3 position, Float3 scale) => CreateObjectModel(objectName, modelName, shader, position, scale, Float3.zero);
+    public static GameObject CreateObjectModel(string objectName, string modelName, Material material) => CreateObjectModel(objectName, modelName, material, Float3.zero, Float3.one, Float3.zero);
+    public static GameObject CreateObjectModel(string objectName, string modelName, Material material, Float3 position) => CreateObjectModel(objectName, modelName, material, position, Float3.one, Float3.zero);
+    public static GameObject CreateObjectModel(string objectName, string modelName, Material material, Float3 position, Float3 scale) => CreateObjectModel(objectName, modelName, material, position, scale, Float3.zero);
     public static GameObject CreateObjectModel(string objectName, string modelName, string textureName, Float3 position, Float3 scale, Float3 rotation)
     {
-        Shader shader;
+        Material material;
 
         if (!string.IsNullOrEmpty(textureName))
         {
-            var texture = new Texture(Program.GetLocalTexturePath(textureName));
+            var texture = new Texture2D(Program.GetLocalTexturePath(textureName));
 
-            shader = new Shader(texture);
+            material = new Material(texture: texture);
         }
         else
-            shader = new Shader();
+            material = new Material();
 
-        return CreateObjectModel(objectName, modelName, shader, position, scale, rotation);
+        return CreateObjectModel(objectName, modelName, material, position, scale, rotation);
     }
 
         
@@ -149,7 +113,7 @@ public static class SceneManager
     [Command("SpawnMesh", "['name', 'textureName', x, y, z] Creates a new mesh object at the specified position")]
     public static void SpawnObject(string modelName, string textureName, float x, float y, float z)
     {
-        currentScene.AddObject(CreateObjectModel(modelName, modelName, textureName, new(x, y, z), Float3.one, Float3.zero));
+        CreateObjectModel(modelName, modelName, textureName, new(x, y, z), Float3.one, Float3.zero);
     }
 
     [Command("RotateObject", "['name', x, y, z] Sets the selected model to the specified rotation")]

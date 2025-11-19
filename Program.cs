@@ -36,14 +36,7 @@ internal static class Program
 
                 if (input != null)
                 {
-                    if(SceneManager.currentScene == null)
-                    {
-                        ConsoleCmd.HandleConsoleInput(input);
-                    }
-                    else // !! FW Use better implementation down the line
-                    {
-                        ConsoleInputted?.Invoke(input);
-                    }
+                    ConsoleInputted?.Invoke(input);
                 }
             }
         });

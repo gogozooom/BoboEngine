@@ -5,9 +5,8 @@ namespace BoboEngine.Shaders;
 
 public class Shader
 {
-    // TODO: put in material class
-    public Texture texture;
-    public bool cullBackFaces = true;
+    public bool isLoaded => _vertexCode != null && _fragmentCode != null;
+    public bool isCompiled => shaderRef != 0;
 
     public string vertexFilepath;
     public string fragmentFilepath;
@@ -17,20 +16,22 @@ public class Shader
     private string _vertexCode;
     private string _fragmentCode;
 
-    public Shader(string vertexCode, string fragmentCode)
-    {
-        _vertexCode = vertexCode;
-        _fragmentCode = fragmentCode;
-        cullBackFaces = true;
-    }
     public Shader(Texture texture = null, string _vertexFilepath = "Shader/modelShader.vert", string _fragmentFilepath = "Shader/modelShader.frag")
     {
+        if (!File.Exists(_vertexFilepath))
+        {
+            Program.LogError($"File path for '{_vertexFilepath}' does not exist!");
+            return;
+        }
+        if (!File.Exists(_fragmentFilepath))
+        {
+            Program.LogError($"File path for '{_fragmentFilepath}' does not exist!");
+            return;
+        }
+
         vertexFilepath = _vertexFilepath;
         fragmentFilepath = _fragmentFilepath;
 
-        _vertexCode = "";
-        _fragmentCode = "";
-        
         try
         {
             _vertexCode = File.ReadAllText(vertexFilepath);
@@ -39,13 +40,10 @@ public class Shader
         }
         catch (Exception e)
         {
-            Console.WriteLine("Could not read shader files, program will exit\n\n{0}", e);
-            Environment.Exit(0);
+            Program.LogError("Could not load shaders!");
+            Program.LogError(e.Message);
             return;
         }
-
-        this.texture = texture;
-        cullBackFaces = true;
     }
 
     public void CreateShader()
@@ -53,6 +51,17 @@ public class Shader
         if (!WindowManager.Initialized)
         {
             Program.LogError("Cannot CreateShader without a window!");
+            return;
+        }
+
+        if(_vertexCode == null || _vertexCode == "")
+        {
+            Program.LogError($"'{this}' No vertex shader loaded!");
+            return;
+        }
+        if(_fragmentCode == null || _fragmentCode == "")
+        {
+            Program.LogError($"'{this}'No fragment shader loaded!");
             return;
         }
 
@@ -97,7 +106,7 @@ public class Shader
 
     public void Bind()
     {
-        if (shaderRef == 0) CreateShader();
+        if (!isCompiled) CreateShader();
 
         glUseProgram(shaderRef);
     }

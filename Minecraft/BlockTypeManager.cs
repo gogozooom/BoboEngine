@@ -1,4 +1,5 @@
-﻿namespace BoboEngine;
+﻿
+namespace Minecraft;
 public static class BlockTypeManager
 {
     public static Dictionary<string, BlockType> blockData { get; private set; } = new();

@@ -66,6 +66,8 @@ namespace ConsoleCommand
                 Type 'help' for options...
                 """);
 
+            CmdConsoleBuffer.Initialize();
+
             setupDone = true;
         }
         

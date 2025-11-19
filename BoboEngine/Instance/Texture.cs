@@ -1,89 +1,35 @@
-﻿//using StbImageSharp;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using static OpenGL.GL;
 
 namespace BoboEngine;
-public class Texture
+public abstract class Texture
 {
-    //public ImageResult imageR { get; private set; }
-    public string name { get; private set; }
-    public List<Float3[,]> images { get; private set; }
-    public bool isTextureArray => images.Count > 1;
+    public string name { get; internal set; }
+    public bool loaded { get; internal set; }
+    public int width { get; internal set; }
+    public int height { get; internal set; }
 
-    public bool loaded { get; private set; }
-
-    public int width { get; private set; }
-    public int height { get; private set; }
-
-
-    public Texture()
-    {
-        LoadNullTexture();
-    }
-
-    public Texture(string filePath)
-    {
-        images = new();
-        if (!LoadImageFile(filePath)) // Failed to load texture
-        {
-            LoadNullTexture();
-        }
-    }
-
-    public Texture(Float3[,] image, string name)
-    {
-        images = [image];
-        this.name = name;
-
-        loaded = true;
-
-        UpdateImageProperties();
-    }
-
-    public Texture(List<Float3[,]> images, string name)
-    {
-        this.images = images;
-        this.name = name;
-
-        loaded = true;
-
-        UpdateImageProperties();
-    }
-
-    void LoadNullTexture()
+    protected void LoadNullTexture()
     {
         LoadImageFile(Program.GetLocalTexturePath("NULL"));
     }
-    void UpdateImageProperties()
-    {
-        /*
-        width = imageR.Width;
-        height = imageR.Height;
-        wscale = width - 1;
-        hscale = height - 1;
-        */
-        if (images.Count == 0) return;
 
-        width = images[0].GetLength(0);
-        height = images[0].GetLength(1);
-    }
+    protected abstract void UpdateImageProperties();
 
-    readonly byte[] bmpHeader = [66, 77];
-    public bool LoadImageFile(string filePath)
+    protected readonly byte[] bmpHeader = [66, 77];
+    protected Float3[,] ReadImageFile(string filePath)
     {
         // -- Error Checks --
         if (string.IsNullOrEmpty(filePath))
         {
             Program.LogError($"Please specify a file to load!");
-            return false;
+            return null;
         }
         if (!File.Exists(filePath))
         {
             Program.LogError($"Could find model file '{filePath}'");
-            return false;
+            return null;
         }
-
-        images.Clear();
 
         /*
         using (var stream = File.OpenRead(filePath))
@@ -103,7 +49,7 @@ public class Texture
         if (!header.SequenceEqual(bmpHeader))
         {
             Program.LogError($"File is not in BMP format! '{filePath}'");
-            return false;
+            return null;
         }
 
         uint imageSize = BitConverter.ToUInt32(data[34..38]);
@@ -132,60 +78,40 @@ public class Texture
             }
         }
 
-
-        images.Add(image);
         //*/
 
-        loaded = true;
-        UpdateImageProperties();
-
-        return true;
+        return image;
     }
 
-    private uint textureRef;
-    public void BindOpenGL()
+    public abstract bool LoadImageFile(string filePath);
+
+    protected uint textureRef;
+    public abstract void BindOpenGL();
+
+    protected bool PreBindOpenGL()
     {
         if (!WindowManager.Initialized)
         {
             Program.LogError("Cannot bind open gl without a window!");
-            return;
+            return false;
         }
 
         if (!loaded)
         {
             Program.LogError("Cannot bind open gl without a loaded texture!");
-            return;
+            return false;
         }
 
-        // OpenGl Time
-
-        byte[] texData = new byte[width * height * 3 * images.Count];
-
-        int textureIndex = 0;
-        foreach (var image in images)
-        {
-            for (int y = 0; y < height; y++)
-            {
-                for (int x = 0; x < width; x++)
-                {
-                    var pixelData = image[x, y];
-
-                    var offset = (textureIndex * width * height * 3) + (y * width + x) * 3;
-
-                    texData[offset] = (byte)(pixelData.r * 255);
-                    texData[offset + 1] = (byte)(pixelData.g * 255);
-                    texData[offset + 2] = (byte)(pixelData.b * 255);
-                }
-            }
-            textureIndex++;
-        }
-
+        return true;
+    }
+    protected void PostBindOpenGL(byte[] texData)
+    {
         GCHandle gCHandle = GCHandle.Alloc(texData, GCHandleType.Pinned);
         IntPtr textureDataPointer = gCHandle.AddrOfPinnedObject();
 
         textureRef = glGenTexture();
 
-        glBindTexture(GL_TEXTURE_2D_ARRAY, textureRef);
+        glBindTexture(GL_TEXTURE_TYPE, textureRef);
 
         /* (Context - Minecraft):
             * GL_LINEAR:
@@ -208,15 +134,14 @@ public class Texture
                 X DITTO to GL_LINEAR_MIPMAP_NEAREST
         */
 
-        glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_TYPE, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_TYPE, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-        glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_TYPE, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_TYPE, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
         // Set to higher value depending on how big the texture atlas is
         //glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_LEVEL, 1); 
-
 
         try
         {
@@ -231,8 +156,20 @@ public class Texture
             }*/
 
             //glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, width, height, images.Count, GL_RGB, GL_UNSIGNED_BYTE, textureDataPointer);
-            glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB, width, height, images.Count, 0, GL_RGB, GL_UNSIGNED_BYTE, textureDataPointer);
-            glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
+            if (GL_TEXTURE_TYPE == GL_TEXTURE_2D)
+            {
+                glTexImage2D(GL_TEXTURE_TYPE, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, textureDataPointer);
+            }
+            else if(GL_TEXTURE_TYPE == GL_TEXTURE_2D_ARRAY)
+            {
+                glTexImage3D(GL_TEXTURE_TYPE, 0, GL_RGB, width, height, texData.Length / (width*height*3), 0, GL_RGB, GL_UNSIGNED_BYTE, textureDataPointer);
+            }
+            else
+            {
+                throw new NotImplementedException($"Type of '{GL_TEXTURE_TYPE}' is not implemented!");
+            }
+
+            glGenerateMipmap(GL_TEXTURE_TYPE);
         }
         catch (Exception e)
         {
@@ -248,15 +185,16 @@ public class Texture
         glUniform1i(glGetUniformLocation(textureRef, "mainTexture"), 0);
     }
 
+    protected int GL_TEXTURE_TYPE;
     public void BindTexture()
     {
         if (textureRef == 0) BindOpenGL();
 
-        glBindTexture(GL_TEXTURE_2D_ARRAY, textureRef);
+        glBindTexture(GL_TEXTURE_TYPE, textureRef);
     }
     public void UnbindTexture()
     {
-        glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
+        glBindTexture(GL_TEXTURE_TYPE, 0);
     }
     public void Delete()
     {

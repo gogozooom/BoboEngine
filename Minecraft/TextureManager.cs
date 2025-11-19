@@ -1,29 +1,31 @@
 ﻿using BoboEngine;
 
-public static class TextureAtlasManager
+
+namespace Minecraft;
+public static class TextureManager
 {
     private const int GridSize = 16; // Assumed to be 16x16 textures for now
-    public static Texture blockTextureAtlas { get; private set; }
+    public static Texture blockTextureArray { get; private set; }
     public static Dictionary<string, int> blockTextureIds { get; private set; } = new();
     public static void GenerateAtlas()
     {
         var blockTexturePath = Path.Combine(Program.GetLocalTexturePath(), "Blocks");
 
-        List<Texture> textures = new();
+        List<Texture2D> textures = new();
 
         foreach (var file in Directory.GetFiles(blockTexturePath))
         {
-            textures.Add(new Texture(file));
+            textures.Add(new Texture2D(file));
         }
 
-        var nullT = new Texture(Program.GetLocalTexturePath("NULL"));
+        var nullT = new Texture2D(Program.GetLocalTexturePath("NULL"));
 
         textures.Add(nullT); // Guarantee null texture!
 
-        blockTextureAtlas = GenerateAtlas(textures, nullT);
+        blockTextureArray = GenerateAtlas(textures, nullT);
     }
 
-    public static Texture GenerateAtlas(List<Texture> textures, Texture backgroundTexture)
+    public static Texture2DArray GenerateAtlas(List<Texture2D> textures, Texture2D backgroundTexture)
     {
         int indexWH = (int)MathF.Ceiling(MathF.Sqrt(textures.Count));
         int gridWH = indexWH * GridSize;
@@ -36,13 +38,13 @@ public static class TextureAtlasManager
         int i = 0;
         foreach (var texture in textures)
         {
-            output.Add(texture.images[0]);
+            output.Add(texture.image);
 
             blockTextureIds.Add(texture.name, i); // Change to block id
             i++;
         }
 
-        return new Texture(output, "atlas");
+        return new Texture2DArray(output, "atlas");
     }
 
     public static int GetTextureID(string textureName)
