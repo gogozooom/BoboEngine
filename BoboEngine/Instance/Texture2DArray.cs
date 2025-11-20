@@ -1,19 +1,22 @@
-﻿using System.Runtime.InteropServices;
+﻿using StbImageSharp;
 using static OpenGL.GL;
 
 namespace BoboEngine;
 public class Texture2DArray : Texture
 {
-    public List<Float3[,]> images { get; private set; } = new();
+    public ImageResult[] images;
 
-    public Texture2DArray()
+    public Texture2DArray(TextureSampleType sampleType = 0)
     {
         GL_TEXTURE_TYPE = GL_TEXTURE_2D_ARRAY;
+        this.sampleType = sampleType;
+
         LoadNullTexture();
     }
-    public Texture2DArray(Float3[,] image, string name)
+    public Texture2DArray(ImageResult image, string name, TextureSampleType sampleType = 0)
     {
         GL_TEXTURE_TYPE = GL_TEXTURE_2D_ARRAY;
+        this.sampleType = sampleType;
 
         images = [image];
         this.name = name;
@@ -21,10 +24,10 @@ public class Texture2DArray : Texture
         loaded = true;
         UpdateImageProperties();
     }
-
-    public Texture2DArray(List<Float3[,]> images, string name)
+    public Texture2DArray(ImageResult[] images, string name, TextureSampleType sampleType = 0)
     {
         GL_TEXTURE_TYPE = GL_TEXTURE_2D_ARRAY;
+        this.sampleType = sampleType;
 
         this.images = images;
         this.name = name;
@@ -37,17 +40,17 @@ public class Texture2DArray : Texture
     {
         if (loaded == false) return;
 
-        width = images[0].GetLength(0);
-        height = images[0].GetLength(1);
+        width = images[0].Width;
+        height = images[0].Height;
     }
 
     public override bool LoadImageFile(string filePath)
     {
-        var image = ReadImageFile(filePath);
+        var image = ReadImageFile(filePath, ColorComponents.RedGreenBlueAlpha);
 
         if (image == null) return false;
 
-        images.Clear();
+        images = [image];
         
         loaded = true;
         UpdateImageProperties();
@@ -58,25 +61,11 @@ public class Texture2DArray : Texture
     {
         if (!PreBindOpenGL()) return;
 
-        byte[] texData = new byte[width * height * 3 * images.Count];
+        byte[] texData = [];
 
-        int textureIndex = 0;
         foreach (var image in images)
         {
-            for (int y = 0; y < height; y++)
-            {
-                for (int x = 0; x < width; x++)
-                {
-                    var pixelData = image[x, y];
-
-                    var offset = (textureIndex * width * height * 3) + (y * width + x) * 3;
-
-                    texData[offset] = (byte)(pixelData.r * 255);
-                    texData[offset + 1] = (byte)(pixelData.g * 255);
-                    texData[offset + 2] = (byte)(pixelData.b * 255);
-                }
-            }
-            textureIndex++;
+            texData = texData.Concat(image.Data).ToArray();
         }
 
         PostBindOpenGL(texData);

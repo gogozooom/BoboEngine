@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿using StbImageSharp;
+using System.Runtime.InteropServices;
 using static OpenGL.GL;
 
 namespace BoboEngine;
@@ -9,6 +10,8 @@ public abstract class Texture
     public int width { get; internal set; }
     public int height { get; internal set; }
 
+    protected TextureSampleType sampleType; 
+
     protected void LoadNullTexture()
     {
         LoadImageFile(Program.GetLocalTexturePath("NULL"));
@@ -17,7 +20,7 @@ public abstract class Texture
     protected abstract void UpdateImageProperties();
 
     protected readonly byte[] bmpHeader = [66, 77];
-    protected Float3[,] ReadImageFile(string filePath)
+    protected ImageResult ReadImageFile(string filePath, ColorComponents colorComponents = ColorComponents.Default)
     {
         // -- Error Checks --
         if (string.IsNullOrEmpty(filePath))
@@ -31,17 +34,18 @@ public abstract class Texture
             return null;
         }
 
-        /*
-        using (var stream = File.OpenRead(filePath))
-        {
-            imageR = ImageResult.FromStream(stream);
-        }
-        */
-
         name = Path.GetFileNameWithoutExtension(filePath);
 
-        //* Manual BMP importer
-        byte[] data = File.ReadAllBytes(filePath);
+        using (var stream = File.OpenRead(filePath))
+        {
+            var result = ImageResult.FromStream(stream, colorComponents);
+
+            return result;
+        }
+
+        /* Manual BMP importer
+
+        data = File.ReadAllBytes(filePath);
 
         byte[] header = data[..2];
 
@@ -79,8 +83,6 @@ public abstract class Texture
         }
 
         //*/
-
-        return image;
     }
 
     public abstract bool LoadImageFile(string filePath);
@@ -134,8 +136,17 @@ public abstract class Texture
                 X DITTO to GL_LINEAR_MIPMAP_NEAREST
         */
 
-        glTexParameteri(GL_TEXTURE_TYPE, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
-        glTexParameteri(GL_TEXTURE_TYPE, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        switch (sampleType)
+        {
+            case TextureSampleType.Nearest:
+                glTexParameteri(GL_TEXTURE_TYPE, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
+                glTexParameteri(GL_TEXTURE_TYPE, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+                break;
+            default:
+                glTexParameteri(GL_TEXTURE_TYPE, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+                glTexParameteri(GL_TEXTURE_TYPE, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                break;
+        }
 
         glTexParameteri(GL_TEXTURE_TYPE, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_TYPE, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -158,11 +169,11 @@ public abstract class Texture
             //glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, width, height, images.Count, GL_RGB, GL_UNSIGNED_BYTE, textureDataPointer);
             if (GL_TEXTURE_TYPE == GL_TEXTURE_2D)
             {
-                glTexImage2D(GL_TEXTURE_TYPE, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, textureDataPointer);
+                glTexImage2D(GL_TEXTURE_TYPE, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, textureDataPointer);
             }
             else if(GL_TEXTURE_TYPE == GL_TEXTURE_2D_ARRAY)
             {
-                glTexImage3D(GL_TEXTURE_TYPE, 0, GL_RGB, width, height, texData.Length / (width*height*3), 0, GL_RGB, GL_UNSIGNED_BYTE, textureDataPointer);
+                glTexImage3D(GL_TEXTURE_TYPE, 0, GL_RGBA, width, height, texData.Length / (width*height*4), 0, GL_RGBA, GL_UNSIGNED_BYTE, textureDataPointer);
             }
             else
             {
@@ -203,4 +214,9 @@ public abstract class Texture
         glDeleteTexture(textureRef);
         textureRef = 0;
     }
+}
+public enum TextureSampleType
+{
+    Linear,
+    Nearest
 }

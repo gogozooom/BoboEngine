@@ -6,7 +6,9 @@ namespace BoboEngine
     {
         public static Camera main { get; private set; }
 
-        public float fov = 80f;
+        public float fov { get => _fov; set => SetFOV(value); }
+        private float _fov = 70f;
+        private void SetFOV(float v) => _fov = Math.Clamp(v, 0.1f, 179.9f);
 
         public float nearPlane = 0.01f;
         public float farPlane = 100f;

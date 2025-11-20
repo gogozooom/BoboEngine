@@ -31,9 +31,9 @@ public static class SceneManager
         var mesh = newObject.AddComponent<Mesh>();
         mesh.LoadObjFile(Program.GetLocalModelPath("Cube"));
 
-        ShaderManager.CreateShader("cube", "Shader", "Shader");
+        ShaderManager.CreateShader("cube");
 
-        var material = new Material("cube", null);
+        var material = new Material("cube", new Texture2D(Program.GetLocalTexturePath("Sample")));
         mesh.material = material;
 
         /* Block Look Direction Testing

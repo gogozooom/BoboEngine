@@ -1,19 +1,22 @@
-﻿using static OpenGL.GL;
+﻿using StbImageSharp;
+using static OpenGL.GL;
 
 namespace BoboEngine;
 public class Texture2D : Texture
 {
-    public Float3[,] image;
+    public ImageResult image;
 
-    public Texture2D()
+    public Texture2D(TextureSampleType sampleType = 0)
     {
         GL_TEXTURE_TYPE = GL_TEXTURE_2D;
+        this.sampleType = sampleType;
 
         LoadNullTexture();
     }
-    public Texture2D(string filePath)
+    public Texture2D(string filePath, TextureSampleType sampleType = 0)
     {
         GL_TEXTURE_TYPE = GL_TEXTURE_2D;
+        this.sampleType = sampleType;
 
         if (!LoadImageFile(filePath)) // Failed to load texture
         {
@@ -25,12 +28,12 @@ public class Texture2D : Texture
     {
         if (loaded == false) return;
 
-        width = image.GetLength(0);
-        height = image.GetLength(1);
+        width = image.Width;
+        height = image.Height;
     }
     public override bool LoadImageFile(string filePath)
     {
-        var image = ReadImageFile(filePath);
+        var image = ReadImageFile(filePath, ColorComponents.RedGreenBlueAlpha);
 
         if (image == null) return false;
 
@@ -44,24 +47,6 @@ public class Texture2D : Texture
     {
         if(!PreBindOpenGL()) return;
 
-        byte[] texData = new byte[width * height * 3];
-
-        int textureIndex = 0;
-        for (int y = 0; y < height; y++)
-        {
-            for (int x = 0; x < width; x++)
-            {
-                var pixelData = image[x, y];
-
-                var offset = (textureIndex * width * height * 3) + (y * width + x) * 3;
-
-                texData[offset] = (byte)(pixelData.r * 255);
-                texData[offset + 1] = (byte)(pixelData.g * 255);
-                texData[offset + 2] = (byte)(pixelData.b * 255);
-            }
-        }
-        textureIndex++;
-
-        PostBindOpenGL(texData);
+        PostBindOpenGL(image.Data);
     }
 }

@@ -19,6 +19,12 @@ public static class BlockTypeManager
 
         AddBlockData("minecraft:null");
 
+        foreach (var item in TextureManager.blockTextureIds)
+        {
+            AddBlockData("minecraft:" + item.Key, item.Key, item.Key);
+        }
+
+        /*
         AddBlockData(
             "minecraft:dirt",
             "Dirt",
@@ -71,12 +77,12 @@ public static class BlockTypeManager
             "minecraft:grass_block",
             "Grass Block",
 
-            "grass_block",
-            "grass_block",
+            "grass_block_side",
+            "grass_block_side",
             "grass_block_top",
             "dirt",
-            "grass_block",
-            "grass_block"
+            "grass_block_side",
+            "grass_block_side"
             );
 
         AddBlockData(
@@ -90,6 +96,7 @@ public static class BlockTypeManager
             "crafting_table_front",
             "crafting_table_front"
             );
+        */
     }
 
     private static void AddBlockData(string id) => blockData.Add(id, new BlockType());

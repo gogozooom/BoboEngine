@@ -4,21 +4,27 @@ using BoboEngine.Shaders;
 using ConsoleCommand;
 using GLFW;
 using InputDevices;
-using Cursor = BoboEngine.Input.Cursor;
 using Minecraft;
+using Cursor = BoboEngine.Input.Cursor;
 
 public class Move3DInput : ObjectBehavior
 {
     public static Move3DInput Instance { get; private set; }
 
-    public float movementSpeed = 10f;
-    public float rotationSpeed = 75f;
-    public float sensitivity = 3f;
+    public float flyingSpeed = 10.92f; // Minecraft Flying Speed
+    public float acceleration = 1.4f;
+    public float flyingSpeedVertical = 7f; // Minecraft Flying Speed
+    public float accelerationY = 4f;
+    public float airFriction = 1.80f; // Origonal minecraft air friction = 0.09 (X 20 for from tick to seconds)
+    public float yAirFriction = 15.20f;
+    public float sensitivity = 1f;
 
     public GameObject boxSelectionMesh;
 
     public BlockRaycastHit lastHit;
     public string blockSelected = "minecraft:dirt";
+
+    public Float3 velocity;
 
     public override void Start()
     {
@@ -29,6 +35,7 @@ public class Move3DInput : ObjectBehavior
         _3DMouse.input.onLeftInput += Mouse3DLeftInput;
 
         Cursor.onMouseButtonChanged += OnMouseButtonPressed;
+        Cursor.onScroll += OnMouseScroll;
 
         boxSelectionMesh = new GameObject("BoxSelection");
         
@@ -46,58 +53,28 @@ public class Move3DInput : ObjectBehavior
 
     public override void Update()
     {
-        Float3 posInput = _3DMouse.input.position;
-        Float3 rotInput = _3DMouse.input.rotation;
+        UpdateMovment();
+        UpdateRaycast();
+    }
+    private void UpdateMovment()
+    {
+        Float3 rotInput = GetRotationInput();
+        transform.rotation = new Float3(Math.Clamp(transform.rotation.x + rotInput.x, -90f, 90f), transform.rotation.y + rotInput.y, 0);
 
-        var w = InputSystem.GetKey(Keys.W);
-        var a = InputSystem.GetKey(Keys.A);
-        var s = InputSystem.GetKey(Keys.S);
-        var d = InputSystem.GetKey(Keys.D);
-        var space = InputSystem.GetKey(Keys.Space);
-        var shift = InputSystem.GetKey(Keys.LeftShift);
+        Float3 posInput = Transform.GetYRotationBasisVectors(transform.yaw).TransformVector(GetPosInput());
 
-        if(posInput == Float3.zero)
-        {
-            posInput = Float3.zero;
+        Float3 inputForce = new Float3(posInput.x * flyingSpeed * acceleration, posInput.y * flyingSpeedVertical * accelerationY, posInput.z * flyingSpeed * acceleration);
+        
+        velocity += inputForce * Time.deltaTime;
 
-            if (w)
-            {
-                posInput += Float3.zAxis;
-            }
-            if (s)
-            {
-                posInput -= Float3.zAxis;
-            }
-            if (a)
-            {
-                posInput += Float3.xAxis;
-            }
-            if (d)
-            {
-                posInput -= Float3.xAxis;
-            }
-            if (space)
-            {
-                posInput += Float3.yAxis;
-            }
-            if (shift)
-            {
-                posInput -= Float3.yAxis;
-            }
+        transform.position += velocity * Time.deltaTime;
 
-            rotInput = new(Cursor.delta.y * sensitivity, Cursor.delta.x * sensitivity, 0);
-        }
+        UpdateDrag(inputForce);
+    }
 
-
-
-        bool isUpsideDown = transform.upVector.y < 0;
-        bool isZFliped = transform.rotation.z < -90 || transform.rotation.z > 90;
-
-        transform.rotation += new Float3(rotInput.x * (isZFliped ? -1 : 1), rotInput.y * (isUpsideDown ? -1 : 1), 0) * rotationSpeed * Time.deltaTime; // -rotInput.z
-
-        transform.position += SceneManager.currentScene.camera.transform.TransformVector(posInput) * movementSpeed * Time.deltaTime;
-
-        lastHit = WorldDataManager.Raycast(transform.position, transform.forwardVector, 5);
+    public void UpdateRaycast()
+    {
+        lastHit = WorldDataManager.Raycast(transform.position, transform.baseVectors.forwardVector, 5);
 
         if (lastHit)
         {
@@ -108,11 +85,79 @@ public class Move3DInput : ObjectBehavior
         {
             boxSelectionMesh.enabled = false;
         }
-
-        //Program.Log(result);
-
-        //Program.Log(transform.position);
     }
+
+
+    public void UpdateDrag(Float3 inputForce)
+    {
+        float xDrag = 0;
+
+        bool doXDrag = inputForce.x == 0
+            || MathF.Abs(velocity.x) > flyingSpeed
+            || MathF.Sign(inputForce.x) != MathF.Sign(velocity.x);
+
+        if (doXDrag) xDrag = velocity.x * airFriction;
+
+        float yDrag = 0;
+
+        bool doYDrag = inputForce.y == 0
+            || MathF.Abs(velocity.y) > flyingSpeedVertical
+            || MathF.Sign(inputForce.y) != MathF.Sign(velocity.y);
+
+        if (doYDrag) yDrag = velocity.y * yAirFriction;
+
+        float zDrag = 0;
+
+        bool doZDrag = inputForce.z == 0
+            || MathF.Abs(velocity.z) > flyingSpeed
+            || MathF.Sign(inputForce.z) != MathF.Sign(velocity.z);
+
+        if (doZDrag) zDrag = velocity.z * airFriction;
+
+        Float3 drag = new Float3(xDrag, yDrag, zDrag);
+
+        velocity -= drag * Time.deltaTime;
+    }
+
+    private Float3 GetPosInput()
+    {
+        Float3 posInput = Float3.zero;
+
+        var w = InputSystem.GetKey(Keys.W);
+        var a = InputSystem.GetKey(Keys.A);
+        var s = InputSystem.GetKey(Keys.S);
+        var d = InputSystem.GetKey(Keys.D);
+        var space = InputSystem.GetKey(Keys.Space);
+        var shift = InputSystem.GetKey(Keys.LeftShift);
+
+        if (w)
+        {
+            posInput += Float3.zAxis;
+        }
+        if (s)
+        {
+            posInput -= Float3.zAxis;
+        }
+        if (a)
+        {
+            posInput += Float3.xAxis;
+        }
+        if (d)
+        {
+            posInput -= Float3.xAxis;
+        }
+        if (space)
+        {
+            posInput += Float3.yAxis;
+        }
+        if (shift)
+        {
+            posInput -= Float3.yAxis;
+        }
+
+        return posInput;
+    }
+    private Float3 GetRotationInput() => new Float3(Cursor.delta.y, Cursor.delta.x, 0) * (0.12f * sensitivity); // 0.12f resonable constant from pixels to sensitivity value
 
     private void OnMouseButtonPressed(MouseInputState state)
     {
@@ -146,6 +191,10 @@ public class Move3DInput : ObjectBehavior
             DestroyBlock();
         }
     }
+    private void OnMouseScroll(Float2 scroll)
+    {
+        Camera.main.fov -= scroll.y*2f;
+    }
 
     private void PlaceBlock()
     {
@@ -153,7 +202,7 @@ public class Move3DInput : ObjectBehavior
 
         Int3 blockToChange = (Int3)(lastHit.blockPosition + lastHit.blockFace.GetNormal());
 
-        WorldDataManager.SetBlock(blockSelected, blockToChange);
+        WorldDataManager.SetBlock(blockToChange, blockSelected);
     }
     private void DestroyBlock()
     {
@@ -161,7 +210,7 @@ public class Move3DInput : ObjectBehavior
 
         Int3 blockToChange = lastHit.blockPosition;
 
-        WorldDataManager.SetBlock("minecraft:air", lastHit.blockPosition);
+        WorldDataManager.SetBlock(lastHit.blockPosition, "minecraft:air");
     }
     private static void PickBlock()
     {

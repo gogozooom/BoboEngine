@@ -1,6 +1,4 @@
 ﻿using BoboEngine;
-using BoboEngine.Input;
-using BoboEngine.Shaders;
 using ConsoleCommand;
 using System.Diagnostics;
 using System.Reflection;

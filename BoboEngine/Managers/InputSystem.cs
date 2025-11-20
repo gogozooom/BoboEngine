@@ -60,6 +60,7 @@ public static class Cursor
     public static Action<MouseInputState> onMouseButtonChanged;
     public static Action<MouseInputState> onMouseButtonDown;
     public static Action<MouseInputState> onMouseButtonUp;
+    public static Action<Float2> onScroll;
 
     public static void mouse_button_callback(Window window, MouseButton button, GLFW.InputState state, ModifierKeys mods)
     {
@@ -75,6 +76,10 @@ public static class Cursor
         {
             onMouseButtonUp?.Invoke(inputState);
         }
+    }
+    public static void mouse_scroll_callback(Window window, double x, double y)
+    {
+        onScroll?.Invoke(new((float)x,(float)y));
     }
 
     private static Int2 lastPosition = position;

@@ -26,7 +26,7 @@ public static class WorldDataManager
         {
             if (block.Key == "minecraft:null") continue;
 
-            chunk.SetBlockAtLocalPosition(new(i * 2, 0, 0), new(block.Key));
+            SetBlock(new(i * 1, 0, 0), new(block.Key));
 
             i++;
         }
@@ -334,7 +334,7 @@ public static class WorldDataManager
         return new BlockRaycastHit(currentBlock, blockPos, new BlockFace(blockDirectionHit), positionMarched);
     }
 
-    public static void SetBlock(string block_id, Int3 position)
+    public static void SetBlock(Int3 position, string block_id)
     {
         var chunk = GetChunkInPosition(position);
 
@@ -402,7 +402,7 @@ public static class WorldDataManager
     [Command("SetBlock", "[#x, #y, #z, 'block_id']")]
     public static void SetBlock(int x, int y, int z, string block_id)
     {
-        SetBlock(block_id, new(x, y, z));
+        SetBlock(new(x, y, z), block_id);
 
         Program.Log("Set block to: " + block_id);
     }

@@ -1,12 +1,13 @@
 ﻿using BoboEngine.Input;
-using Minecraft;
+using BoboEngine.Shaders;
 using ConsoleCommand;
 using GLFW;
+using Minecraft;
+using StbImageSharp;
 using System.Drawing;
 using System.Numerics;
 using static OpenGL.GL;
 using Cursor = BoboEngine.Input.Cursor;
-using BoboEngine.Shaders;
 
 namespace BoboEngine
 {
@@ -31,6 +32,7 @@ namespace BoboEngine
             CreateWindow(windowWidth, windowHeight, Program.TITLE);
 
             // After window creation to prevent errors
+            StbImage.stbi_set_flip_vertically_on_load(1);
             TextureManager.GenerateAtlas();
             SceneManager.LoadScene();
             BlockTypeManager.GenerateBlockData();
@@ -251,7 +253,8 @@ namespace BoboEngine
             Glfw.SetKeyCallback(Window, InputSystem.key_callback);
             Glfw.SetCursorPositionCallback(Window, Cursor.cursor_position_callback);
             Glfw.SetMouseButtonCallback(Window, Cursor.mouse_button_callback);
-
+            Glfw.SetScrollCallback(Window, Cursor.mouse_scroll_callback);
+            
             // Errors
             Glfw.SetErrorCallback((code, message) =>
             {
