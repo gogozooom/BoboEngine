@@ -17,6 +17,7 @@ public class Move3DInput : ObjectBehavior
     public float accelerationY = 4f;
     public float airFriction = 1.80f; // Origonal minecraft air friction = 0.09 (X 20 for from tick to seconds)
     public float yAirFriction = 15.20f;
+
     public float sensitivity = 1f;
 
     public GameObject boxSelectionMesh;
@@ -69,26 +70,9 @@ public class Move3DInput : ObjectBehavior
 
         transform.position += velocity * Time.deltaTime;
 
-        UpdateDrag(inputForce);
+        ApplyDrag(inputForce);
     }
-
-    public void UpdateRaycast()
-    {
-        lastHit = WorldDataManager.Raycast(transform.position, transform.baseVectors.forwardVector, 5);
-
-        if (lastHit)
-        {
-            boxSelectionMesh.enabled = true;
-            boxSelectionMesh.transform.position = lastHit.blockPosition + new Float3(0.5f, 0.5f, 0.5f);
-        }
-        else
-        {
-            boxSelectionMesh.enabled = false;
-        }
-    }
-
-
-    public void UpdateDrag(Float3 inputForce)
+    public void ApplyDrag(Float3 inputForce)
     {
         float xDrag = 0;
 
@@ -104,7 +88,6 @@ public class Move3DInput : ObjectBehavior
             || MathF.Abs(velocity.y) > flyingSpeedVertical
             || MathF.Sign(inputForce.y) != MathF.Sign(velocity.y);
 
-        if (doYDrag) yDrag = velocity.y * yAirFriction;
 
         float zDrag = 0;
 
@@ -112,11 +95,26 @@ public class Move3DInput : ObjectBehavior
             || MathF.Abs(velocity.z) > flyingSpeed
             || MathF.Sign(inputForce.z) != MathF.Sign(velocity.z);
 
-        if (doZDrag) zDrag = velocity.z * airFriction;
+        if (doZDrag || doYDrag) zDrag = velocity.z * airFriction;
+        if (doYDrag || doZDrag) yDrag = velocity.y * yAirFriction;
 
         Float3 drag = new Float3(xDrag, yDrag, zDrag);
 
         velocity -= drag * Time.deltaTime;
+    }
+    public void UpdateRaycast()
+    {
+        lastHit = WorldDataManager.Raycast(transform.position, transform.baseVectors.forwardVector, 5);
+
+        if (lastHit)
+        {
+            boxSelectionMesh.enabled = true;
+            boxSelectionMesh.transform.position = lastHit.blockPosition + new Float3(0.5f, 0.5f, 0.5f);
+        }
+        else
+        {
+            boxSelectionMesh.enabled = false;
+        }
     }
 
     private Float3 GetPosInput()
@@ -157,7 +155,9 @@ public class Move3DInput : ObjectBehavior
 
         return posInput;
     }
-    private Float3 GetRotationInput() => new Float3(Cursor.delta.y, Cursor.delta.x, 0) * (0.12f * sensitivity); // 0.12f resonable constant from pixels to sensitivity value
+    private Float3 GetRotationInput() => new Float3(Cursor.delta.y, Cursor.delta.x, 0) 
+                                        * (0.12f * sensitivity) // 0.12f resonable constant from pixels to sensitivity value
+                                        * (MathF.Log10(Camera.main.fov + 1.02f) / 1.85138f); // TMP fov scaling
 
     private void OnMouseButtonPressed(MouseInputState state)
     {

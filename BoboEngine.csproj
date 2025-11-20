@@ -17,10 +17,6 @@
     <PackageReference Include="StbImageSharp" Version="2.30.15" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Minecraft\Data\" />
-  </ItemGroup>
-
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
     <Exec Command="xcopy $(ProjectDir)Bin-Dep $(TargetDir) /E /H /I /Y" />
   </Target>

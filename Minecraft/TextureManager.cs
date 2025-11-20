@@ -16,7 +16,6 @@ public static class TextureManager
 
         textures.Add(nullT); // Guarantee null texture!
 
-
         var blockTexturePath = Path.Combine(Program.ProgramDirectory, "Data\\assets\\minecraft\\textures\\block");
 
         if (!Directory.Exists(blockTexturePath))

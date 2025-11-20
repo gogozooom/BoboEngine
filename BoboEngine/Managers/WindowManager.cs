@@ -34,8 +34,9 @@ namespace BoboEngine
             // After window creation to prevent errors
             StbImage.stbi_set_flip_vertically_on_load(1);
             TextureManager.GenerateAtlas();
-            SceneManager.LoadScene();
+            BlockModelManager.LoadBlockModelData();
             BlockTypeManager.GenerateBlockData();
+            SceneManager.LoadScene();
             WorldDataManager.GenerateTestChunk();
 
             SetClearColor(new Vector4(0.2f,0.2f,0.4f, 1f));

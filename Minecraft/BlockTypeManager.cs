@@ -1,18 +1,8 @@
-﻿
-namespace Minecraft;
+﻿namespace Minecraft;
 public static class BlockTypeManager
 {
     public static Dictionary<string, BlockType> blockData { get; private set; } = new();
 
-    public static BlockType GetBlockData(string id)
-    {
-        if (id != null && blockData.ContainsKey(id))
-        {
-            return blockData[id];
-        }
-
-        return blockData["minecraft:null"];
-    }
     public static void GenerateBlockData() // TODO: Move to json files
     {
         blockData.Clear();
@@ -97,6 +87,16 @@ public static class BlockTypeManager
             "crafting_table_front"
             );
         */
+    }
+    
+    public static BlockType GetBlockData(string id)
+    {
+        if (id != null && blockData.ContainsKey(id))
+        {
+            return blockData[id];
+        }
+
+        return blockData["minecraft:null"];
     }
 
     private static void AddBlockData(string id) => blockData.Add(id, new BlockType());
