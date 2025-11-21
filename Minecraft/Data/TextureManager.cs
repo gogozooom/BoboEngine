@@ -5,61 +5,67 @@ using StbImageSharp;
 namespace Minecraft;
 public static class TextureManager
 {
-    private const int GridSize = 16; // Assumed to be 16x16 textures for now
     public static Texture2DArray blockTextureArray { get; private set; }
-    public static Dictionary<string, int> blockTextureIds { get; private set; } = new();
+    public static Dictionary<string, int> blockTextureIds { get; private set; }
     public static void GenerateAtlas()
     {
-        List<Texture2D> textures = new();
+        List<ImageResult> images = [Texture.ReadImageFile(Program.GetLocalTexturePath("NULL"), ColorComponents.RedGreenBlueAlpha)];
+        blockTextureIds = new Dictionary<string, int> { { "NULL", 0 } };
 
-        var nullT = new Texture2D(Program.GetLocalTexturePath("NULL"));
+        var texturesPath = Path.Combine(Program.ProgramDirectory, "Data\\assets\\minecraft\\textures");
 
-        textures.Add(nullT); // Guarantee null texture!
-
-        var blockTexturePath = Path.Combine(Program.ProgramDirectory, "Data\\assets\\minecraft\\textures\\block");
-
-        if (!Directory.Exists(blockTexturePath))
+        if (!Directory.Exists(texturesPath))
         {
             Program.LogError("No minecraft data supported! Please put minecraft data named as 'Data' in executable directory!");
         }
         else
         {
-            foreach (var file in Directory.GetFiles(blockTexturePath))
+            var files = Directory.GetFiles(texturesPath, "*.png", SearchOption.AllDirectories);
+
+            int i = 1; // 1 to account for null texture
+            int t = files.Length;
+
+            foreach (var file in files)
             {
-                var name = Path.GetFileName(file);
+                var fileName = file.Remove(0, texturesPath.Length + 1).Split('.')[0].Replace('\\', '/');
+
+                if (IgnoreFile(file.Remove(0, texturesPath.Length + 1)))
+                {
+                    Program.Log($"Ignoring '{fileName}'...");
+                    continue;
+                }
+
                 var type = Path.GetExtension(file);
 
-                if (type == ".png")
-                    textures.Add(new Texture2D(file));
-                else if (type != ".mcmeta")
-                    Program.LogWarning($"File of type {name}.'{type}'");
+                var image = Texture.ReadImageFile(file, ColorComponents.RedGreenBlueAlpha);
 
+                images.Add(image);
+
+                int total16Sprites = (image.Width / 16) * (image.Height / 16);
+
+                if(image.Width % 16f != 0 || image.Height % 16f != 0)
+                {
+                    Program.LogWarning($"Ignoring '{fileName}' because it's not uniform!");
+                    continue;
+                }
+
+                for (int sizeI = 0; sizeI < total16Sprites; sizeI++)
+                {
+                    blockTextureIds.Add(fileName + (total16Sprites > 1 ? $"_{sizeI}" : ""), i); // TODO: find better way to load textures bigger than 16x16
+
+                    i++;
+                }
+
+                Program.LogMessage($"Loaded ({images.Count}/{t}) --- '{fileName}{type}'");
             }
         }
 
-        blockTextureArray = GenerateAtlas(textures, nullT);
+        blockTextureArray = new Texture2DArray(images.ToArray(), "atlas", TextureSampleType.Nearest);
     }
 
-    public static Texture2DArray GenerateAtlas(List<Texture2D> textures, Texture2D backgroundTexture)
+    public static bool IgnoreFile(string file)
     {
-        int indexWH = (int)MathF.Ceiling(MathF.Sqrt(textures.Count));
-        int gridWH = indexWH * GridSize;
-
-        // UVS
-        blockTextureIds.Clear();
-
-        List<ImageResult> output = new();
-
-        int i = 0;
-        foreach (var texture in textures)
-        {
-            output.Add(texture.image);
-
-            blockTextureIds.Add(texture.name, i); // Change to block id
-            i++;
-        }
-
-        return new Texture2DArray(output.ToArray(), "atlas", TextureSampleType.Nearest);
+        return !file.StartsWith("block");
     }
 
     public static int GetTextureID(string textureName)
@@ -67,7 +73,8 @@ public static class TextureManager
         if (!blockTextureIds.ContainsKey(textureName))
         {
             Program.LogError("TextureAtlasManager: Requested non-existent texture: " + textureName);
-            textureName = "NULL";
+            //textureName = "NULL";
+            return 0;
         }
 
         return blockTextureIds[textureName];

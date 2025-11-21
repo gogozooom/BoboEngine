@@ -1,21 +1,17 @@
-﻿
-using HidSharp.Reports;
-using StbImageSharp;
-
-namespace BoboEngine.Utils;
+﻿namespace BoboEngine.Utils;
 
 public static class FileParser
 {
-    public static DynamicData ReadFile(string filePath)
+    public static DynamicData ParseJson(string name, string data, bool includeRedundantRawData = true)
     {
-        string data = File.ReadAllText(filePath);
+        if(data == "{}")
+        {
+            Program.LogWarning($"Tried to load {name} which is empty!");
 
-        return ParseJson(Path.GetFileNameWithoutExtension(filePath), data);
-    }
+            return new DynamicData(name, DataType.Array, data);
+        }
 
-    private static DynamicData ParseJson(string name, string data, DynamicData parent = null)
-    {
-        var result = new DynamicData(name, DataType.Array, parent, data);
+        var result = new DynamicData(name, DataType.Array, includeRedundantRawData ? data : null);
 
         while (data.Length > 0)
         {
@@ -71,7 +67,7 @@ public static class FileParser
 
                 if (data.StartsWith(',')) data = data.Remove(0, 1).TrimStart();
 
-                dataResult = ParseJson(itemId, rawData, result);
+                dataResult = ParseJson(itemId, rawData);
             }
             else if (data.StartsWith("["))
             {
@@ -93,7 +89,7 @@ public static class FileParser
 
                 data = data.Remove(0, rawData.Length).Trim();
 
-                dataResult = ParseJson(itemId, rawData, result);
+                dataResult = ParseJson(itemId, rawData);
             }
             else
             {
@@ -103,11 +99,12 @@ public static class FileParser
 
                 rawData = value;
                 if (rawData.EndsWith(']')) rawData = rawData.Split(']')[0];
+                if (rawData.EndsWith('}')) rawData = rawData.Split('}')[0];
                 rawData = rawData.TrimEnd();
 
                 data = data.Remove(0, value.Length).TrimStart();
 
-                dataResult = new DynamicData(itemId, DataType.Value, result, rawData);
+                dataResult = new DynamicData(itemId, DataType.Value, rawData);
             }
 
             if (data.StartsWith(","))
@@ -122,21 +119,27 @@ public static class FileParser
 
 public class DynamicData
 {
+    public DynamicData parent;
     public readonly string name;
 
-    public readonly DynamicData parent;
     public readonly Dictionary<string, DynamicData> data = new();
 
+    /// <summary>
+    /// Can either be the value when "<see cref="_dataType"/>" is equal to "DataType.Value" <br/>
+    /// Or the full json data used to initialize the class in the first place
+    /// </summary>
     private string _rawData;
     private DataType _dataType;
     public void SetDataType(DataType dataType) => _dataType = dataType;
 
-    public DynamicData(string name, DataType dataType = DataType.Unknown, DynamicData parent = null, string rawData = null)
+    public DynamicData(string name, DataType dataType = DataType.Unknown, string rawData = null, DynamicData parent = null)
     {
         this.name = name;
         this.parent = parent;
         _rawData = rawData;
         _dataType = dataType;
+
+        if (dataType == DataType.Value && rawData == null) Program.LogWarning("DynamicData created as a value with no data!");
     }
 
     public DataType GetDataType() => _dataType;
@@ -154,16 +157,37 @@ public class DynamicData
             return default;
         }
 
-        switch (_dataType)
-        {
-            default:
-                if (typeof(T) == typeof(string))
-                    return (T)Convert.ChangeType(_rawData.Trim('"'), typeof(T));
-                else break;
-        }
+
+        if (typeof(T) == typeof(string)) return (T)Convert.ChangeType(_rawData.Trim('"'), typeof(T));
+
 
         Program.LogError($"Type of '{name}' cannot be converted to type: '{typeof(T)}' as this data is of type: '{_dataType}'!");
         return default;
+    }
+    public void SetValue(string value)
+    {
+        if (_dataType == DataType.Unknown)
+        {
+            Program.LogWarning($"Cannot set value of an empty data list!");
+            return;
+        }
+
+        if (_dataType != DataType.Value)
+        {
+            Program.LogWarning($"Property of '{name}' is an array! Cannot set value!");
+            return;
+        }
+
+        if (ValueIllegal(value))
+        {
+            Program.LogWarning($"Value '{value}' contains illegal characters!");
+            return;
+        }
+
+        if (!value.StartsWith('"')) value = '"' + value;
+        if (!value.EndsWith('"')) value += '"';
+
+        _rawData = value;
     }
     public DynamicData GetItem(string id)
     {
@@ -181,6 +205,24 @@ public class DynamicData
 
         return result;
     }
+    public List<DynamicData> GetAllValues()
+    {
+        List<DynamicData> result = new();
+
+        GetAllItems(this, ref result);
+
+        return result;
+    }
+    public void RemoveItem(string id)
+    {
+        if (!HasItem(id))
+        {
+            Program.LogWarning($"'{this}' does not contain '{id}'!");
+            return;
+        }
+
+        data.Remove(id);
+    }
     public bool HasItem(string id)
     {
         if (data.Count == 0)
@@ -193,18 +235,86 @@ public class DynamicData
     public void PopulateData(DynamicData d)
     {
         data.Add(d.name, d);
+        d.parent = this;
+    }
+    public void Merge(DynamicData d)
+    {
+        var data = d.Copy();
+
+        if(_dataType != DataType.Array)
+        {
+            Program.LogWarning("Cannot Merge value data type!");
+            return;
+        }
+
+        foreach (var item in data.data.Values)
+        {
+            if (!HasItem(item.name))
+            {
+                PopulateData(item);
+                continue;
+            }
+
+            // CONFLICT!!
+
+            // Held by parent
+            var conflictingItem = GetItem(item.name);
+
+            // Held by merging child
+            var targetDataType = item.GetDataType();
+
+            if (conflictingItem.GetDataType() != targetDataType)
+            {
+                Program.LogWarning($"Item property '{item.name}' has a type miss-match! '{targetDataType}' != '{conflictingItem.GetDataType()}'!");
+                continue;
+            }
+
+            switch (targetDataType)
+            {
+                case DataType.Value:
+
+                    conflictingItem.SetValue(item.GetValue<string>());
+                    break;
+
+                case DataType.ValueArray:
+
+                    // Split between adding and replacing with:
+                    // "array" : [ {...}, {...} ]
+                    // and:
+                    // "pos"   : [ 0, 2, 1 ]
+                    // ...
+
+                    Program.LogWarning($"Target type of '{targetDataType}' not implemented!");
+
+                    break;
+                case DataType.Array:
+                    foreach (var v in item.data.Values)
+                    {
+                        conflictingItem.Merge(v);
+                    }
+
+                    break;
+                default:
+                    Program.LogWarning($"Cannot merge item '{item}' continuing...");
+                    continue;
+            }
+        }
+    }
+
+    public DynamicData Copy()
+    {
+        return FileParser.ParseJson(name, ToJson(), false);
     }
 
     public string ToJson()
     {
+        string dataString = "";
+
+        if (parent && parent.GetDataType() != DataType.ValueArray) dataString += $"\"{name}\":";
+
         if (_dataType == DataType.Array)
         {
-            string dataString = "";
-            if (parent != null)
-            {
-                dataString += $"\"{name}\":";
-            }
-            dataString += "{\n";
+            dataString += "{";
 
             int i = 0;
             foreach (var item in data.Values)
@@ -214,7 +324,6 @@ public class DynamicData
                 i++;
 
                 if(i < data.Count) dataString += ",";
-                dataString += "\n";
             }
 
             dataString += "}";
@@ -222,7 +331,7 @@ public class DynamicData
         }
         else if(_dataType == DataType.ValueArray)
         {
-            string dataString = $"\"{name}\": [ ";
+            dataString += "[ ";
 
             int i = 0;
             foreach (var item in data.Values)
@@ -242,14 +351,31 @@ public class DynamicData
         }
         else
         {
-            string dataString = "";
-
-            if (parent && parent.GetDataType() != DataType.ValueArray) dataString += $"\"{name}\":";
-
             dataString += _rawData;
 
             return dataString;
         }
+    }
+
+    private static void GetAllItems(DynamicData data, ref List<DynamicData> allData)
+    {
+        foreach (var item in data.data.Values)
+        {
+            var type = item.GetDataType();
+
+            if(type == DataType.Value && item.parent.GetDataType() != DataType.ValueArray) // May want to remove this last part later...
+            {
+                allData.Add(item);
+            }
+            else if(type == DataType.Array || type == DataType.ValueArray)
+            {
+                GetAllItems(item, ref allData);
+            }
+        }
+    }
+    private static bool ValueIllegal(string v)
+    {
+        return v.Contains(',') || v.Contains('[') || v.Contains(']') || v.Contains('{') || v.Contains('}');
     }
 
     public override string ToString()
@@ -267,7 +393,7 @@ public class DynamicData
         }
     }
 
-    public static implicit operator bool(DynamicData d) => d.GetDataType() != DataType.Unknown;
+    public static implicit operator bool(DynamicData d) => !(d == null || d.GetDataType() == DataType.Unknown);
 }
 
 public enum DataType

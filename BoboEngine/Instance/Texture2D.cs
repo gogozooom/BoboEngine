@@ -33,6 +33,7 @@ public class Texture2D : Texture
     }
     public override bool LoadImageFile(string filePath)
     {
+        name = Path.GetFileNameWithoutExtension(filePath);
         var image = ReadImageFile(filePath, ColorComponents.RedGreenBlueAlpha);
 
         if (image == null) return false;

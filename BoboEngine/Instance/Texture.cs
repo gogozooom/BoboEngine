@@ -20,7 +20,7 @@ public abstract class Texture
     protected abstract void UpdateImageProperties();
 
     protected readonly byte[] bmpHeader = [66, 77];
-    protected ImageResult ReadImageFile(string filePath, ColorComponents colorComponents = ColorComponents.Default)
+    public static ImageResult ReadImageFile(string filePath, ColorComponents colorComponents = ColorComponents.Default)
     {
         // -- Error Checks --
         if (string.IsNullOrEmpty(filePath))
@@ -30,11 +30,9 @@ public abstract class Texture
         }
         if (!File.Exists(filePath))
         {
-            Program.LogError($"Could find model file '{filePath}'");
+            Program.LogError($"Could find texture file '{filePath}'");
             return null;
         }
-
-        name = Path.GetFileNameWithoutExtension(filePath);
 
         using (var stream = File.OpenRead(filePath))
         {

@@ -109,7 +109,6 @@ public class Chunk : ObjectBehavior
                     bool renderBackFace = backBlock.block_id == "minecraft:air";
                     bool renderFrontFace = frontBlock.block_id == "minecraft:air";
 
-
                     vertices.Add(new Float3(0, 0, 0) + localBlockPosition);
                     vertices.Add(new Float3(0, 0, 1) + localBlockPosition);
                     vertices.Add(new Float3(0, 1, 1) + localBlockPosition);
@@ -132,7 +131,7 @@ public class Chunk : ObjectBehavior
                                           $"{2 + vO}/{2}/1 " +
                                           $"{3 + vO}/{3}/1 " +
                                           $"{4 + vO}/{4}/1",
-                                          TextureManager.GetTextureID(blockType.rightTexture)
+                                          TextureManager.GetTextureID(blockType.eastTexture)
                                           ));
                     }
 
@@ -146,7 +145,7 @@ public class Chunk : ObjectBehavior
                                           $"{5 + vO}/{2}/2 " +
                                           $"{6 + vO}/{3}/2 " +
                                           $"{7 + vO}/{4}/2",
-                                          TextureManager.GetTextureID(blockType.leftTexture)
+                                          TextureManager.GetTextureID(blockType.westTexture)
                                           ));
                     }
 
@@ -160,7 +159,7 @@ public class Chunk : ObjectBehavior
                                           $"{5 + vO}/{2}/3 " +
                                           $"{8 + vO}/{3}/3 " +
                                           $"{2 + vO}/{4}/3",
-                                          TextureManager.GetTextureID(blockType.bottomTexture)
+                                          TextureManager.GetTextureID(blockType.downTexture)
                                           ));
                     }
 
@@ -174,7 +173,7 @@ public class Chunk : ObjectBehavior
                                           $"{7 + vO}/{2}/4 " +
                                           $"{6 + vO}/{3}/4 " +
                                           $"{4 + vO}/{4}/4",
-                                          TextureManager.GetTextureID(blockType.topTexture)
+                                          TextureManager.GetTextureID(blockType.upTexture)
                                           ));
                     }
 
@@ -188,7 +187,7 @@ public class Chunk : ObjectBehavior
                                           $"{1 + vO}/{2}/5 " +
                                           $"{4 + vO}/{3}/5 " +
                                           $"{6 + vO}/{4}/5",
-                                          TextureManager.GetTextureID(blockType.backTexture)
+                                          TextureManager.GetTextureID(blockType.southTexture)
                                           ));
                     }
 
@@ -202,7 +201,7 @@ public class Chunk : ObjectBehavior
                                           $"{8 + vO}/{2}/6 " +
                                           $"{7 + vO}/{3}/6 " +
                                           $"{3 + vO}/{4}/6",
-                                          TextureManager.GetTextureID(blockType.rightTexture)
+                                          TextureManager.GetTextureID(blockType.eastTexture)
                                           ));
                     }
 

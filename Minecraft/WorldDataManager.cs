@@ -24,8 +24,6 @@ public static class WorldDataManager
         int i = 0;
         foreach (var block in BlockTypeManager.blockData)
         {
-            if (block.Key == "minecraft:null") continue;
-
             SetBlock(new(i * 1, 0, 0), new(block.Key));
 
             i++;
