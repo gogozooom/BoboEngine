@@ -1,8 +1,4 @@
-﻿!REMINDER! :
-	- Use Nsight Graphics to easily debug graphical errors!
-	- It also allows for quick shader testing!
-
-Known Issues:
+﻿Known Issues:
 	- Placing a block at the edge of a chunk does not update that chunk's culling
 		* Solution: After proper block updates are implemented, if mesh changes are detected, set 'meshChanged' to true regenerating the mesh next frame
 	- 3DConnexion input being handeled on a separate thread causing errors when accessing data used by the window thread
@@ -14,6 +10,15 @@ Known Issues:
 
 TODO:
 	- Use MinecraftJsonManager to load the "elements" of a minecraft model and generate that in the mesh
+		* Implement block model rotation
+		* Faces culling needs to be more sophisticated than simply adjasentBlock == "air"
+		* Implement block facing directions, and update the model and culling faces accordingly
+
+	- REFACTOR:
+		* Chunk.cs GenerateMesh method (Bruh, it's such a repetetive mess... move everything to private functions)
+		* Stress test: Create random models in block bench and test to see if they're accurate in my version!
+		* Null test: Setting random things to null in blockbench, and eventually edit the json data itself to cause intentional weird behavior
+
 
 	- Buffer input event actions to be handled before update
 

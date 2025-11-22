@@ -1,4 +1,6 @@
-﻿namespace BoboEngine.Utils;
+﻿using Microsoft.Win32.SafeHandles;
+
+namespace BoboEngine.Utils;
 
 public static class FileParser
 {
@@ -151,15 +153,96 @@ public class DynamicData
             return default;
         }
 
-        if (_dataType != DataType.Value)
+        if (_dataType == DataType.Array)
         {
             Program.LogWarning($"Property of '{name}' is an array! Please use GetItem()!");
             return default;
         }
 
+        if (typeof(T) == typeof(string)) return (T)Convert.ChangeType(_rawData.Trim('"'), typeof(string));
 
-        if (typeof(T) == typeof(string)) return (T)Convert.ChangeType(_rawData.Trim('"'), typeof(T));
+        if (typeof(T) == typeof(float))
+        {
+            if (_dataType != DataType.Value)
+            {
+                Program.LogError($"Type of '{name}' is not a Value! Cannot convert to '{typeof(float)}'!");
+                return default;
+            }
 
+            if(!float.TryParse(_rawData, out var value))
+            {
+                Program.LogError($"Could not parse float out of '{_rawData}'!");
+                return default;
+            }
+
+            return (T)Convert.ChangeType(value, typeof(float));
+        }
+
+        if (typeof(T) == typeof(int))
+        {
+            if (_dataType != DataType.Value)
+            {
+                Program.LogError($"Type of '{name}' is not a Value! Cannot convert to '{typeof(int)}'!");
+                return default;
+            }
+
+            if (!int.TryParse(_rawData, out var value))
+            {
+                Program.LogError($"Could not parse int out of '{_rawData}'!");
+                return default;
+            }
+
+            return (T)Convert.ChangeType(value, typeof(int));
+        }
+
+        if (typeof(T) == typeof(Float3))
+        {
+            if(_dataType != DataType.ValueArray)
+            {
+                Program.LogError($"Type of '{name}' is not a ValueArray! Cannot convert to '{typeof(Float3)}'!");
+                return default;
+            }
+
+            float x = 0;
+            float y = 0;
+            float z = 0;
+
+            var xD = GetItem("0");
+            var yD = GetItem("1");
+            var zD = GetItem("2");
+
+            if (xD) x = xD.GetValue<float>();
+            if (yD) y = yD.GetValue<float>();
+            if (zD) z = zD.GetValue<float>();
+
+            return (T)Convert.ChangeType(new Float3(x, y, z), typeof(Float3));
+        }
+
+        if (typeof(T) == typeof(UVRect))
+        {
+            if (_dataType != DataType.ValueArray)
+            {
+                Program.LogError($"Type of '{name}' is not a ValueArray! Cannot convert to '{typeof(Float3)}'!");
+                return default;
+            }
+
+            float uMin = 0;
+            float vMin = 0;
+            float uMax = 0;
+            float vMax = 0;
+
+            var uMD = GetItem("0");
+            var vMD = GetItem("1");
+            var uXD = GetItem("2");
+            var vXD = GetItem("3");
+
+            if (uMD) uMin = uMD.GetValue<float>();
+            if (vMD) vMin = vMD.GetValue<float>();
+            if (uXD) uMax = uXD.GetValue<float>();
+            if (vXD) vMax = vXD.GetValue<float>();
+
+            return (T)Convert.ChangeType(new UVRect(uMin, vMin, uMax, vMax), typeof(UVRect));
+        }
 
         Program.LogError($"Type of '{name}' cannot be converted to type: '{typeof(T)}' as this data is of type: '{_dataType}'!");
         return default;
@@ -213,11 +296,12 @@ public class DynamicData
 
         return result;
     }
+    public DynamicData[] GetImmediateChildren() => data.Values.ToArray();
     public void RemoveItem(string id)
     {
         if (!HasItem(id))
         {
-            Program.LogWarning($"'{this}' does not contain '{id}'!");
+            //Program.LogWarning($"'{this}' does not contain '{id}'!");
             return;
         }
 
@@ -284,7 +368,7 @@ public class DynamicData
                     // "pos"   : [ 0, 2, 1 ]
                     // ...
 
-                    Program.LogWarning($"Target type of '{targetDataType}' not implemented!");
+                    //Program.LogWarning($"Target type of '{targetDataType}' not implemented!");
 
                     break;
                 case DataType.Array:

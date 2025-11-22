@@ -9,7 +9,7 @@ public static class BlockTypeManager
     {
         blockData.Clear();
 
-        AddBlockData("minecraft:null");
+        blockData.Add("minecraft:null", new());
 
         string[] testBlocks = [
             "models/block/dirt",
@@ -19,21 +19,25 @@ public static class BlockTypeManager
             "models/block/oak_log",
             "models/block/oak_planks",
             "models/block/orange_wool",
+            "models/block/oak_stairs",
+            "models/block/hopper",
+            "models/block/anvil",
+            "models/block/rose_bush_bottom",
+            "models/block/dandelion",
+            "models/block/four_sea_pickles",
             ];
 
         foreach (var blockV in testBlocks)
         {
-            var d = MinecraftJsonManager.GetData(blockV);
+            var data = MinecraftJsonManager.GetData(blockV);
 
-            if (!d)
+            if (!data)
             {
                 Program.LogWarning($"Could not find: '{blockV}'!");
-                return;
+                continue;
             }
 
-            var block = MinecraftJsonManager.GetFullyPopulatedData(d, "models/");
-
-            AddBlockData(block);
+            AddBlockData(data);
         }
 
         /*
@@ -123,67 +127,14 @@ public static class BlockTypeManager
 
     private static void AddBlockData(DynamicData data)
     {
-        var textures = data.GetItem("textures");
-
-        if(!textures) return;
-
-        var upD = textures.GetItem("up");
-        var downD = textures.GetItem("down");
-
-        var topD = textures.GetItem("top");
-        var bottomD = textures.GetItem("bottom");
-
-        var northD = textures.GetItem("north");
-        var eastD = textures.GetItem("east");
-        var southD = textures.GetItem("south");
-        var westD = textures.GetItem("west");
-
-        var sideD = textures.GetItem("side");
-
-        var upS = "";
-        var downS = "";
-        var northS = "";
-        var eastS = "";
-        var southS = "";
-        var westS = "";
-
-        if (upD)
-        {
-            upS = upD.GetValue<string>().Split(':')[^1];
-            downS = downD.GetValue<string>().Split(':')[^1];
-        }
-        else
-        {
-            upS = topD.GetValue<string>().Split(':')[^1];
-            downS = bottomD.GetValue<string>().Split(':')[^1];
-        }
-
-        if (sideD)
-        {
-            var sideS = sideD.GetValue<string>().Split(':')[^1];
-
-            northS = sideS;
-            eastS = sideS;
-            southS = sideS;
-            westS = sideS;
-        }
-        else
-        {
-            northS = northD.GetValue<string>().Split(':')[^1];
-            eastS = eastD.GetValue<string>().Split(':')[^1];
-            southS = southD.GetValue<string>().Split(':')[^1];
-            westS = westD.GetValue<string>().Split(':')[^1];
-        }
-
-
+        MinecraftJsonManager.FullyPopulateData(ref data, "models/");
 
         var name = data.name.Split('/')[^1];
 
-        AddBlockData("minecraft:"+name, name, eastS, westS, upS, downS, southS, northS);
+        var id = "minecraft:" + name;
+
+        blockData.Add(id, new(id, name, data));
     }
-    private static void AddBlockData(string id) => blockData.Add(id, new BlockType());
-    private static void AddBlockData(string id, string name, string textureID) => blockData.Add(id, new BlockType(id, name, textureID));
-    private static void AddBlockData(string id, string name, string eastTexture, string westTexture, string upTexture, string downTexture, string southTexture, string northFolder) => blockData.Add(id, new BlockType(id, name, eastTexture, westTexture, upTexture, downTexture, southTexture, northFolder));
 }
 
 public struct BlockType
@@ -191,46 +142,34 @@ public struct BlockType
     public readonly string id;
     public readonly string name;
 
-    public readonly string eastTexture;
-    public readonly string westTexture;
-    public readonly string upTexture;
-    public readonly string downTexture;
-    public readonly string southTexture;
-    public readonly string northTexture;
+    public readonly DynamicData modelData;
+
+    public static DynamicData nullData;
 
     public BlockType()
     {
         id = "minecraft:null";
         name = "NULL";
 
-        eastTexture = "NULL";
-        westTexture = "NULL";
-        upTexture = "NULL";
-        downTexture = "NULL";
-        southTexture = "NULL";
-        northTexture = "NULL";
-    }
-    public BlockType(string id, string name, string rightTexture, string leftTexture, string topTexture, string bottomTexture, string backTexture, string frontTexture)
-    {
-        this.id = id;
-        this.name = name;
-        this.eastTexture = rightTexture;
-        this.westTexture = leftTexture;
-        this.upTexture = topTexture;
-        this.downTexture = bottomTexture;
-        this.southTexture = backTexture;
-        this.northTexture = frontTexture;
+        if (!nullData) GenerateNullData();
+
+        modelData = nullData;
     }
 
-    public BlockType(string id, string name, string texture)
+
+    public BlockType(string id, string name, DynamicData data)
     {
         this.id = id;
         this.name = name;
-        eastTexture = texture;
-        westTexture = texture;
-        upTexture = texture;
-        downTexture = texture;
-        southTexture = texture;
-        northTexture = texture;
+        this.modelData = data;
+    }
+
+    private static void GenerateNullData()
+    {
+        var data = "{{\"parent\": \"minecraft:block/cube_all\",\"textures\": {\"all\": \"minecraft:null\"}}";
+
+        nullData = FileParser.ParseJson("NULL", data);
+
+        MinecraftJsonManager.FullyPopulateData(ref nullData, "models/");
     }
 }

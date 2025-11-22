@@ -10,7 +10,7 @@ public static class TextureManager
     public static void GenerateAtlas()
     {
         List<ImageResult> images = [Texture.ReadImageFile(Program.GetLocalTexturePath("NULL"), ColorComponents.RedGreenBlueAlpha)];
-        blockTextureIds = new Dictionary<string, int> { { "NULL", 0 } };
+        blockTextureIds = new Dictionary<string, int> { { "minecraft:null", 0 } };
 
         var texturesPath = Path.Combine(Program.ProgramDirectory, "Data\\assets\\minecraft\\textures");
 
@@ -34,6 +34,8 @@ public static class TextureManager
                     Program.Log($"Ignoring '{fileName}'...");
                     continue;
                 }
+
+                fileName = "minecraft:" + fileName;
 
                 var type = Path.GetExtension(file);
 
@@ -70,6 +72,8 @@ public static class TextureManager
 
     public static int GetTextureID(string textureName)
     {
+        if (!textureName.Contains(':')) textureName = "minecraft:" + textureName;
+
         if (!blockTextureIds.ContainsKey(textureName))
         {
             Program.LogError("TextureAtlasManager: Requested non-existent texture: " + textureName);

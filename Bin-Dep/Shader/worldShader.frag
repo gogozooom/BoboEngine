@@ -8,7 +8,15 @@ uniform sampler2DArray mainTexture;
 
 void main()
 {
-    f_color = texture(mainTexture, v_TexCoord); // Texture Sample
+    vec4 color = texture(mainTexture, v_TexCoord);
+
+    // Alpha Discard
+    if (color.w < 0.5)
+    {
+        discard;
+    }
+
+    f_color = color; // Texture Sample
 
     //f_color = vec4(v_VertexColor, 1); // Triangle Color Sample
     //f_color = vec4(fract(v_TexCoord), 0, 1); // UV Debug

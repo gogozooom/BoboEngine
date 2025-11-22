@@ -124,30 +124,30 @@ public static class WorldDataManager
             var c = positionMarched - blockPos;
 
             // Unit Square Points
-            Float3 v1 = new(0, 0, 0); // Down - South - East
-            Float3 v2 = new(1, 0, 0); // Down - South - West
-            Float3 v3 = new(1, 0, 1); // Down - North - West
-            Float3 v4 = new(0, 0, 1); // Down - North - East
-            Float3 v5 = new(0, 1, 1); // Up   - North - East
-            Float3 v6 = new(1, 1, 1); // Up   - North - West
-            Float3 v7 = new(1, 1, 0); // Up   - South - West
-            Float3 v8 = new(0, 1, 0); // Up   - South - East
+            Float3 v1 = new(0, 0, 0); // Down - North - West
+            Float3 v2 = new(1, 0, 0); // Down - North - East
+            Float3 v3 = new(1, 0, 1); // Down - South - East
+            Float3 v4 = new(0, 0, 1); // Down - South - West
+            Float3 v5 = new(0, 1, 1); // Up   - South - West
+            Float3 v6 = new(1, 1, 1); // Up   - South - East
+            Float3 v7 = new(1, 1, 0); // Up   - North - East
+            Float3 v8 = new(0, 1, 0); // Up   - North - West
 
             // Edge Normals
             Float3 n1 = Float3.CrossProduct(v1 - c, v2 - c); // Down  - South
-            Float3 n2 = Float3.CrossProduct(v2 - c, v3 - c); // Down  - West
+            Float3 n2 = Float3.CrossProduct(v2 - c, v3 - c); // Down  - East
             Float3 n3 = Float3.CrossProduct(v3 - c, v4 - c); // Down  - North
-            Float3 n4 = Float3.CrossProduct(v4 - c, v1 - c); // Down  - East
+            Float3 n4 = Float3.CrossProduct(v4 - c, v1 - c); // Down  - West
 
-            Float3 n5 = Float3.CrossProduct(v4 - c, v5 - c); // North - East
-            Float3 n6 = Float3.CrossProduct(v3 - c, v6 - c); // North - West
-            Float3 n7 = Float3.CrossProduct(v2 - c, v7 - c); // South - West
-            Float3 n8 = Float3.CrossProduct(v1 - c, v8 - c); // South - East
+            Float3 n5 = Float3.CrossProduct(v4 - c, v5 - c); // South - West
+            Float3 n6 = Float3.CrossProduct(v3 - c, v6 - c); // South - East
+            Float3 n7 = Float3.CrossProduct(v2 - c, v7 - c); // North - East
+            Float3 n8 = Float3.CrossProduct(v1 - c, v8 - c); // North - West
 
-            Float3 n9 = Float3.CrossProduct(v5 - c, v6 - c); // Up    - North
-            Float3 n10 = Float3.CrossProduct(v6 - c, v7 - c); // Up    - West
-            Float3 n11 = Float3.CrossProduct(v7 - c, v8 - c); // Up    - South
-            Float3 n12 = Float3.CrossProduct(v8 - c, v5 - c); // Up    - East
+            Float3 n9 = Float3.CrossProduct(v5 - c, v6 - c); // Up    - South
+            Float3 n10 = Float3.CrossProduct(v6 - c, v7 - c); // Up    - East
+            Float3 n11 = Float3.CrossProduct(v7 - c, v8 - c); // Up    - North
+            Float3 n12 = Float3.CrossProduct(v8 - c, v5 - c); // Up    - West
 
             // Dot Results
             float r1 = Float3.Dot(n1, raycastDirection);
@@ -193,43 +193,24 @@ public static class WorldDataManager
 
             // r1  - r2  - r3  - r4  - r5  - r6  - r7  - r8  - r9  - r10 - r11 - r12
 
-            // Supposed to be WEST
-            // Neg - Neg - Pos - Pos - Pos - Neg - Pos - Pos - Pos - Neg - Neg - Pos
-
-            // Supposed to be EAST
-            // Pos - Pos - Pos - Neg - Pos - Pos - Neg - Neg - Neg - Neg - Neg - Neg
-
             if (r4 <= s && r5 >= -s && r8 <= s && r12 <= s)
             {
-                nextBlockDirections.Add(BlockDirection.EAST);
+                nextBlockDirections.Add(BlockDirection.WEST);
             }
             else if (r2 <= s && r6 <= s && r7 >= -s && r10 <= s)
             {
-                nextBlockDirections.Add(BlockDirection.WEST);
+                nextBlockDirections.Add(BlockDirection.EAST);
             }
 
             // r1  - r2  - r3  - r4  - r5  - r6  - r7  - r8  - r9  - r10 - r11 - r12
 
-            // Supposed to be SOUTH
-            // Neg - Neg - Pos - Pos - Pos - Neg - Neg - Pos - Pos - Neg - Neg - Pos
-            // Neg - Neg - Pos - Pos - Neg - Neg - Neg - Pos - Pos - Neg - Neg - Pos
-            // Neg - Neg - Pos - Pos - Neg - Neg - Neg - Pos - Pos - Neg - Neg - Pos
-            // Neg - Neg - Pos - Neg - Pos - Neg - Neg - Pos - Pos - Pos - Neg - Pos
-            // Neg - Pos - Pos - Pos - Pos - Pos - Neg - Pos - Pos - Pos - Neg - Neg
-
-            // NOT SOUTH
-            // Neg - Neg - Pos - Pos - Neg - Neg - Pos - Pos - Pos - Neg - Neg - Pos
-            // Neg - Neg - Pos - Neg - Pos - Neg - Neg - Pos - Pos - Pos - Pos - Pos
-            // Neg - Pos - Pos - Neg - Pos - Pos - Neg - Pos - Pos - Pos - Pos - Pos
-            // Neg - Neg - Pos - Neg - Pos - Neg - Neg - Pos - Pos - Pos - Pos - Pos
-
             if (r3 <= s && r5 <= s && r6 >= -s && r9 <= s)
             {
-                nextBlockDirections.Add(BlockDirection.NORTH);
+                nextBlockDirections.Add(BlockDirection.SOUTH);
             }
             else if (r1 <= s && r7 <= s && r8 >= -s && r11 <= s)
             {
-                nextBlockDirections.Add(BlockDirection.SOUTH);
+                nextBlockDirections.Add(BlockDirection.NORTH);
             }
 
 
@@ -295,19 +276,19 @@ public static class WorldDataManager
                     pointToMarchTo = Maths.PlanePointIntersection(c, raycastDirection, Axis.Yaxis) + blockPos;
                     blockPos += new Int3(0, -1, 0);
                     break;
-                case BlockDirection.NORTH:
+                case BlockDirection.SOUTH:
                     pointToMarchTo = Maths.PlanePointIntersection(c, raycastDirection, Axis.Zaxis, 1) + blockPos;
                     blockPos += new Int3(0, 0, 1);
                     break;
-                case BlockDirection.SOUTH:
+                case BlockDirection.NORTH:
                     pointToMarchTo = Maths.PlanePointIntersection(c, raycastDirection, Axis.Zaxis) + blockPos;
                     blockPos += new Int3(0, 0, -1);
                     break;
-                case BlockDirection.WEST:
+                case BlockDirection.EAST:
                     pointToMarchTo = Maths.PlanePointIntersection(c, raycastDirection, Axis.Xaxis, 1) + blockPos;
                     blockPos += new Int3(1, 0, 0);
                     break;
-                case BlockDirection.EAST:
+                case BlockDirection.WEST:
                     pointToMarchTo = Maths.PlanePointIntersection(c, raycastDirection, Axis.Xaxis) + blockPos;
                     blockPos += new Int3(-1, 0, 0);
                     break;

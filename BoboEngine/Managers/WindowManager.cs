@@ -39,7 +39,7 @@ namespace BoboEngine
             SceneManager.LoadScene();
             WorldDataManager.GenerateTestChunk();
 
-            SetClearColor(new Vector4(0.2f,0.2f,0.4f, 1f));
+            SetClearColor(new Vector4(0.2f, 0.2f, 0.4f, 1f));
 
             float timeLastFrame = Time.time;
 

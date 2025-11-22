@@ -54,7 +54,7 @@ public static class MinecraftJsonManager
         return result;
     }
 
-    public static DynamicData GetFullyPopulatedData(DynamicData data, string context = "")
+    public static DynamicData FullyPopulateData(ref DynamicData data, string context = "")
     {
         while (data.HasItem("parent"))
         {
@@ -75,12 +75,12 @@ public static class MinecraftJsonManager
 
         data.RemoveItem("parent");
 
-        data = PopulateReferences(data);
+        PopulateReferences(ref data);
 
         return data;
     }
 
-    public static DynamicData PopulateReferences(DynamicData data)
+    public static DynamicData PopulateReferences(ref DynamicData data)
     {
         List<DynamicData> allValues = data.GetAllValues();
 
@@ -97,7 +97,7 @@ public static class MinecraftJsonManager
             {
                 if (independentValues.ContainsKey(value.name))
                 {
-                    Program.LogWarning($"Duplicate values '{value.name}'"); // Maybe have a list of items in the dictionarys?
+                    //Program.LogWarning($"Duplicate values '{value.name}'");
                     continue;
                 }
 
@@ -113,7 +113,7 @@ public static class MinecraftJsonManager
 
             if(!independentValues.TryGetValue(indepS, out var indepD))
             {
-                Program.LogWarning($"Unable to populate '#{indepS}' missing independent variable!");
+                //Program.LogWarning($"Unable to populate '#{indepS}' missing independent variable!");
                 continue;
             }
 
@@ -124,7 +124,7 @@ public static class MinecraftJsonManager
         if (!success) return data;
 
         // Repeat
-        return PopulateReferences(data);
+        return PopulateReferences(ref data);
     }
 
     private static bool IgnoreFile(string file)
