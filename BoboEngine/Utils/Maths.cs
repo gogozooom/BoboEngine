@@ -99,24 +99,27 @@ public static class Maths
     /// <summary>
     /// Sin in degrees
     /// </summary>
-    public static float Sin(float a)
-    {
-        return MathF.Sin(ToRad(a));
-    }
+    public static float Sin(float a) => MathF.Sin(ToRad(a));
     /// <summary>
     /// Cos in degrees
     /// </summary>
-    public static float Cos(float a)
-    {
-        return MathF.Cos(ToRad(a));
-    }
+    public static float Cos(float a) => MathF.Cos(ToRad(a));
     /// <summary>
     /// Tan in degrees
     /// </summary>
-    public static float Tan(float a)
-    {
-        return MathF.Tan(ToRad(a));
-    }
+    public static float Tan(float a) => MathF.Tan(ToRad(a));
+    /// <summary>
+    /// Csc in degrees
+    /// </summary>
+    public static float Csc(float a) => 1 / Sin(a);
+    /// <summary>
+    /// Sec in degrees
+    /// </summary>
+    public static float Sec(float a) => 1 / Cos(a);
+    /// <summary>
+    /// Cot in degrees
+    /// </summary>
+    public static float Cot(float a) => 1 / Tan(a);
 
     /// <summary>
     /// Converts degrees to radians
@@ -132,6 +135,22 @@ public static class Maths
     {
         return r * 180 / MathF.PI;
     }
+
+    /// <summary>
+    /// Triangle wave from 0 - 1 </br>
+    /// Desmos: https://www.desmos.com/calculator/myjp5vxk9z
+    /// </summary>
+    public static float TriangleWave(float x)
+    {
+        // lxl is supposed to look like |x| :sob:
+        float lxl = MathF.Abs(x);
+
+        bool isInt = x == MathF.Floor(x);
+        bool evenS = MathF.Floor(lxl) % 2 == 0;
+
+        return isInt && !evenS ? 1 : ((isInt || evenS ? lxl : MathF.Ceiling(lxl) - lxl) % 1);
+    }
+
     public static float GetTriangleDepthAtPoint(Float3 a, Float3 b, Float3 c, Float2 p)
     {
         PointInTriangle((Float2)a, (Float2)b, (Float2)c, p, out Float3 weights);

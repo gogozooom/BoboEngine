@@ -4,11 +4,11 @@ namespace Minecraft;
 
 public static class MinecraftJsonManager
 {
-    public static Dictionary<string, DynamicData> rawDataResults;
+    public static Dictionary<string, DynamicData> allData;
 
     public static void LoadBlockModelData()
     {
-        rawDataResults = new();
+        allData = new();
 
         var assetsPath = Path.Combine(Program.ProgramDirectory, "Data\\assets\\minecraft");
         
@@ -37,15 +37,15 @@ public static class MinecraftJsonManager
 
             var results = FileParser.ParseJson(fileName, data, false);
 
-            rawDataResults.Add(fileName, results);
+            allData.Add(fileName, results);
 
-            Program.LogMessage($"Loaded ({rawDataResults.Count}/{t}) --- '{fileName}{type}'");
+            Program.LogMessage($"Loaded ({allData.Count}/{t}) --- '{fileName}{type}'");
         }
     }
 
     public static DynamicData GetData(string id)
     {
-        if (!rawDataResults.TryGetValue(id, out var result))
+        if (!allData.TryGetValue(id, out var result))
         {
             Program.LogError($"No raw block model data for id '{id}'!");
             return null;

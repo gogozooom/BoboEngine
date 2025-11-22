@@ -55,7 +55,10 @@ public class Chunk : ObjectBehavior
 
     private Mesh _connectedMesh;
 
-    public void GenerateMesh() // TODO: Fire this only when both: The block data has changed AND on late update!
+    /// <summary>
+    /// Updates the visual mesh
+    /// </summary>
+    public void GenerateMesh()
     {
         _connectedMesh.DeleteMesh();
 
@@ -63,12 +66,12 @@ public class Chunk : ObjectBehavior
         List<FaceInfo> faces = new();
         List<Float2> textureCoords = new();
         List<Float3> normals = [
-            new(-1, 0, 0),
-            new(-1, 0, 0),
-            new( 0,-1, 0),
-            new( 0, 1, 0),
-            new( 0, 0,-1),
-            new( 0, 0, 1),
+            BlockFace.GetNormal(BlockDirection.WEST),
+            BlockFace.GetNormal(BlockDirection.EAST),
+            BlockFace.GetNormal(BlockDirection.DOWN),
+            BlockFace.GetNormal(BlockDirection.UP),
+            BlockFace.GetNormal(BlockDirection.NORTH),
+            BlockFace.GetNormal(BlockDirection.SOUTH),
             ];
 
 
@@ -89,18 +92,18 @@ public class Chunk : ObjectBehavior
 
                     var elementData = blockType.modelData.GetItem("elements");
 
-                    DynamicData[] elements = elementData.GetImmediateChildren();
-
                     if (!elementData)
                     {
                         Program.LogWarning($"'{blockType}' does not have any model elements!");
                         continue;
                     }
 
+                    DynamicData[] elements = elementData.GetImmediateChildren();
+
                     // Flipped order to allow block overlays to render over
                     for (int i = elements.Length - 1; i >= 0; i--)
                     {
-                        GenerateBlockMesh(blockType, localBlockPosition, ref vertices, ref faces, ref textureCoords, elementIndex, elements[i]);
+                        GM_GenerateBlockMesh(blockType, localBlockPosition, ref vertices, ref faces, ref textureCoords, elementIndex, elements[i]);
 
                         elementIndex++;
                     }
@@ -110,8 +113,22 @@ public class Chunk : ObjectBehavior
 
         _connectedMesh.LoadRawData(vertices.ToArray(), faces.ToArray(), normals.ToArray(), textureCoords.ToArray());
     }
-    private void GenerateBlockMesh(BlockType blockType, Int3 localBlockPosition, ref List<Float3> vertices, ref List<FaceInfo> faces, ref List<Float2> textureCoords, int elementIndex, DynamicData elementData)
+
+    /// <summary>
+    /// Only to be used by <see cref="GenerateMesh"/>
+    /// </summary>
+    private void GM_GenerateBlockMesh(BlockType blockType, Int3 localBlockPosition, ref List<Float3> vertices, ref List<FaceInfo> faces, ref List<Float2> textureCoords, int elementIndex, DynamicData elementData)
     {
+        /* NOTE:
+         * Any variable name immidiatly followed by a 'D' means Data
+         *  e.g:
+         *     var facesD == DynamicData facesData
+         *     var fromD == DynamicData fromData
+         *     var rescaleD == DynamicData rescaleData
+         *     
+         *  I have this simply to avoid clutter
+         */
+
         var facesD = elementData.GetItem("faces");
 
         if (!facesD)
@@ -122,25 +139,49 @@ public class Chunk : ObjectBehavior
 
         Int3 worldBlockPosition = LocalPositionToWorld(localBlockPosition);
 
-
-        // Adjacent blocks
-        var westBlock = WorldDataManager.GetBlockAtPosition(worldBlockPosition + new Int3(-1, 0, 0));
-        var eastBlock = WorldDataManager.GetBlockAtPosition(worldBlockPosition + new Int3(1, 0, 0));
-        var downBlock = WorldDataManager.GetBlockAtPosition(worldBlockPosition + new Int3(0, -1, 0));
-        var upBlock = WorldDataManager.GetBlockAtPosition(worldBlockPosition + new Int3(0, 1, 0));
-        var northBlock = WorldDataManager.GetBlockAtPosition(worldBlockPosition + new Int3(0, 0, -1));
-        var southBlock = WorldDataManager.GetBlockAtPosition(worldBlockPosition + new Int3(0, 0, 1));
-
         // Create Vertice Bounds
 
         Float3 from = new(0, 0, 0);
         Float3 to = new(16, 16, 16);
 
+        Float3 rotationOrigin = new(0, 0, 0);
+        Axis rotationAxis = Axis.Yaxis;
+        float rotationAngle = 0;
+        bool rotationRescale = false;
+
         var fromD = elementData.GetItem("from");
         var toD = elementData.GetItem("to");
+        var rotationD = elementData.GetItem("rotation");
+
+        DynamicData originD = null;
+        DynamicData axisD = null;
+        DynamicData angleD = null;
+        DynamicData rescaleD = null;
+
 
         if (fromD) from = fromD.GetValue<Float3>();
         if (toD) to = toD.GetValue<Float3>();
+        if (rotationD)
+        {
+            originD = rotationD.GetItem("origin");
+
+            if (originD) rotationOrigin = originD.GetValue<Float3>();
+
+
+            axisD = rotationD.GetItem("axis");
+
+            if (axisD) rotationAxis = axisD.GetValue<Axis>();
+
+
+            angleD = rotationD.GetItem("angle");
+
+            if (angleD) rotationAngle = angleD.GetValue<float>();
+
+
+            rescaleD = rotationD.GetItem("rescale");
+
+            if (rescaleD) rotationRescale = rescaleD.GetValue<bool>();
+        }
 
         // Face Render Checks
 
@@ -179,201 +220,45 @@ public class Chunk : ObjectBehavior
         float northUVRotation = 0;
         float southUVRotation = 0;
 
-        // For Loop to avoid tedious code duplication
-        // Yes I know, a function serves the same purpose, shut up... (I'll do that in refactoring later...)
-        for (int i = 0; i < 6; i++)
-        {
-            DynamicData faceD;
+        // Adjacent blocks
+        var downBlock = WorldDataManager.GetBlockAtPosition(worldBlockPosition + new Int3(0, -1, 0));
+        var upBlock = WorldDataManager.GetBlockAtPosition(worldBlockPosition + new Int3(0, 1, 0));
+        var northBlock = WorldDataManager.GetBlockAtPosition(worldBlockPosition + new Int3(0, 0, -1));
+        var southBlock = WorldDataManager.GetBlockAtPosition(worldBlockPosition + new Int3(0, 0, 1));
+        var westBlock = WorldDataManager.GetBlockAtPosition(worldBlockPosition + new Int3(-1, 0, 0));
+        var eastBlock = WorldDataManager.GetBlockAtPosition(worldBlockPosition + new Int3(1, 0, 0));
 
-            // Get faceD
-            switch (i)
-            {
-                case 0:
-                    faceD = eastFaceD;
-                    break;
-                case 1:
-                    faceD = westFaceD;
-                    break;
-                case 2:
-                    faceD = downFaceD;
-                    break;
-                case 3:
-                    faceD = upFaceD;
-                    break;
-                case 4:
-                    faceD = northFaceD;
-                    break;
-                default:
-                    faceD = southFaceD;
-                    break;
-            }
+        // Maybe put downBlock, upBlock, northBlock, etc... in a separate struct?
 
-            UVRect uvs = new UVRect(0, 0, 16, 16);
-            bool renderFace = false;
-            int textureID = 0;
-            float rotation = 0;
+        GM_PopulateModelProperties(eastFaceD, ref renderEastFace, ref eastTextureUVs, ref eastTextureID, ref eastUVRotation,
+            from, to,
+            downBlock, upBlock, northBlock, southBlock, westBlock, eastBlock);
 
-            if (faceD)
-            {
-                var cullfaceD = faceD.GetItem("cullface");
+        GM_PopulateModelProperties(westFaceD, ref renderWestFace, ref westTextureUVs, ref westTextureID, ref westUVRotation,
+            from, to,
+            downBlock, upBlock, northBlock, southBlock, westBlock, eastBlock);
 
-                if (cullfaceD)
-                {
-                    string cullface = cullfaceD.GetValue<string>();
+        GM_PopulateModelProperties(downFaceD, ref renderDownFace, ref downTextureUVs, ref downTextureID, ref downUVRotation,
+            from, to,
+            downBlock, upBlock, northBlock, southBlock, westBlock, eastBlock);
 
-                    string adjacentBlockId = "minecraft:air";
+        GM_PopulateModelProperties(upFaceD, ref renderUpFace, ref upTextureUVs, ref upTextureID, ref upUVRotation,
+            from, to,
+            downBlock, upBlock, northBlock, southBlock, westBlock, eastBlock);
 
-                    switch (cullface)
-                    {
-                        case "down":
-                            adjacentBlockId = downBlock.block_id;
-                            break;
-                        case "up":
-                            adjacentBlockId = upBlock.block_id;
-                            break;
-                        case "north":
-                            adjacentBlockId = northBlock.block_id;
-                            break;
-                        case "south":
-                            adjacentBlockId = southBlock.block_id;
-                            break;
-                        case "west":
-                            adjacentBlockId = westBlock.block_id;
-                            break;
-                        case "east":
-                            adjacentBlockId = eastBlock.block_id;
-                            break;
-                    }
+        GM_PopulateModelProperties(northFaceD, ref renderNorthFace, ref northTextureUVs, ref northTextureID, ref northUVRotation,
+            from, to,
+            downBlock, upBlock, northBlock, southBlock, westBlock, eastBlock);
 
-                    renderFace = adjacentBlockId == "minecraft:air"; // To be more sophisticated!
-                }
-                else renderFace = true;
-
-                if (renderFace)
-                {
-                    var textureD = faceD.GetItem("texture");
-
-                    if (textureD)
-                    {
-                        textureID = TextureManager.GetTextureID(textureD.GetValue<string>());
-                    }
-
-                    var uvD = faceD.GetItem("uv");
-
-                    if (uvD)
-                    {
-                        uvs = uvD.GetValue<UVRect>();
-                    }
-                    else
-                    {
-                        Float3 fromF = 16 - from;
-
-                        Float3 size = to - from;
-
-                        Float3 sizeF = 16 - size;
-
-                        switch (i)
-                        {
-                            case 0: // East
-
-                                uvs = new UVRect(sizeF.z - from.z, sizeF.y - from.y, fromF.z, fromF.y);
-
-                                break;
-                            case 1: // West
-
-                                uvs = new UVRect(from.z, sizeF.y - from.y, from.z + size.z, fromF.y);
-
-                                break;
-                            case 2: // Down
-
-                                uvs = new UVRect(from.x, sizeF.z - from.z, from.x + size.x, size.z + from.z);
-
-                                break;
-                            case 3: // Up
-
-                                uvs = new UVRect(from.x, from.z, size.x + from.x, size.z + from.z);
-
-                                break;
-                            case 4: // North
-
-                                uvs = new UVRect(sizeF.x - from.x, sizeF.y - from.y, fromF.x, fromF.y);
-
-                                break;
-                            default: // South
-
-                                uvs = new UVRect(from.x, sizeF.y - from.y, from.x + size.x, fromF.y);
-
-                                break;
-                        }
-                    }
-
-                    var rotateD = faceD.GetItem("rotation");
-
-                    if (rotateD)
-                    {
-                        var rotateV = rotateD.GetValue<int>();
-
-                        if(rotateV == 0 || rotateV == 90 || rotateV == 180 || rotateV == 270)
-                        {
-                            rotation = rotateV;
-                        }
-                        else
-                        {
-                            Program.LogWarning($"Invalid texture rotation value '{rotateV}'");
-                        }
-                    }
-                }
-            }
-
-            uvs /= 16;
-
-            // Apply results
-            switch (i)
-            {
-                case 0:
-                    renderEastFace = renderFace;
-                    eastTextureID = textureID;
-                    eastTextureUVs = uvs;
-                    eastUVRotation = rotation;
-                    break;
-                case 1:
-                    renderWestFace = renderFace;
-                    westTextureID = textureID;
-                    westTextureUVs = uvs;
-                    westUVRotation = rotation;
-                    break;
-                case 2:
-                    renderDownFace = renderFace;
-                    downTextureID = textureID;
-                    downTextureUVs = uvs;
-                    downUVRotation = rotation;
-                    break;
-                case 3:
-                    renderUpFace = renderFace;
-                    upTextureID = textureID;
-                    upTextureUVs = uvs;
-                    upUVRotation = rotation;
-                    break;
-                case 4:
-                    renderNorthFace = renderFace;
-                    northTextureID = textureID;
-                    northTextureUVs = uvs;
-                    northUVRotation = rotation;
-                    break;
-                case 5:
-                    renderSouthFace = renderFace;
-                    southTextureID = textureID;
-                    southTextureUVs = uvs;
-                    southUVRotation = rotation;
-                    break;
-            }
-        }
-
+        GM_PopulateModelProperties(southFaceD, ref renderSouthFace, ref southTextureUVs, ref southTextureID, ref southUVRotation,
+            from, to,
+            downBlock, upBlock, northBlock, southBlock, westBlock, eastBlock);
 
         // Create Vertices
 
         from /= 16;
         to /= 16;
+        rotationOrigin /= 16;
 
         Float3[] blockVerts = [
             new Float3(0, 0, 0), // 1
@@ -388,7 +273,53 @@ public class Chunk : ObjectBehavior
 
         foreach (var vert in blockVerts)
         {
-            Float3 transformedVert = new(vert.x == 0 ? from.x : to.x, vert.y == 0 ? from.y : to.y, vert.z == 0 ? from.z : to.z);
+            Float3 untransformedVert = new(vert.x == 0 ? from.x : to.x, vert.y == 0 ? from.y : to.y, vert.z == 0 ? from.z : to.z);
+
+            Float3 transformedVert = untransformedVert;
+
+            if (rotationD && rotationAngle != 0) // Avoid unnecessary calculation
+            {
+                if (originD) transformedVert -= rotationOrigin;
+
+                BaseVectors basisVectors;
+
+                switch (rotationAxis)
+                {
+                    case Axis.Xaxis:
+                        basisVectors = BaseVectors.FromXRotation(rotationAngle);
+                        break;
+                    case Axis.Zaxis:
+                        basisVectors = BaseVectors.FromZRotation(rotationAngle);
+                        break;
+                    default:
+                        basisVectors = BaseVectors.FromYRotation(rotationAngle);
+                        break;
+                }
+
+                Float3 scaler = new(1, 1, 1);
+
+                if (rotationRescale)
+                {
+                    float mult = Maths.Sec(45f * Maths.TriangleWave(rotationAngle / 45f));
+
+                    switch (rotationAxis)
+                    {
+                        case Axis.Xaxis:
+                            scaler = new(1, mult, mult);
+                            break;
+                        case Axis.Zaxis:
+                            scaler = new(mult, mult, 1);
+                            break;
+                        default:
+                            scaler = new(mult, 1, mult);
+                            break;
+                    }
+                }
+
+                transformedVert = basisVectors.TransformVector(transformedVert) * scaler;
+
+                if (originD) transformedVert += rotationOrigin;
+            }
 
             vertices.Add(transformedVert + localBlockPosition);
         }
@@ -412,266 +343,38 @@ public class Chunk : ObjectBehavior
 
         if (renderWestFace) 
         {
-            // West Face
-
-            switch (westUVRotation)
-            {
-                default:
-                    textureCoords.Add(new(westTextureUVs.uMin, westTextureUVs.vMin));
-                    textureCoords.Add(new(westTextureUVs.uMax, westTextureUVs.vMin));
-                    textureCoords.Add(new(westTextureUVs.uMax, westTextureUVs.vMax));
-                    textureCoords.Add(new(westTextureUVs.uMin, westTextureUVs.vMax));
-                    break;
-                case 90f:
-                    textureCoords.Add(new(westTextureUVs.uMax, westTextureUVs.vMin));
-                    textureCoords.Add(new(westTextureUVs.uMax, westTextureUVs.vMax));
-                    textureCoords.Add(new(westTextureUVs.uMin, westTextureUVs.vMax));
-                    textureCoords.Add(new(westTextureUVs.uMin, westTextureUVs.vMin));
-                    break;
-                case 180f:
-                    textureCoords.Add(new(westTextureUVs.uMax, westTextureUVs.vMax));
-                    textureCoords.Add(new(westTextureUVs.uMin, westTextureUVs.vMax));
-                    textureCoords.Add(new(westTextureUVs.uMin, westTextureUVs.vMin));
-                    textureCoords.Add(new(westTextureUVs.uMax, westTextureUVs.vMin));
-                    break;
-                case 270f:
-                    textureCoords.Add(new(westTextureUVs.uMin, westTextureUVs.vMax));
-                    textureCoords.Add(new(westTextureUVs.uMin, westTextureUVs.vMin));
-                    textureCoords.Add(new(westTextureUVs.uMax, westTextureUVs.vMin));
-                    textureCoords.Add(new(westTextureUVs.uMax, westTextureUVs.vMax));
-                    break;
-            }
-
-            var uvO = textureCoords.Count();
-
-            var vO = elementIndex * 8;
-
-            squareFaces.Add(($"f {1 + vO}/{uvO - 3}/1 " +
-                              $"{2 + vO}/{uvO - 2}/1 " +
-                              $"{3 + vO}/{uvO - 1}/1 " +
-                              $"{4 + vO}/{uvO}/1",
-                              westTextureID
-                              ));
+            GM_GenerateModelFace(westUVRotation, westTextureUVs, westTextureID, [1, 2, 3, 4], 1,
+                ref textureCoords, ref squareFaces, ref elementIndex);
         }
 
         if (renderEastFace)
         {
-            // East Face
-
-            switch (eastUVRotation)
-            {
-                default:
-                    textureCoords.Add(new(eastTextureUVs.uMin, eastTextureUVs.vMin));
-                    textureCoords.Add(new(eastTextureUVs.uMax, eastTextureUVs.vMin));
-                    textureCoords.Add(new(eastTextureUVs.uMax, eastTextureUVs.vMax));
-                    textureCoords.Add(new(eastTextureUVs.uMin, eastTextureUVs.vMax));
-                    break;
-                case 90f:
-                    textureCoords.Add(new(eastTextureUVs.uMax, eastTextureUVs.vMin));
-                    textureCoords.Add(new(eastTextureUVs.uMax, eastTextureUVs.vMax));
-                    textureCoords.Add(new(eastTextureUVs.uMin, eastTextureUVs.vMax));
-                    textureCoords.Add(new(eastTextureUVs.uMin, eastTextureUVs.vMin));
-                    break;
-                case 180f:
-                    textureCoords.Add(new(eastTextureUVs.uMax, eastTextureUVs.vMax));
-                    textureCoords.Add(new(eastTextureUVs.uMin, eastTextureUVs.vMax));
-                    textureCoords.Add(new(eastTextureUVs.uMin, eastTextureUVs.vMin));
-                    textureCoords.Add(new(eastTextureUVs.uMax, eastTextureUVs.vMin));
-                    break;
-                case 270f:
-                    textureCoords.Add(new(eastTextureUVs.uMin, eastTextureUVs.vMax));
-                    textureCoords.Add(new(eastTextureUVs.uMin, eastTextureUVs.vMin));
-                    textureCoords.Add(new(eastTextureUVs.uMax, eastTextureUVs.vMin));
-                    textureCoords.Add(new(eastTextureUVs.uMax, eastTextureUVs.vMax));
-                    break;
-            }
-
-            var uvO = textureCoords.Count();
-
-            var vO = elementIndex * 8;
-
-            squareFaces.Add(($"f {8 + vO}/{uvO - 3}/2 " +
-                              $"{5 + vO}/{uvO - 2}/2 " +
-                              $"{6 + vO}/{uvO - 1}/2 " +
-                              $"{7 + vO}/{uvO}/2",
-                              eastTextureID
-                              ));
+            GM_GenerateModelFace(eastUVRotation, eastTextureUVs, eastTextureID, [8, 5, 6, 7], 2,
+                ref textureCoords, ref squareFaces, ref elementIndex);
         }
 
         if (renderDownFace)
         {
-            // Down Face
-
-            switch (downUVRotation)
-            {
-                default:
-                    textureCoords.Add(new(downTextureUVs.uMin, downTextureUVs.vMin));
-                    textureCoords.Add(new(downTextureUVs.uMax, downTextureUVs.vMin));
-                    textureCoords.Add(new(downTextureUVs.uMax, downTextureUVs.vMax));
-                    textureCoords.Add(new(downTextureUVs.uMin, downTextureUVs.vMax));
-                    break;
-                case 90f:
-                    textureCoords.Add(new(downTextureUVs.uMax, downTextureUVs.vMin));
-                    textureCoords.Add(new(downTextureUVs.uMax, downTextureUVs.vMax));
-                    textureCoords.Add(new(downTextureUVs.uMin, downTextureUVs.vMax));
-                    textureCoords.Add(new(downTextureUVs.uMin, downTextureUVs.vMin));
-                    break;
-                case 180f:
-                    textureCoords.Add(new(downTextureUVs.uMax, downTextureUVs.vMax));
-                    textureCoords.Add(new(downTextureUVs.uMin, downTextureUVs.vMax));
-                    textureCoords.Add(new(downTextureUVs.uMin, downTextureUVs.vMin));
-                    textureCoords.Add(new(downTextureUVs.uMax, downTextureUVs.vMin));
-                    break;
-                case 270f:
-                    textureCoords.Add(new(downTextureUVs.uMin, downTextureUVs.vMax));
-                    textureCoords.Add(new(downTextureUVs.uMin, downTextureUVs.vMin));
-                    textureCoords.Add(new(downTextureUVs.uMax, downTextureUVs.vMin));
-                    textureCoords.Add(new(downTextureUVs.uMax, downTextureUVs.vMax));
-                    break;
-            }
-
-            var uvO = textureCoords.Count();
-
-            var vO = elementIndex * 8;
-
-            squareFaces.Add(($"f {1 + vO}/{uvO - 3}/3 " +
-                              $"{5 + vO}/{uvO - 2}/3 " +
-                              $"{8 + vO}/{uvO - 1}/3 " +
-                              $"{2 + vO}/{uvO}/3",
-                              downTextureID
-                              ));
+            GM_GenerateModelFace(downUVRotation, downTextureUVs, downTextureID, [1, 5, 8, 2], 3,
+                ref textureCoords, ref squareFaces, ref elementIndex);
         }
 
         if (renderUpFace)
         {
-            // Up Face
-
-            switch (upUVRotation)
-            {
-                default:
-                    textureCoords.Add(new(upTextureUVs.uMin, upTextureUVs.vMin));
-                    textureCoords.Add(new(upTextureUVs.uMax, upTextureUVs.vMin));
-                    textureCoords.Add(new(upTextureUVs.uMax, upTextureUVs.vMax));
-                    textureCoords.Add(new(upTextureUVs.uMin, upTextureUVs.vMax));
-                    break;
-                case 90f:
-                    textureCoords.Add(new(upTextureUVs.uMax, upTextureUVs.vMin));
-                    textureCoords.Add(new(upTextureUVs.uMax, upTextureUVs.vMax));
-                    textureCoords.Add(new(upTextureUVs.uMin, upTextureUVs.vMax));
-                    textureCoords.Add(new(upTextureUVs.uMin, upTextureUVs.vMin));
-                    break;
-                case 180f:
-                    textureCoords.Add(new(upTextureUVs.uMax, upTextureUVs.vMax));
-                    textureCoords.Add(new(upTextureUVs.uMin, upTextureUVs.vMax));
-                    textureCoords.Add(new(upTextureUVs.uMin, upTextureUVs.vMin));
-                    textureCoords.Add(new(upTextureUVs.uMax, upTextureUVs.vMin));
-                    break;
-                case 270f:
-                    textureCoords.Add(new(upTextureUVs.uMin, upTextureUVs.vMax));
-                    textureCoords.Add(new(upTextureUVs.uMin, upTextureUVs.vMin));
-                    textureCoords.Add(new(upTextureUVs.uMax, upTextureUVs.vMin));
-                    textureCoords.Add(new(upTextureUVs.uMax, upTextureUVs.vMax));
-                    break;
-            }
-
-            var uvO = textureCoords.Count();
-
-            var vO = elementIndex * 8;
-
-            squareFaces.Add(($"f {3 + vO}/{uvO - 3}/4 " +
-                              $"{7 + vO}/{uvO - 2}/4 " +
-                              $"{6 + vO}/{uvO - 1}/4 " +
-                              $"{4 + vO}/{uvO}/4",
-                              upTextureID
-                              ));
+            GM_GenerateModelFace(upUVRotation, upTextureUVs, upTextureID, [3, 7, 6, 4], 4,
+                ref textureCoords, ref squareFaces, ref elementIndex);
         }
 
         if (renderNorthFace)
         {
-            // North Face
-
-            switch (northUVRotation)
-            {
-                default:
-                    textureCoords.Add(new(northTextureUVs.uMin, northTextureUVs.vMin));
-                    textureCoords.Add(new(northTextureUVs.uMax, northTextureUVs.vMin));
-                    textureCoords.Add(new(northTextureUVs.uMax, northTextureUVs.vMax));
-                    textureCoords.Add(new(northTextureUVs.uMin, northTextureUVs.vMax));
-                    break;
-                case 90f:
-                    textureCoords.Add(new(northTextureUVs.uMax, northTextureUVs.vMin));
-                    textureCoords.Add(new(northTextureUVs.uMax, northTextureUVs.vMax));
-                    textureCoords.Add(new(northTextureUVs.uMin, northTextureUVs.vMax));
-                    textureCoords.Add(new(northTextureUVs.uMin, northTextureUVs.vMin));
-                    break;
-                case 180f:
-                    textureCoords.Add(new(northTextureUVs.uMax, northTextureUVs.vMax));
-                    textureCoords.Add(new(northTextureUVs.uMin, northTextureUVs.vMax));
-                    textureCoords.Add(new(northTextureUVs.uMin, northTextureUVs.vMin));
-                    textureCoords.Add(new(northTextureUVs.uMax, northTextureUVs.vMin));
-                    break;
-                case 270f:
-                    textureCoords.Add(new(northTextureUVs.uMin, westTextureUVs.vMax));
-                    textureCoords.Add(new(northTextureUVs.uMin, northTextureUVs.vMin));
-                    textureCoords.Add(new(northTextureUVs.uMax, northTextureUVs.vMin));
-                    textureCoords.Add(new(northTextureUVs.uMax, northTextureUVs.vMax));
-                    break;
-            }
-
-            var uvO = textureCoords.Count();
-
-            var vO = elementIndex * 8;
-
-            squareFaces.Add(($"f {5 + vO}/{uvO - 3}/5 " +
-                              $"{1 + vO}/{uvO - 2}/5 " +
-                              $"{4 + vO}/{uvO - 1}/5 " +
-                              $"{6 + vO}/{uvO}/5",
-                              northTextureID
-                              ));
+            GM_GenerateModelFace(northUVRotation, northTextureUVs, northTextureID, [5, 1, 4, 6], 5,
+                ref textureCoords, ref squareFaces, ref elementIndex);
         }
 
         if (renderSouthFace)
         {
-            // South Face
-
-            switch (southUVRotation)
-            {
-                default:
-                    textureCoords.Add(new(southTextureUVs.uMin, southTextureUVs.vMin));
-                    textureCoords.Add(new(southTextureUVs.uMax, southTextureUVs.vMin));
-                    textureCoords.Add(new(southTextureUVs.uMax, southTextureUVs.vMax));
-                    textureCoords.Add(new(southTextureUVs.uMin, southTextureUVs.vMax));
-                    break;
-                case 90f:
-                    textureCoords.Add(new(southTextureUVs.uMax, southTextureUVs.vMin));
-                    textureCoords.Add(new(southTextureUVs.uMax, southTextureUVs.vMax));
-                    textureCoords.Add(new(southTextureUVs.uMin, southTextureUVs.vMax));
-                    textureCoords.Add(new(southTextureUVs.uMin, southTextureUVs.vMin));
-                    break;
-                case 180f:
-                    textureCoords.Add(new(southTextureUVs.uMax, southTextureUVs.vMax));
-                    textureCoords.Add(new(southTextureUVs.uMin, southTextureUVs.vMax));
-                    textureCoords.Add(new(southTextureUVs.uMin, southTextureUVs.vMin));
-                    textureCoords.Add(new(southTextureUVs.uMax, southTextureUVs.vMin));
-                    break;
-                case 270f:
-                    textureCoords.Add(new(southTextureUVs.uMin, southTextureUVs.vMax));
-                    textureCoords.Add(new(southTextureUVs.uMin, southTextureUVs.vMin));
-                    textureCoords.Add(new(southTextureUVs.uMax, southTextureUVs.vMin));
-                    textureCoords.Add(new(southTextureUVs.uMax, southTextureUVs.vMax));
-                    break;
-            }
-
-            var uvO = textureCoords.Count();
-
-            var vO = elementIndex * 8;
-
-            squareFaces.Add(($"f {2 + vO}/{uvO - 3}/6 " +
-                              $"{8 + vO}/{uvO - 2}/6 " +
-                              $"{7 + vO}/{uvO - 1}/6 " +
-                              $"{3 + vO}/{uvO}/6",
-                              southTextureID
-                              ));
+            GM_GenerateModelFace(southUVRotation, southTextureUVs, southTextureID, [2, 8, 7, 3], 6,
+                ref textureCoords, ref squareFaces, ref elementIndex);
         }
 
         foreach (var face in squareFaces)
@@ -684,6 +387,174 @@ public class Chunk : ObjectBehavior
                 faces.Add(faceItem);
             }
         }
+    }
+
+    /// <summary>
+    /// Only to be used by <see cref="GenerateMesh"/>
+    /// </summary>
+    private void GM_PopulateModelProperties(DynamicData faceD, ref bool renderFace, ref UVRect uvs, ref int textureID, ref float rotation,
+        Float3 from, Float3 to,
+        BlockData downBlock, BlockData upBlock, BlockData northBlock, BlockData southBlock, BlockData westBlock, BlockData eastBlock)
+    {
+        if (faceD)
+        {
+            var cullfaceD = faceD.GetItem("cullface");
+
+            if (cullfaceD)
+            {
+                string cullface = cullfaceD.GetValue<string>();
+
+                string adjacentBlockId = "minecraft:air";
+
+                switch (cullface)
+                {
+                    case "down":
+                        adjacentBlockId = downBlock.block_id;
+                        break;
+                    case "up":
+                        adjacentBlockId = upBlock.block_id;
+                        break;
+                    case "north":
+                        adjacentBlockId = northBlock.block_id;
+                        break;
+                    case "south":
+                        adjacentBlockId = southBlock.block_id;
+                        break;
+                    case "west":
+                        adjacentBlockId = westBlock.block_id;
+                        break;
+                    case "east":
+                        adjacentBlockId = eastBlock.block_id;
+                        break;
+                }
+
+                renderFace = adjacentBlockId == "minecraft:air"; // To be more sophisticated!
+            }
+            else renderFace = true;
+
+            if (renderFace)
+            {
+                var textureD = faceD.GetItem("texture");
+
+                if (textureD)
+                {
+                    textureID = TextureManager.GetTextureID(textureD.GetValue<string>());
+                }
+
+                var uvD = faceD.GetItem("uv");
+
+                if (uvD)
+                {
+                    uvs = uvD.GetValue<UVRect>();
+                }
+                else
+                {
+                    Float3 fromF = 16 - from;
+
+                    Float3 size = to - from;
+
+                    Float3 sizeF = 16 - size;
+
+                    switch (faceD.name)
+                    {
+                        case "east":
+
+                            uvs = new UVRect(sizeF.z - from.z, sizeF.y - from.y, fromF.z, fromF.y);
+
+                            break;
+                        case "west":
+
+                            uvs = new UVRect(from.z, sizeF.y - from.y, from.z + size.z, fromF.y);
+
+                            break;
+                        case "down":
+
+                            uvs = new UVRect(from.x, sizeF.z - from.z, from.x + size.x, size.z + from.z);
+
+                            break;
+                        case "up":
+
+                            uvs = new UVRect(from.x, from.z, size.x + from.x, size.z + from.z);
+
+                            break;
+                        case "north":
+
+                            uvs = new UVRect(sizeF.x - from.x, sizeF.y - from.y, fromF.x, fromF.y);
+
+                            break;
+                        case "south":
+
+                            uvs = new UVRect(from.x, sizeF.y - from.y, from.x + size.x, fromF.y);
+
+                            break;
+                    }
+                }
+
+                var rotateD = faceD.GetItem("rotation");
+
+                if (rotateD)
+                {
+                    var rotateV = rotateD.GetValue<int>();
+
+                    if (rotateV == 0 || rotateV == 90 || rotateV == 180 || rotateV == 270)
+                    {
+                        rotation = rotateV;
+                    }
+                    else
+                    {
+                        Program.LogWarning($"Invalid texture rotation value '{rotateV}'");
+                    }
+                }
+            }
+        }
+
+        uvs /= 16;
+    }
+
+    /// <summary>
+    /// Only to be used by <see cref="GenerateMesh"/>
+    /// </summary>
+    private void GM_GenerateModelFace(float uvRotation, UVRect uvs, int textureID, int[] vertIndices, int normalIndex, 
+        ref List<Float2> textureCoords, ref List<(string, int)> squareFaces, ref int elementIndex)
+    {
+        switch (uvRotation)
+        {
+            default:
+                textureCoords.Add(new(uvs.uMin, uvs.vMin));
+                textureCoords.Add(new(uvs.uMax, uvs.vMin));
+                textureCoords.Add(new(uvs.uMax, uvs.vMax));
+                textureCoords.Add(new(uvs.uMin, uvs.vMax));
+                break;
+            case 90f:
+                textureCoords.Add(new(uvs.uMax, uvs.vMin));
+                textureCoords.Add(new(uvs.uMax, uvs.vMax));
+                textureCoords.Add(new(uvs.uMin, uvs.vMax));
+                textureCoords.Add(new(uvs.uMin, uvs.vMin));
+                break;
+            case 180f:
+                textureCoords.Add(new(uvs.uMax, uvs.vMax));
+                textureCoords.Add(new(uvs.uMin, uvs.vMax));
+                textureCoords.Add(new(uvs.uMin, uvs.vMin));
+                textureCoords.Add(new(uvs.uMax, uvs.vMin));
+                break;
+            case 270f:
+                textureCoords.Add(new(uvs.uMin, uvs.vMax));
+                textureCoords.Add(new(uvs.uMin, uvs.vMin));
+                textureCoords.Add(new(uvs.uMax, uvs.vMin));
+                textureCoords.Add(new(uvs.uMax, uvs.vMax));
+                break;
+        }
+
+        var uvO = textureCoords.Count();
+
+        var vO = elementIndex * 8;
+
+        squareFaces.Add(($"f {vertIndices[0] + vO}/{uvO - 3}/{normalIndex} " +
+                          $"{vertIndices[1] + vO}/{uvO - 2}/{normalIndex} " +
+                          $"{vertIndices[2] + vO}/{uvO - 1}/{normalIndex} " +
+                          $"{vertIndices[3] + vO}/{uvO}/{normalIndex}",
+                          textureID
+                          ));
     }
 
     public BlockData GetBlockAtLocalPosition(Int3 localPosition)
@@ -787,6 +658,11 @@ public struct BlockFace
     }
 
     public Float3 GetNormal()
+    {
+        return GetNormal(direction);
+    }
+
+    public static Float3 GetNormal(BlockDirection direction)
     {
         switch (direction)
         {

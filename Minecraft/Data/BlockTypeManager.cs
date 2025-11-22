@@ -11,23 +11,34 @@ public static class BlockTypeManager
 
         blockData.Add("minecraft:null", new());
 
-        string[] testBlocks = [
+        string[] watchList = [
+            // Normal Blocks
             "models/block/dirt",
             "models/block/grass_block",
-            "models/block/stone",
-            "models/block/crafting_table",
-            "models/block/oak_log",
-            "models/block/oak_planks",
-            "models/block/orange_wool",
-            "models/block/oak_stairs",
-            "models/block/hopper",
-            "models/block/anvil",
-            "models/block/rose_bush_bottom",
-            "models/block/dandelion",
-            "models/block/four_sea_pickles",
+
+            // Broken Blocks
+            "models/block/oak_log_horizontal", // Not horizontal?
+            "models/block/lantern", // No Textures?
+            "models/block/wildflowers_1", // Stem weird offset?
+
+            // Fix animated textures
+            "models/block/magma_block",
+            "models/block/command_block",
+
+            // Fix textures bigger than 16x16
+            "models/block/cherry_shelf_inventory",
+
+            "models/block/slime_block", // Incorrect rendering order?
+
+            // Better Transparency Support
+            "models/block/orange_stained_glass",
+            "models/block/pink_stained_glass",
+            "models/block/green_stained_glass",
+            "models/block/yellow_stained_glass",
             ];
 
-        foreach (var blockV in testBlocks)
+        /* Test Blocks
+        foreach (var blockV in watchList)
         {
             var data = MinecraftJsonManager.GetData(blockV);
 
@@ -39,6 +50,16 @@ public static class BlockTypeManager
 
             AddBlockData(data);
         }
+        /*/
+
+        //* All Blocks
+        foreach (var data in MinecraftJsonManager.allData.Values)
+        {
+            if(data.name.StartsWith("models/block"))
+
+            AddBlockData(data);
+        }
+        //*/
 
         /*
         AddBlockData(

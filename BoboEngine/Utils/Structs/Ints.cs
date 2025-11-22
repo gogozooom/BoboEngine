@@ -10,6 +10,9 @@ public struct Int3(int x = 0, int y = 0, int z = 0)
     public int b { get => y; set => y = value; }
     public int c { get => z; set => z = value; }
 
+    public static Int3 zero = new(0, 0, 0);
+    public static Int3 one = new(1, 1, 1);
+
     public static Int3 operator +(Int3 v1, Int3 v2) => new(v1.x + v2.x, v1.y + v2.y, v1.z + v2.z);
     public static Int3 operator -(Int3 v1, Int3 v2) => new(v1.x - v2.x, v1.y - v2.y, v1.z - v2.z);
     public static Int3 operator *(Int3 v1, Int3 v2) => new(v1.x * v2.x, v1.y * v2.y, v1.z * v2.z);
@@ -30,6 +33,9 @@ public struct Int2(int x = 0, int y = 0)
 {
     public int x = x;
     public int y = y;
+
+    public static Int2 zero = new(0, 0);
+    public static Int2 one = new(1, 1);
 
     public static Int2 operator +(Int2 a, Int2 b) => new(a.x + b.x, a.y + b.y); // Adding
     public static Int2 operator -(Int2 a, Int2 b) => new(a.x - b.x, a.y - b.y); // Subtracting

@@ -62,7 +62,7 @@ public class Move3DInput : ObjectBehavior
         Float3 rotInput = GetRotationInput();
         transform.rotation = new Float3(Math.Clamp(transform.rotation.x + rotInput.x, -90f, 90f), transform.rotation.y + rotInput.y, 0);
 
-        Float3 posInput = Transform.GetYRotationBasisVectors(transform.yaw).TransformVector(GetPosInput());
+        Float3 posInput = BaseVectors.FromYRotation(transform.yaw).TransformVector(GetPosInput());
 
         Float3 inputForce = new Float3(posInput.x * flyingSpeed * acceleration, posInput.y * flyingSpeedVertical * accelerationY, posInput.z * flyingSpeed * acceleration);
         

@@ -21,12 +21,21 @@ public static class WorldDataManager
 
         var chunk = CreateChunkObject(new(0,0,0));
 
-        int i = 0;
+        int x = 0;
+        int z = 0;
+        float rowCount = MathF.Sqrt(BlockTypeManager.blockData.Count);
+
         foreach (var block in BlockTypeManager.blockData)
         {
-            SetBlock(new(i * 1, 0, 0), new(block.Key));
+            SetBlock(new(x * 2, 0, z * 2), new(block.Key));
 
-            i++;
+            x++;
+
+            if(x >= rowCount)
+            {
+                z++;
+                x = 0;
+            }
         }
 
         FillBlocks(new(-25, -1, -25), new(25, -1, 25), "minecraft:grass_block");

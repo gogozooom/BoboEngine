@@ -28,6 +28,7 @@ public static class SceneManager
         scene.camera.transform.position = new Float3(0, 1.1f, -5.5f);
 
         var newObject = new GameObject();
+        newObject.AddComponent<Rotater>();
         var mesh = newObject.AddComponent<Mesh>();
         mesh.LoadObjFile(Program.GetLocalModelPath("Cube"));
 

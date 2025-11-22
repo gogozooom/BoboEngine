@@ -16,6 +16,11 @@
         public virtual void Update(){}
 
         /// <summary>
+        /// Runs after the frame has rendered
+        /// </summary>
+        public virtual void LateUpdate(){}
+
+        /// <summary>
         /// Runs right after getting destroyed
         /// </summary>
         public virtual void OnDestroy(){}

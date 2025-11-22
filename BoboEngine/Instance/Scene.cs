@@ -18,19 +18,9 @@
             {
                 AddObject(obj);
             }
-        }
 
-        /// <summary>
-        /// Updates all objects in the scene
-        /// </summary>
-        public void Update()
-        {
-            DestroyBufferedObjects();
-
-            foreach (var item in objects.ToArray())
-            {
-                UpdateObject(item);
-            }
+            WindowManager.beforeRender += Update;
+            WindowManager.afterRender += LateUpdate;
         }
         public GameObject Find(string name)
         {
@@ -97,21 +87,53 @@
 
             _object.OnDestroy();
         }
+
+        /// <summary>
+        /// Updates all objects in the scene
+        /// </summary>
+        private void Update()
+        {
+            foreach (var item in objects.ToArray())
+            {
+                UpdateObject(item);
+            }
+        }
+
+        /// <summary>
+        /// Late updates all objects in the scene
+        /// </summary>
+        private void LateUpdate()
+        {
+            DestroyBufferedObjects();
+
+            foreach (var item in objects.ToArray())
+            {
+                LateUpdateObject(item);
+            }
+        }
+
         // TODO: Will be used when separated with an AWAKE method
         // Awake method will be run as soon as a compoment is added,
         // Start is run after all objects in the scene are finnished loading
-        void StartObject(GameObject gObject)
+        private void StartObject(GameObject gObject)
         {
             foreach (var component in gObject.components)
             {
                 component.Start();
             }
         }
-        void UpdateObject(GameObject gObject)
+        private void UpdateObject(GameObject gObject)
         {
             foreach (var component in gObject.components)
             {
                 component.Update();
+            }
+        }
+        private void LateUpdateObject(GameObject gObject)
+        {
+            foreach (var component in gObject.components)
+            {
+                component.LateUpdate();
             }
         }
     }

@@ -161,6 +161,28 @@ public class DynamicData
 
         if (typeof(T) == typeof(string)) return (T)Convert.ChangeType(_rawData.Trim('"'), typeof(string));
 
+        if (typeof(T) == typeof(bool))
+        {
+            if (_dataType != DataType.Value)
+            {
+                Program.LogError($"Type of '{name}' is not a Value! Cannot convert to '{typeof(bool)}'!");
+                return default;
+            }
+
+            switch (_rawData)
+            {
+                case "false":
+                    return (T)Convert.ChangeType(false, typeof(bool));
+
+                case "true":
+                    return (T)Convert.ChangeType(true, typeof(bool));
+
+                default:
+                    Program.LogError($"Could not parse bool out of '{_rawData}' from '{name}'!");
+                    return default;
+            }
+        }
+
         if (typeof(T) == typeof(float))
         {
             if (_dataType != DataType.Value)
@@ -171,7 +193,7 @@ public class DynamicData
 
             if(!float.TryParse(_rawData, out var value))
             {
-                Program.LogError($"Could not parse float out of '{_rawData}'!");
+                Program.LogError($"Could not parse float out of '{_rawData}' from '{name}'!");
                 return default;
             }
 
@@ -188,7 +210,7 @@ public class DynamicData
 
             if (!int.TryParse(_rawData, out var value))
             {
-                Program.LogError($"Could not parse int out of '{_rawData}'!");
+                Program.LogError($"Could not parse int out of '{_rawData}' from '{name}'!");
                 return default;
             }
 
@@ -242,6 +264,30 @@ public class DynamicData
             if (vXD) vMax = vXD.GetValue<float>();
 
             return (T)Convert.ChangeType(new UVRect(uMin, vMin, uMax, vMax), typeof(UVRect));
+        }
+
+        if (typeof(T) == typeof(Axis))
+        {
+            if (_dataType != DataType.Value)
+            {
+                Program.LogError($"Type of '{name}' is not a Value! Cannot convert to '{typeof(Axis)}'!");
+                return default;
+            }
+
+
+
+            switch (_rawData.Trim('"'))
+            {
+                case "x":
+                    return (T)Convert.ChangeType(Axis.Xaxis, typeof(Axis));
+                case "y":
+                    return (T)Convert.ChangeType(Axis.Yaxis, typeof(Axis));
+                case "z":
+                    return (T)Convert.ChangeType(Axis.Zaxis, typeof(Axis));
+                default:
+                    Program.LogError($"Could not parse axis out of '{_rawData}' from '{name}'!");
+                    return default;
+            }
         }
 
         Program.LogError($"Type of '{name}' cannot be converted to type: '{typeof(T)}' as this data is of type: '{_dataType}'!");

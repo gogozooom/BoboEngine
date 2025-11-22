@@ -123,8 +123,6 @@ namespace BoboEngine
 
                 // update
 
-                SceneManager.currentScene.Update();
-
                 beforeRender?.Invoke();
 
                 // render

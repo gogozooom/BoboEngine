@@ -10,7 +10,7 @@
 
 TODO:
 	- Use MinecraftJsonManager to load the "elements" of a minecraft model and generate that in the mesh
-		* Implement block model rotation
+√		* Implement block model rotation
 		* Faces culling needs to be more sophisticated than simply adjasentBlock == "air"
 		* Implement block facing directions, and update the model and culling faces accordingly
 

@@ -144,3 +144,78 @@ public struct UVRect(float uMin = 0, float vMin = 0, float uMax = 1, float vMax 
         return $"[{uMin}, {vMin}, {uMax}, {vMax}]";
     }
 }
+
+public struct BaseVectors(Float3 leftVector, Float3 upVector, Float3 forwardVector)
+{
+    public Float3 leftVector { get; private set; } = leftVector;
+    public Float3 upVector { get; private set; } = upVector;
+    public Float3 forwardVector { get; private set; } = forwardVector;
+
+    public Float3 TransformVector(Float3 point)
+    {
+        return leftVector * point.x + upVector * point.y + forwardVector * point.z;
+    }
+
+    public static BaseVectors FromRotation(Float3 rotation)
+    {
+        // --- Apply Y Rotation ---
+        BaseVectors yBaseVectors = FromYRotation(rotation.y);
+
+        // --- Apply X Rotation ---
+        BaseVectors xBaseVectors = FromXRotation(rotation.x);
+
+        // --- Apply Z Rotation ---
+        BaseVectors zBaseVectors = FromZRotation(rotation.z);
+
+        // --- Combied Vectors ---
+
+        Float3 leftVector = yBaseVectors.TransformVector(xBaseVectors.TransformVector(zBaseVectors.leftVector));
+        Float3 upVector = yBaseVectors.TransformVector(xBaseVectors.TransformVector(zBaseVectors.upVector));
+        Float3 forwardVector = yBaseVectors.TransformVector(xBaseVectors.TransformVector(zBaseVectors.forwardVector));
+
+        return new(leftVector, upVector, forwardVector);
+    }
+    public static BaseVectors FromYRotation(float rotation)
+    {
+        return new(
+            new Float3(Maths.Cos(rotation), 0, Maths.Sin(rotation)),
+            Float3.yAxis,
+            new(Maths.Sin(-rotation), 0, Maths.Cos(rotation))
+            );
+    }
+    public static BaseVectors FromXRotation(float rotation)
+    {
+        return new(
+            Float3.xAxis,
+            new(0, Maths.Cos(rotation), Maths.Sin(rotation)),
+            new(0, -Maths.Sin(rotation), Maths.Cos(rotation))
+            );
+    }
+    public static BaseVectors FromZRotation(float rotation)
+    {
+        return new(
+            new Float3(Maths.Cos(rotation), Maths.Sin(rotation), 0),
+            new(-Maths.Sin(rotation), Maths.Cos(rotation), 0),
+            Float3.zAxis
+            );
+    }
+}
+
+public struct BaseVectors2D(Float2 leftVector, Float2 upVector)
+{
+    public Float2 leftVector { get; private set; } = leftVector;
+    public Float2 upVector { get; private set; } = upVector;
+
+    public Float2 TransformVector(Float2 point)
+    {
+        return leftVector * point.x + upVector * point.y;
+    }
+
+    public static BaseVectors2D FromRotation(float a)
+    {
+        return new(
+            new(-Maths.Sin(a), Maths.Cos(a)),
+            new(Maths.Cos(a), Maths.Sin(a))
+            );
+    }
+}

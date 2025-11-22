@@ -81,7 +81,7 @@ public class Transform : ObjectBehavior
     }
     BaseVectors GetBasisVectors()
     {
-        return GetBasisVectors(rotation);
+        return BaseVectors.FromRotation(rotation);
     }
 
     public Float3 ToWorldPoint(Float3 point)
@@ -104,70 +104,8 @@ public class Transform : ObjectBehavior
         return baseVectors.TransformVector(point);
     }
 
-    public static BaseVectors GetBasisVectors(Float3 rotation)
-    {
-        // --- Apply Y Rotation ---
-        BaseVectors yBaseVectors = GetYRotationBasisVectors(rotation.y);
-
-        // --- Apply X Rotation ---
-        BaseVectors xBaseVectors = GetXRotationBasisVectors(rotation.x);
-
-        // --- Apply Z Rotation ---
-        BaseVectors zBaseVectors = GetZRotationBasisVectors(rotation.z);
-
-        // --- Combied Vectors ---
-
-        Float3 leftVector = yBaseVectors.TransformVector(xBaseVectors.TransformVector(zBaseVectors.leftVector));
-        Float3 upVector = yBaseVectors.TransformVector(xBaseVectors.TransformVector(zBaseVectors.upVector));
-        Float3 forwardVector = yBaseVectors.TransformVector(xBaseVectors.TransformVector(zBaseVectors.forwardVector));
-
-        return new(leftVector, upVector, forwardVector);
-    }
-    public static BaseVectors GetYRotationBasisVectors(float rotation)
-    {
-        return new(
-            new Float3(Maths.Cos(rotation), 0, Maths.Sin(rotation)),
-            Float3.yAxis,
-            new(Maths.Sin(-rotation), 0, Maths.Cos(rotation))
-            );
-    }
-    public static BaseVectors GetXRotationBasisVectors(float rotation)
-    {
-        return new(
-            Float3.xAxis,
-            new(0, Maths.Cos(rotation), Maths.Sin(rotation)),
-            new(0, -Maths.Sin(rotation), Maths.Cos(rotation))
-            );
-    }
-    public static BaseVectors GetZRotationBasisVectors(float rotation)
-    {
-        return new(
-            new Float3(Maths.Cos(rotation), Maths.Sin(rotation), 0),
-            new(-Maths.Sin(rotation), Maths.Cos(rotation), 0),
-            Float3.zAxis
-            );
-    }
-
     public override string ToString()
     {
         return $"P:({position}) R:({rotation}) S:({scale})";
-    }
-}
-public struct BaseVectors
-{
-    public Float3 leftVector { get; private set; }
-    public Float3 upVector { get; private set; }
-    public Float3 forwardVector { get; private set; }
-
-    public BaseVectors(Float3 leftVector, Float3 upVector, Float3 forwardVector)
-    {
-        this.leftVector = leftVector;
-        this.upVector = upVector;
-        this.forwardVector = forwardVector;
-    }
-
-    public Float3 TransformVector(Float3 point)
-    {
-        return leftVector * point.x + upVector * point.y + forwardVector * point.z;
     }
 }
