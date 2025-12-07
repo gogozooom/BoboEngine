@@ -2,7 +2,9 @@
 using BoboEngine.Input;
 using BoboEngine.Shaders;
 using ConsoleCommand;
-using GLFW;
+using CursorMode = GLFW.CursorMode;
+using Keys = GLFW.Keys;
+using MouseButton = GLFW.MouseButton;
 using InputDevices;
 using Minecraft;
 using Cursor = BoboEngine.Input.Cursor;
@@ -10,6 +12,8 @@ using Cursor = BoboEngine.Input.Cursor;
 public class Move3DInput : ObjectBehavior
 {
     public static Move3DInput Instance { get; private set; }
+
+    public float speedMultiplier = 1f;
 
     public float flyingSpeed = 10.92f; // Minecraft Flying Speed
     public float acceleration = 1.4f;
@@ -37,6 +41,7 @@ public class Move3DInput : ObjectBehavior
 
         Cursor.onMouseButtonChanged += OnMouseButtonPressed;
         Cursor.onScroll += OnMouseScroll;
+        
 
         boxSelectionMesh = new GameObject("BoxSelection");
         
@@ -64,7 +69,7 @@ public class Move3DInput : ObjectBehavior
 
         Float3 posInput = BaseVectors.FromYRotation(transform.yaw).TransformVector(GetPosInput());
 
-        Float3 inputForce = new Float3(posInput.x * flyingSpeed * acceleration, posInput.y * flyingSpeedVertical * accelerationY, posInput.z * flyingSpeed * acceleration);
+        Float3 inputForce = new Float3(posInput.x * flyingSpeed * acceleration, posInput.y * flyingSpeedVertical * accelerationY, posInput.z * flyingSpeed * acceleration) * speedMultiplier;
         
         velocity += inputForce * Time.deltaTime;
 
@@ -80,14 +85,11 @@ public class Move3DInput : ObjectBehavior
             || MathF.Abs(velocity.x) > flyingSpeed
             || MathF.Sign(inputForce.x) != MathF.Sign(velocity.x);
 
-        if (doXDrag) xDrag = velocity.x * airFriction;
-
         float yDrag = 0;
 
         bool doYDrag = inputForce.y == 0
             || MathF.Abs(velocity.y) > flyingSpeedVertical
             || MathF.Sign(inputForce.y) != MathF.Sign(velocity.y);
-
 
         float zDrag = 0;
 
@@ -95,8 +97,9 @@ public class Move3DInput : ObjectBehavior
             || MathF.Abs(velocity.z) > flyingSpeed
             || MathF.Sign(inputForce.z) != MathF.Sign(velocity.z);
 
-        if (doZDrag || doYDrag) zDrag = velocity.z * airFriction;
-        if (doYDrag || doZDrag) yDrag = velocity.y * yAirFriction;
+        if (doXDrag || doZDrag) xDrag = velocity.x * airFriction;
+        if (doZDrag || doXDrag) zDrag = velocity.z * airFriction;
+        if (doYDrag) yDrag = velocity.y * yAirFriction;
 
         Float3 drag = new Float3(xDrag, yDrag, zDrag);
 
@@ -193,7 +196,8 @@ public class Move3DInput : ObjectBehavior
     }
     private void OnMouseScroll(Float2 scroll)
     {
-        Camera.main.fov -= scroll.y*2f;
+        speedMultiplier = Maths.Clamp(speedMultiplier + scroll.y / 30f, 0, 3);
+        //Camera.main.fov = Maths.Clamp(Camera.main.fov - scroll.y * 2f, 20, 120);
     }
 
     private void PlaceBlock()
@@ -223,6 +227,8 @@ public class Move3DInput : ObjectBehavior
     [Command("Block", "['blockID'] Sets the block to place")]
     public static void ChangeBlock(string type)
     {
+        if (!type.Contains(':')) type = "minecraft:" + type;
+
         Instance.blockSelected = type;
         Program.Log($"Selected: '{type}'");
     }

@@ -65,7 +65,7 @@ public static class WorldDataManager
 
         return chunks[chunkPos];
     }
-    public static BlockData GetBlockAtPosition(Int3 position)
+    public static WorldBlockData GetBlockAtPosition(Int3 position)
     {
         var chunk = GetChunkInPosition(position);
 
@@ -73,7 +73,7 @@ public static class WorldDataManager
 
         return chunk.GetBlockAtLocalPosition(localPosition);
     }
-    public static BlockData GetBlockAtPosition(Float3 position) => GetBlockAtPosition(Float3ToBlockPos(position));
+    public static WorldBlockData GetBlockAtPosition(Float3 position) => GetBlockAtPosition(Float3ToBlockPos(position));
     public static Int3 Float3ToBlockPos(Float3 position) => (Int3)new Float3(
                 position.x - Maths.Mod(position.x, 1),
                 position.y - Maths.Mod(position.y, 1),
@@ -125,7 +125,7 @@ public static class WorldDataManager
 
         Int3 blockPos = Float3ToBlockPos(raycastPosition);
 
-        BlockData currentBlock = GetBlockAtPosition(blockPos);
+        WorldBlockData currentBlock = GetBlockAtPosition(blockPos);
 
         while (currentBlock.block_id == "minecraft:air")
         {
@@ -390,6 +390,8 @@ public static class WorldDataManager
     [Command("SetBlock", "[#x, #y, #z, 'block_id']")]
     public static void SetBlock(int x, int y, int z, string block_id)
     {
+        if (!block_id.Contains(':')) block_id = "minecraft:" + block_id;
+
         SetBlock(new(x, y, z), block_id);
 
         Program.Log("Set block to: " + block_id);
@@ -398,6 +400,8 @@ public static class WorldDataManager
     [Command("Fill", "[#x1, #y1, #z1, #x2, #y2, #z2, 'block_id']")]
     public static void FillBlocks(int x1, int y1, int z1, int x2, int y2, int z2, string block_id)
     {
+        if (!block_id.Contains(':')) block_id = "minecraft:" + block_id;
+
         FillBlocks(new Int3(x1, y1, z1), new Int3(x2, y2, z2), block_id);
     }
 

@@ -73,6 +73,7 @@ public static class TextureManager
     public static int GetTextureID(string textureName)
     {
         if (!textureName.Contains(':')) textureName = "minecraft:" + textureName;
+        if (textureName.Contains('#')) return 0;
 
         if (!blockTextureIds.ContainsKey(textureName))
         {

@@ -13,9 +13,16 @@ public static class BlockTypeManager
 
         string[] watchList = [
             // Normal Blocks
+            "models/block/air",
             "models/block/dirt",
             "models/block/grass_block",
+            "models/block/rose_bush_bottom",
+            "models/block/rose_bush_top",
+            "models/block/anvil",
+            "models/block/crafting_table",
 
+
+            /*
             // Broken Blocks
             "models/block/oak_log_horizontal", // Not horizontal?
             "models/block/lantern", // No Textures?
@@ -35,9 +42,9 @@ public static class BlockTypeManager
             "models/block/pink_stained_glass",
             "models/block/green_stained_glass",
             "models/block/yellow_stained_glass",
+            */
             ];
 
-        /* Test Blocks
         foreach (var blockV in watchList)
         {
             var data = MinecraftJsonManager.GetData(blockV);
@@ -50,16 +57,6 @@ public static class BlockTypeManager
 
             AddBlockData(data);
         }
-        /*/
-
-        //* All Blocks
-        foreach (var data in MinecraftJsonManager.allData.Values)
-        {
-            if(data.name.StartsWith("models/block"))
-
-            AddBlockData(data);
-        }
-        //*/
 
         /*
         AddBlockData(
@@ -136,7 +133,7 @@ public static class BlockTypeManager
         */
     }
     
-    public static BlockType GetBlockData(string id)
+    public static BlockType GetBlockType(string id)
     {
         if (id != null && blockData.ContainsKey(id))
         {
@@ -155,42 +152,5 @@ public static class BlockTypeManager
         var id = "minecraft:" + name;
 
         blockData.Add(id, new(id, name, data));
-    }
-}
-
-public struct BlockType
-{
-    public readonly string id;
-    public readonly string name;
-
-    public readonly DynamicData modelData;
-
-    public static DynamicData nullData;
-
-    public BlockType()
-    {
-        id = "minecraft:null";
-        name = "NULL";
-
-        if (!nullData) GenerateNullData();
-
-        modelData = nullData;
-    }
-
-
-    public BlockType(string id, string name, DynamicData data)
-    {
-        this.id = id;
-        this.name = name;
-        this.modelData = data;
-    }
-
-    private static void GenerateNullData()
-    {
-        var data = "{{\"parent\": \"minecraft:block/cube_all\",\"textures\": {\"all\": \"minecraft:null\"}}";
-
-        nullData = FileParser.ParseJson("NULL", data);
-
-        MinecraftJsonManager.FullyPopulateData(ref nullData, "models/");
     }
 }

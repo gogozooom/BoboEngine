@@ -18,6 +18,8 @@ public struct Int3(int x = 0, int y = 0, int z = 0)
     public static Int3 operator *(Int3 v1, Int3 v2) => new(v1.x * v2.x, v1.y * v2.y, v1.z * v2.z);
     public static Int3 operator -(Int3 v, int i) => new(v.x - i, v.y - i, v.z - i);
     public static Int3 operator *(Int3 v, int i) => new(v.x * i, v.y * i, v.z * i); // Length Multiplication
+    public static bool operator ==(Int3 a, Int3 b) => a.x == b.x && a.y == b.y && a.z == b.z;
+    public static bool operator !=(Int3 a, Int3 b) => a.x != b.x || a.y != b.y || a.z != b.z;
 
     public override string ToString() => $"({x},{y},{z})";
     public static explicit operator Int3(int[] n)

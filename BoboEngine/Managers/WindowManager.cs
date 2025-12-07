@@ -34,7 +34,6 @@ namespace BoboEngine
             // After window creation to prevent errors
             StbImage.stbi_set_flip_vertically_on_load(1);
             TextureManager.GenerateAtlas();
-            MinecraftJsonManager.LoadBlockModelData();
             BlockTypeManager.GenerateBlockData();
             SceneManager.LoadScene();
             WorldDataManager.GenerateTestChunk();

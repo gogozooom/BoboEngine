@@ -9,16 +9,8 @@
 	- Moving the camera up and down is slow when not pressing any directional keys
 
 TODO:
-	- Use MinecraftJsonManager to load the "elements" of a minecraft model and generate that in the mesh
-√		* Implement block model rotation
-		* Faces culling needs to be more sophisticated than simply adjasentBlock == "air"
-		* Implement block facing directions, and update the model and culling faces accordingly
 
-	- REFACTOR:
-		* Chunk.cs GenerateMesh method (Bruh, it's such a repetetive mess... move everything to private functions)
-		* Stress test: Create random models in block bench and test to see if they're accurate in my version!
-		* Null test: Setting random things to null in blockbench, and eventually edit the json data itself to cause intentional weird behavior
-
+	- Implement block facing directions, and update the model and culling faces accordingly
 
 	- Buffer input event actions to be handled before update
 
@@ -98,6 +90,11 @@ FINNISHED:
 			4. Recipes
 			5. Item Drops
 
+	- Use MinecraftJsonManager to load the "elements" of a minecraft model and generate that in the mesh
+		* Implement block model rotation
+		* Faces culling needs to be more sophisticated than simply adjasentBlock == "air"
+		* Only load json files as needed
+		* Rework block data from json to proper classes
 OLD:
 
 	- Create scene skyboxes

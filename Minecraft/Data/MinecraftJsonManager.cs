@@ -4,51 +4,31 @@ namespace Minecraft;
 
 public static class MinecraftJsonManager
 {
-    public static Dictionary<string, DynamicData> allData;
+    public static Dictionary<string, DynamicData> allData = new();
 
-    public static void LoadBlockModelData()
+    public static DynamicData AddFile(string id)
     {
-        allData = new();
+        var file = Path.Combine(Program.ProgramDirectory, "Data\\assets\\minecraft", id + ".json").Replace('/','\\');
 
-        var assetsPath = Path.Combine(Program.ProgramDirectory, "Data\\assets\\minecraft");
-        
-        if (!Directory.Exists(assetsPath))
+        if (!File.Exists(file))
         {
-            Program.LogError("No minecraft data supported! Please put minecraft data named as 'Data' in executable directory!");
-            return;
+            Program.LogError($"Could not find raw block model data for id '{id}'! Make sure minecraft data named as 'Data' is in the executable directory!");
+            return null;
         }
 
-        var files = Directory.GetFiles(assetsPath, "*.json", SearchOption.AllDirectories);
+        var data = File.ReadAllText(file);
 
-        int t = files.Length;
+        var results = FileParser.ParseJson(id, data, false);
 
-        foreach (var file in files)
-        {
-            var fileName = file.Remove(0, assetsPath.Length + 1).Split('.')[0].Replace('\\', '/');
-            var type = Path.GetExtension(file);
+        allData.Add(id, results);
 
-            if (IgnoreFile(file.Remove(0, assetsPath.Length + 1)))
-            {
-                Program.Log($"Ignoring '{fileName}' for the moment...");
-                continue;
-            }
-
-            var data = File.ReadAllText(file);
-
-            var results = FileParser.ParseJson(fileName, data, false);
-
-            allData.Add(fileName, results);
-
-            Program.LogMessage($"Loaded ({allData.Count}/{t}) --- '{fileName}{type}'");
-        }
+        return results;
     }
-
     public static DynamicData GetData(string id)
     {
         if (!allData.TryGetValue(id, out var result))
         {
-            Program.LogError($"No raw block model data for id '{id}'!");
-            return null;
+            return AddFile(id);
         }
 
         return result;
@@ -125,15 +105,5 @@ public static class MinecraftJsonManager
 
         // Repeat
         return PopulateReferences(ref data);
-    }
-
-    private static bool IgnoreFile(string file)
-    {
-        return file.StartsWith("lang") 
-            || file.StartsWith("shaders")
-            || file.StartsWith("post_effect")
-            || file.StartsWith("texts")
-            || file.StartsWith("font")
-            || file.StartsWith("waypoint_style");
     }
 }

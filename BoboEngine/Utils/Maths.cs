@@ -12,36 +12,33 @@ public static class Maths
         return v;
     }
 
+    /// <summary>
+    /// Clamps a value inbetween two numbers
+    /// </summary>
+    public static float Clamp(float v, float min, float max) => Max(Min(v, max), min);
+
+    /// <summary>
+    /// Returns the smallest of the spesified numbers
+    /// </summary>
     public static float Min(float a, float b, float c)
     {
         return Min(Min(a, b), c);
     }
-    public static float Min(float a, float b)
-    {
-        if (a < b)
-        {
-            return a;
-        }
-        else
-        {
-            return b;
-        }
-    }
+    /// <summary>
+    /// Returns the smallest of the spesified numbers
+    /// </summary>
+    public static float Min(float a, float b) => (a < b) ? a : b;
+    /// <summary>
+    /// Returns the biggest of the spesified numbers
+    /// </summary>
     public static float Max(float a, float b, float c)
     {
         return Max(Max(a, b), c);
     }
-    public static float Max(float a, float b)
-    {
-        if (a > b)
-        {
-            return a;
-        }
-        else
-        {
-            return b;
-        }
-    }
+    /// <summary>
+    /// Returns the biggest of the spesified numbers
+    /// </summary>
+    public static float Max(float a, float b) => (a > b) ? a : b;
 
     
     /// <summary>
