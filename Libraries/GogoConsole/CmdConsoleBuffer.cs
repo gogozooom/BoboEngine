@@ -7,7 +7,7 @@ internal static class CmdConsoleBuffer
 
     public static void Initialize()
     {
-        WindowManager.beforeRender += BeforeRender;
+        WindowManager.update += BeforeRender;
         Program.ConsoleInputted += ConsoleInput;
     }
     private static void ConsoleInput(string input)
@@ -17,7 +17,7 @@ internal static class CmdConsoleBuffer
 
     private static void BeforeRender()
     {
-        foreach (var command in bufferedCommands)
+        foreach (var command in bufferedCommands.ToArray())
         {
             ConsoleCmd.HandleConsoleInput(command);
         }

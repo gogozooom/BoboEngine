@@ -13,7 +13,7 @@ public static class MinecraftJsonManager
         if (!File.Exists(file))
         {
             Program.LogError($"Could not find raw block model data for id '{id}'! Make sure minecraft data named as 'Data' is in the executable directory!");
-            return null;
+            return BaseBlock.nullData;
         }
 
         var data = File.ReadAllText(file);

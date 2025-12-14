@@ -131,6 +131,7 @@ public class Mesh : ObjectBehavior, IComparable<Mesh>
 
         var vertexData = new float[faces.Length * 27];
 
+        // TODO For loop is thread safe, can be decoupled from BindOpenGL()!
         for (int i = 0; i < faces.Length; i++)
         {
             var face = faces[i];
@@ -161,36 +162,6 @@ public class Mesh : ObjectBehavior, IComparable<Mesh>
                 faceIndex += 9;
             }
         }
-
-        // Vertex | Color | UV
-        /*
-        vertexData = [
-            -0.5f, -0.5f, 0.0f,   1,1,1, -1f,  -1f,
-            0.5f, -0.5f, 0.0f,    1,1,1,  0f, 0.5f,
-            0.0f,  0.5f, 0.0f,    1,1,1,  0.5f, 1f,
-        ];
-        //*/
-
-        /*
-        vertexData = [
-                -0.5f,  0.5f, 1.0f,     1.0f, 0.0f, 0.0f, // top left
-                 0.5f,  0.5f, 1.0f,     1.0f, 0.0f, 0.0f, // top right
-                -0.5f, -0.5f, 1.0f,     0.0f, 1.0f, 0.0f, // bottom left
-                                                   
-                 0.5f,  0.5f, 1.0f,     1.0f, 0.0f, 0.0f, // top right
-                 0.5f, -0.5f, 1.0f,     1.0f, 1.0f, 0.0f, // bottom right
-                -0.5f, -0.5f, 1.0f,     0.0f, 1.0f, 0.0f, // bottom left
-            ];
-        //*/
-
-        /* Log Vertex Data
-        for (int g = 0; g < vertexData.Length / 8; g++)
-        {
-            Program.Log("Pos: " + vertexData[g * 8 + 0] + ", " + vertexData[g * 8 + 1] + ", " + vertexData[g * 8 + 2]);
-            Program.Log("Col: " + vertexData[g * 8 + 3] + ", " + vertexData[g * 8 + 4] + ", " + vertexData[g * 8 + 5]);
-            Program.Log("UV: " + vertexData[g * 8 + 6] + ", " + vertexData[g * 8 + 7]);
-        }
-        //*/
 
         vertexBufferSize = (uint)vertexData.Length;
 

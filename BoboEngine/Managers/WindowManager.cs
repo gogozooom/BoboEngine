@@ -15,13 +15,15 @@ namespace BoboEngine
     {
         public static bool Initialized => Window != Window.None;
 
+        public static float targetFPS = 0;
+
         public static Window Window { get; private set; }
         public static Float2 WindowSize { get; private set; }
         public static float WindowAspectRatio => WindowSize.x / WindowSize.y;
         public static Vector4 ClearColor { get; private set; }
 
-        public static Action beforeRender;
-        public static Action afterRender;
+        public static Action update;
+        public static Action afterUpdate;
 
         /// <summary>
         /// Opens a window and starts rendering the currently loaded scene
@@ -41,7 +43,6 @@ namespace BoboEngine
             SetClearColor(new Vector4(0.2f, 0.2f, 0.4f, 1f));
 
             float timeLastFrame = Time.time;
-
 
             /* 3D point grid
 
@@ -117,12 +118,14 @@ namespace BoboEngine
             {
                 Time.deltaTime = Time.time - timeLastFrame;
                 timeLastFrame = Time.time;
+                Cursor.Update();
 
                 Glfw.PollEvents();
 
                 // update
 
-                beforeRender?.Invoke();
+                update?.Invoke();
+                afterUpdate?.Invoke();
 
                 // render
 
@@ -187,8 +190,10 @@ namespace BoboEngine
 
                 Glfw.SwapBuffers(Window);
 
-                afterRender?.Invoke();
-                Cursor.Reset();
+
+                // Limit Framerate
+                if (targetFPS > 0)
+                    while ((1f / targetFPS) >= (Time.time - timeLastFrame)); // Much better than Thread.Sleep :sob:
             }
 
 
@@ -322,5 +327,8 @@ namespace BoboEngine
                     break;
             }
         }
+
+        [Command("FPS", "['MaxFPS'] Limits the framerate (0 for unlimited)")]
+        public static void SetFPS(int fps) => targetFPS = fps;
     }
 }

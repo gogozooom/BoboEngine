@@ -19,8 +19,8 @@
                 AddObject(obj);
             }
 
-            WindowManager.beforeRender += Update;
-            WindowManager.afterRender += LateUpdate;
+            WindowManager.update += Update;
+            WindowManager.afterUpdate += LateUpdate;
         }
         public GameObject Find(string name)
         {

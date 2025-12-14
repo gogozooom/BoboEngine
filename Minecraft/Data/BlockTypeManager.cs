@@ -1,15 +1,35 @@
 ﻿using BoboEngine.Utils;
+using Minecraft.Blocks;
 
 namespace Minecraft;
 public static class BlockTypeManager
 {
-    public static Dictionary<string, BlockType> blockData { get; private set; } = new();
+    public static Dictionary<string, BaseBlock> blockData { get; private set; } = new();
 
-    public static void GenerateBlockData() // TODO: Move to json files
+    public static void GenerateBlockData()
     {
         blockData.Clear();
 
-        blockData.Add("minecraft:null", new());
+        BaseBlock[] blocks = [ // TODO: Move to json files
+            new CubeBlock(), // Null
+            new CubeBlock("minecraft:air", "Air", MinecraftJsonManager.GetData("models/block/air")),
+            new CubeBlock("minecraft:dirt", "Dirt", MinecraftJsonManager.GetData("models/block/dirt")),
+            new CubeBlock("minecraft:grass_block", "Grass Block", MinecraftJsonManager.GetData("models/block/grass_block")),
+            new CubeBlock("minecraft:wildflowers", "Wild Flowers", MinecraftJsonManager.GetData("models/block/wildflowers_1")),
+            new TransparentBlock("minecraft:orange_stained_glass", "Orange Stained Glass", MinecraftJsonManager.GetData("models/block/orange_stained_glass")),
+            new TransparentBlock("minecraft:pink_stained_glass", "Pink Stained Glass", MinecraftJsonManager.GetData("models/block/pink_stained_glass")),
+            new TransparentBlock("minecraft:green_stained_glass", "Green Stained Glass", MinecraftJsonManager.GetData("models/block/green_stained_glass")),
+            new TransparentBlock("minecraft:yellow_stained_glass", "Yellow Stained Glass", MinecraftJsonManager.GetData("models/block/yellow_stained_glass"))
+            ];
+
+        foreach (var block in blocks)
+        {
+            blockData.Add(block.id, block);
+        }
+
+        /* Old Method
+
+        blockData.Add("minecraft:null", new CubeBlock());
 
         string[] watchList = [
             // Normal Blocks
@@ -21,12 +41,12 @@ public static class BlockTypeManager
             "models/block/anvil",
             "models/block/crafting_table",
 
-
-            /*
+            "models/block/oak_button",
+            "models/block/oak_button_inventory",
+            
             // Broken Blocks
             "models/block/oak_log_horizontal", // Not horizontal?
             "models/block/lantern", // No Textures?
-            "models/block/wildflowers_1", // Stem weird offset?
 
             // Fix animated textures
             "models/block/magma_block",
@@ -35,14 +55,12 @@ public static class BlockTypeManager
             // Fix textures bigger than 16x16
             "models/block/cherry_shelf_inventory",
 
-            "models/block/slime_block", // Incorrect rendering order?
-
             // Better Transparency Support
             "models/block/orange_stained_glass",
             "models/block/pink_stained_glass",
             "models/block/green_stained_glass",
             "models/block/yellow_stained_glass",
-            */
+            
             ];
 
         foreach (var blockV in watchList)
@@ -57,90 +75,7 @@ public static class BlockTypeManager
 
             AddBlockData(data);
         }
-
-        /*
-        AddBlockData(
-            "minecraft:dirt",
-            "Dirt",
-
-            "dirt"
-            );
-
-        AddBlockData(
-            "minecraft:stone",
-            "Stone",
-
-            "stone"
-            );
-
-        AddBlockData(
-            "minecraft:cobblestone",
-            "Cobblestone",
-
-            "cobblestone"
-            );
-
-        AddBlockData(
-            "minecraft:iron_ore",
-            "Iron Ore",
-
-            "iron_ore"
-            );
-
-        AddBlockData(
-            "minecraft:oak_planks",
-            "Oak Planks",
-
-            "oak_planks"
-            );
-
-
-        AddBlockData(
-            "minecraft:oak_log",
-            "Oak Log",
-
-            "oak_log",
-            "oak_log",
-            "oak_log_top",
-            "oak_log_top",
-            "oak_log",
-            "oak_log"
-            );
-
-        AddBlockData(
-            "minecraft:grass_block",
-            "Grass Block",
-
-            "grass_block_side",
-            "grass_block_side",
-            "grass_block_top",
-            "dirt",
-            "grass_block_side",
-            "grass_block_side"
-            );
-
-        AddBlockData(
-            "minecraft:crafting_table",
-            "Crafting Table",
-
-            "crafting_table_side",
-            "crafting_table_side",
-            "crafting_table_top",
-            "crafting_table_top",
-            "crafting_table_front",
-            "crafting_table_front"
-            );
         */
-    }
-    
-    public static BlockType GetBlockType(string id)
-    {
-        if (id != null && blockData.ContainsKey(id))
-        {
-            return blockData[id];
-        }
-
-        return blockData["minecraft:null"];
     }
 
     private static void AddBlockData(DynamicData data)
@@ -151,6 +86,15 @@ public static class BlockTypeManager
 
         var id = "minecraft:" + name;
 
-        blockData.Add(id, new(id, name, data));
+        blockData.Add(id, new CubeBlock(id, name, data));
+    }
+    public static BaseBlock GetBlockType(string id)
+    {
+        if (id != null && blockData.ContainsKey(id))
+        {
+            return blockData[id];
+        }
+
+        return blockData["minecraft:null"];
     }
 }

@@ -1,6 +1,5 @@
 ﻿using GLFW;
-using Microsoft.VisualBasic;
-using System.Data;
+using System.Windows.Input;
 
 namespace BoboEngine.Input;
 public static class InputSystem
@@ -50,9 +49,15 @@ public static class InputSystem
 }
 public static class Cursor
 {
+    /// <summary>
+    /// The cursor pixel position
+    /// </summary>
     public static Int2 position { get => _position; set => SetCursorPosition(value); }
     private static Int2 _position;
 
+    /// <summary>
+    /// The amount of pixels the cursor has moved this frame
+    /// </summary>
     public static Int2 delta { get; private set; }
     public static CursorMode mode { get => _mode; set => SetCursorMode(value); }
     private static CursorMode _mode;
@@ -86,15 +91,13 @@ public static class Cursor
     public static void cursor_position_callback(Window window, double xPos, double yPos)
     {
         position = new((int)xPos, (int)yPos);
+    }
 
+    public static void Update()
+    {
         delta = position - lastPosition;
 
         lastPosition = position;
-    }
-
-    public static void Reset()
-    {
-        delta = new(0, 0);
     }
 
     private static void SetCursorMode(CursorMode v)

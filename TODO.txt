@@ -1,14 +1,16 @@
 ﻿Known Issues:
-	- Placing a block at the edge of a chunk does not update that chunk's culling
-		* Solution: After proper block updates are implemented, if mesh changes are detected, set 'meshChanged' to true regenerating the mesh next frame
-	- 3DConnexion input being handeled on a separate thread causing errors when accessing data used by the window thread
+	- 3DConnexion event inputs being handeled on a separate thread causing errors when accessing data used by the window thread
 		* Solution: Create beforeRender and afterRender event actions and use those to update the 3D mouse input *(And the same for the CMDConsoleBuffer making the ObjectBehavior script reduntant)*
 	- Selection Outline clipping issues near corners and back of block
 		* Solution: Check for what the clear flags do in the origonal minecraft, presumably the depth gets set to a spesific value allowing only certain parts of the world to be culled
-	- Mouse Delta being inconsitant across different fps
-	- Moving the camera up and down is slow when not pressing any directional keys
+
+Known Optimizations:
+	- Decouple BindOpenGL() method, add support for data conversion to be done on a separate thread.
 
 TODO:
+
+	- Read and write .mca and .nbt data! (https://minecraft.fandom.com/wiki/Region_file_format) (Also look into GZip)
+
 
 	- Implement block facing directions, and update the model and culling faces accordingly
 

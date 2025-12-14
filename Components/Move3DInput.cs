@@ -59,6 +59,8 @@ public class Move3DInput : ObjectBehavior
 
     public override void Update()
     {
+        //Program.Log(GetRotationInput() + ", " + Time.deltaTime);
+
         UpdateMovment();
         UpdateRaycast();
     }
@@ -159,8 +161,7 @@ public class Move3DInput : ObjectBehavior
         return posInput;
     }
     private Float3 GetRotationInput() => new Float3(Cursor.delta.y, Cursor.delta.x, 0) 
-                                        * (0.12f * sensitivity) // 0.12f resonable constant from pixels to sensitivity value
-                                        * (MathF.Log10(Camera.main.fov + 1.02f) / 1.85138f); // TMP fov scaling
+                                        * (0.14f * sensitivity);
 
     private void OnMouseButtonPressed(MouseInputState state)
     {
@@ -197,7 +198,6 @@ public class Move3DInput : ObjectBehavior
     private void OnMouseScroll(Float2 scroll)
     {
         speedMultiplier = Maths.Clamp(speedMultiplier + scroll.y / 30f, 0, 3);
-        //Camera.main.fov = Maths.Clamp(Camera.main.fov - scroll.y * 2f, 20, 120);
     }
 
     private void PlaceBlock()

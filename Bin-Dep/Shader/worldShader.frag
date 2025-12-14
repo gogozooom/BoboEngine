@@ -11,7 +11,7 @@ void main()
     vec4 color = texture(mainTexture, v_TexCoord);
 
     // Alpha Discard
-    if (color.w < 0.5)
+    if (color.w < 0.1)
     {
         discard;
     }

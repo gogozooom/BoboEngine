@@ -430,6 +430,6 @@ public static class WorldDataManager
             return;
         }
 
-        chunk.GenerateMesh();
+        chunk.ForceRegenerateChunk();
     }
 }
