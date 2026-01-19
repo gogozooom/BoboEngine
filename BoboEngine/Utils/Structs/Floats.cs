@@ -1,7 +1,49 @@
-﻿using System.Numerics;
+﻿using System.ComponentModel.Design;
+using System.Numerics;
+using System.Security.Authentication.ExtendedProtection;
 
 namespace BoboEngine;
 
+public struct Float4(float x = 0, float y = 0, float z = 0, float w = 0)
+{
+    public float x = x;
+    public float y = y;
+    public float z = z;
+    public float w = w;
+
+    public float r { get => x; set => x = value; }
+    public float g { get => y; set => y = value; }
+    public float b { get => z; set => z = value; }
+    public float a { get => w; set => w = value; }
+
+    #region variants
+    public static Float4 white => new(1, 1, 1, 1);
+    public static Float4 black => new(0, 0, 0, 1);
+    public static Float4 red => new(1, 0, 0, 1);
+    public static Float4 green => new(0, 1, 0, 1);
+    public static Float4 blue => new(0, 0, 1, 1);
+
+    public static Float4 xAxis => new(1, 0, 0, 1);
+    public static Float4 yAxis => new(0, 1, 0, 1);
+    public static Float4 zAxis => new(0, 0, 1, 1);
+
+
+    public static Float4 zero => new(0, 0, 0, 1);
+    public static Float4 one => new(1, 1, 1, 1);
+    #endregion
+
+    public static Float4 Lerp(Float4 s, Float4 e, float t)
+    {
+        return (e - s) * t + s;
+    }
+
+    public static Float4 operator *(Float4 f, float v) => new Float4(f.x * v, f.y * v, f.z * v, f.w * v);
+    public static Float4 operator -(Float4 a, Float4 b) => new Float4(a.x - b.x, a.y - b.y, a.z - b.z, a.w - b.w);
+    public static Float4 operator +(Float4 a, Float4 b) => new Float4(a.x + b.x, a.y + b.y, a.z + b.z, a.w + b.w);
+
+    public static explicit operator Float3(Float4 v) => new Float3(v.x, v.y, v.z);
+    public override string ToString() => $"({x.ToString()},{y.ToString()},{z.ToString()},{w.ToString()})";
+}
 public struct Float3(float x = 0, float y = 0, float z = 0)
 {
     public float x = x;
@@ -33,6 +75,7 @@ public struct Float3(float x = 0, float y = 0, float z = 0)
     #endregion
 
     public float Length => MathF.Sqrt(Dot(this, this));
+    public float LengthSquared() => Dot(this, this);
     public Float3 Normalized()
     {
         float l = Length;
@@ -44,9 +87,28 @@ public struct Float3(float x = 0, float y = 0, float z = 0)
 
         return this / Length;
     }
+    
+    public readonly float GetAxis(Axis axis)
+    {
+        return axis switch
+        {
+            Axis.Yaxis => y,
+            Axis.Xaxis => x,
+            Axis.Zaxis => z,
+            _ => 0,
+        };
+    }
+    public readonly Float3 With(Axis axis, float value)
+    {
+        float x = axis == Axis.Xaxis ? value : this.x;
+        float y = axis == Axis.Yaxis ? value : this.y;
+        float z = axis == Axis.Zaxis ? value : this.z;
+        return new Float3(x, y, z);
+    }
+
     public static float Dot(Float3 a, Float3 b) => a.x * b.x + a.y * b.y + a.z * b.z;
     public static Float3 CrossProduct(Float3 a, Float3 b) => new(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
-
+    public static Float3 Lerp(Float3 s, Float3 e, float t) => (e - s) * t + s;
     public static Float3 operator +(Float3 a, Float3 b) => new(a.x + b.x, a.y + b.y, a.z + b.z); // Vector Adding
     public static Float3 operator -(Float3 a, Float3 b) => new(a.x - b.x, a.y - b.y, a.z - b.z); // Vector Subracting
     public static Float3 operator -(float a, Float3 b) => new(a - b.x, a - b.y, a - b.z); // Subracting
@@ -61,15 +123,13 @@ public struct Float3(float x = 0, float y = 0, float z = 0)
     public static bool operator !=(Float3 a, Float3 b) => a.x != b.x || a.y != b.y || a.z != b.z;
 
     public override string ToString() => $"({x.ToString()},{y.ToString()},{z.ToString()})";
-    public static Float3 Parse(string s) => (Float3)s.Split(',').Select(float.Parse).ToArray();
-
-
     public Int3 RoundToInt3()
     {
         return new((int)float.Round(x), (int)float.Round(y), (int)float.Round(z));
     }
 
     public static explicit operator Float3(float[] f) => new(f[0], f[1], f[2]);
+    public static explicit operator Float3(Double3 d) => new((float)d.x, (float)d.y, (float)d.z);
 
     public static implicit operator Float3(Int3 i) => new(i.x, i.y, i.z);
 
@@ -96,6 +156,7 @@ public struct Float2(float x = 0, float y = 0)
     #endregion
 
     public float Length => MathF.Sqrt(x * x + y * y);
+    public float LengthSquared() => x * x + y * y;
     public Float2 Normalized() => this / Length;
     public Float2 Cross => new(y, -x);
     public static float Dot(Float2 a, Float2 b) => a.x * b.x + a.y * b.y;
@@ -155,6 +216,30 @@ public struct BaseVectors(Float3 leftVector, Float3 upVector, Float3 forwardVect
     {
         return leftVector * point.x + upVector * point.y + forwardVector * point.z;
     }
+    public Double3 TransformVector(Double3 point)
+    {
+        return (Double3)leftVector * point.x + (Double3)upVector * point.y + (Double3)forwardVector * point.z;
+    }
+    public BaseVectors TransformByBaseVectors(BaseVectors baseVectors)
+    {
+        return new(
+            baseVectors.TransformVector(leftVector),
+            baseVectors.TransformVector(upVector),
+            baseVectors.TransformVector(forwardVector));
+    }
+
+    public BaseVectors RotateXBy(float angle)
+    {
+        return TransformByBaseVectors(FromXRotation(angle));
+    }
+    public BaseVectors RotateYBy(float angle)
+    {
+        return TransformByBaseVectors(FromYRotation(angle));
+    }
+    public BaseVectors RotateZBy(float angle)
+    {
+        return TransformByBaseVectors(FromZRotation(angle));
+    }
 
     public static BaseVectors FromRotation(Float3 rotation)
     {
@@ -198,6 +283,15 @@ public struct BaseVectors(Float3 leftVector, Float3 upVector, Float3 forwardVect
             new(-Maths.Sin(rotation), Maths.Cos(rotation), 0),
             Float3.zAxis
             );
+    }
+
+    public static BaseVectors FacingTowards(Float3 point, Float3 up) // Have to swap point and up????
+    {
+        Float3 forwardVector = point.Normalized();
+        Float3 leftVector = Float3.CrossProduct(forwardVector, up).Normalized();
+        Float3 upVector = Float3.CrossProduct(leftVector, forwardVector).Normalized();
+
+        return new BaseVectors(leftVector, upVector, forwardVector);
     }
 }
 

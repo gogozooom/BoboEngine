@@ -11,15 +11,36 @@ public static class BlockTypeManager
         blockData.Clear();
 
         BaseBlock[] blocks = [ // TODO: Move to json files
-            new CubeBlock(), // Null
-            new CubeBlock("minecraft:air", "Air", MinecraftJsonManager.GetData("models/block/air")),
-            new CubeBlock("minecraft:dirt", "Dirt", MinecraftJsonManager.GetData("models/block/dirt")),
-            new CubeBlock("minecraft:grass_block", "Grass Block", MinecraftJsonManager.GetData("models/block/grass_block")),
-            new CubeBlock("minecraft:wildflowers", "Wild Flowers", MinecraftJsonManager.GetData("models/block/wildflowers_1")),
+            new Block("minecraft:air", "Air", MinecraftJsonManager.GetData("models/block/air")),
+            new FullBlock(), // Null
+            new FullBlock("minecraft:bedrock", "Bedrock", "models/block/bedrock"),
+            new FullBlock("minecraft:dirt", "Dirt", "models/block/dirt"),
+            new FullBlock("minecraft:grass_block", "Grass Block", "models/block/grass_block"),
+            new FullBlock("minecraft:cobblestone", "Cobblestone", "models/block/cobblestone"),
+            new FullBlock("minecraft:stone", "Stone", "models/block/stone"),
+            new FullBlock("minecraft:oak_log", "Oak Log", "models/block/oak_log"),
+            new LeafBlock("minecraft:oak_leaves", "Oak Leaves", "models/block/oak_leaves"),
+            new Slab("minecraft:oak_slab", "Oak Slab", "models/block/oak_slab"),
+            new ShapedBlock("minecraft:oak_stairs", "Oak Stairs", "models/block/oak_stairs"),
+            new FullBlock("minecraft:oak_planks", "Oak Planks", "models/block/oak_planks"),
+            new FullBlock("minecraft:crafting_table", "Crafting Table", "models/block/crafting_table"),
+            new FullBlock("minecraft:orange_wool", "Orange Wool", "models/block/orange_wool"),
+            new FullBlock("minecraft:blue_wool", "Blue Wool", "models/block/blue_wool"),
+            new FullBlock("minecraft:black_wool", "Black Wool", "models/block/black_wool"),
+            new FullBlock("minecraft:white_wool", "White Wool", "models/block/white_wool"),
+            new Anvil("minecraft:anvil", "Anvil", "models/block/anvil"),
+            new Block("minecraft:azalea", "Azalea", "models/block/azalea"),
+            new Block("minecraft:beacon", "Beacon", "models/block/beacon"),
+            new Torch("minecraft:torch", "Torch", "models/block/torch"),
+            new TransparentBlock("minecraft:glass", "Glass", "models/block/glass"),
+
+
+            /*
             new TransparentBlock("minecraft:orange_stained_glass", "Orange Stained Glass", MinecraftJsonManager.GetData("models/block/orange_stained_glass")),
             new TransparentBlock("minecraft:pink_stained_glass", "Pink Stained Glass", MinecraftJsonManager.GetData("models/block/pink_stained_glass")),
             new TransparentBlock("minecraft:green_stained_glass", "Green Stained Glass", MinecraftJsonManager.GetData("models/block/green_stained_glass")),
             new TransparentBlock("minecraft:yellow_stained_glass", "Yellow Stained Glass", MinecraftJsonManager.GetData("models/block/yellow_stained_glass"))
+            */
             ];
 
         foreach (var block in blocks)
@@ -86,7 +107,7 @@ public static class BlockTypeManager
 
         var id = "minecraft:" + name;
 
-        blockData.Add(id, new CubeBlock(id, name, data));
+        blockData.Add(id, new Block(id, name, data));
     }
     public static BaseBlock GetBlockType(string id)
     {

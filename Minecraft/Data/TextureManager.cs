@@ -9,6 +9,8 @@ public static class TextureManager
     public static Dictionary<string, int> blockTextureIds { get; private set; }
     public static void GenerateAtlas()
     {
+        StbImage.stbi_set_flip_vertically_on_load(1);
+
         List<ImageResult> images = [Texture.ReadImageFile(Program.GetLocalTexturePath("NULL"), ColorComponents.RedGreenBlueAlpha)];
         blockTextureIds = new Dictionary<string, int> { { "minecraft:null", 0 } };
 
@@ -83,6 +85,11 @@ public static class TextureManager
         }
 
         return blockTextureIds[textureName];
+    }
+
+    public static string GetPathToTexture(string path)
+    {
+        return Path.Combine(Program.ProgramDirectory, "Data\\assets\\minecraft\\textures", path);
     }
 
     public static void DrawToBMP(Float3[,] image, string fileName) // Borrowed from Sebastian Lague

@@ -111,7 +111,9 @@ public abstract class Texture
 
         textureRef = glGenTexture();
 
-        glBindTexture(GL_TEXTURE_TYPE, textureRef);
+        var GL_TEXTURE_TYPE = GetGL_TEXTURE_TYPE();
+
+        OpenGL.GL.glBindTexture(GL_TEXTURE_TYPE, textureRef);
 
         /* (Context - Minecraft):
             * GL_LINEAR:
@@ -150,7 +152,7 @@ public abstract class Texture
         glTexParameteri(GL_TEXTURE_TYPE, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
         // Set to higher value depending on how big the texture atlas is
-        //glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_LEVEL, 1); 
+        //glTexParameteri(GL_TEXTURE_TYPE, GL_TEXTURE_MAX_LEVEL, 0);
 
         try
         {
@@ -175,7 +177,7 @@ public abstract class Texture
             }
             else
             {
-                throw new NotImplementedException($"Type of '{GL_TEXTURE_TYPE}' is not implemented!");
+                throw new NotImplementedException($"Type of '{GetGL_TEXTURE_TYPE}' is not implemented!");
             }
 
             glGenerateMipmap(GL_TEXTURE_TYPE);
@@ -194,16 +196,16 @@ public abstract class Texture
         glUniform1i(glGetUniformLocation(textureRef, "mainTexture"), 0);
     }
 
-    protected int GL_TEXTURE_TYPE;
-    public void BindTexture()
+    protected abstract int GetGL_TEXTURE_TYPE();
+    public void glBindTexture()
     {
         if (textureRef == 0) BindOpenGL();
 
-        glBindTexture(GL_TEXTURE_TYPE, textureRef);
+        OpenGL.GL.glBindTexture(GetGL_TEXTURE_TYPE(), textureRef);
     }
-    public void UnbindTexture()
+    public void glUnbindTexture()
     {
-        glBindTexture(GL_TEXTURE_TYPE, 0);
+        OpenGL.GL.glBindTexture(GetGL_TEXTURE_TYPE(), 0);
     }
     public void Delete()
     {

@@ -8,15 +8,14 @@ public class Texture2D : Texture
 
     public Texture2D(TextureSampleType sampleType = 0)
     {
-        GL_TEXTURE_TYPE = GL_TEXTURE_2D;
         this.sampleType = sampleType;
 
         LoadNullTexture();
     }
-    public Texture2D(string filePath, TextureSampleType sampleType = 0)
+    public Texture2D(string filePath, string name, TextureSampleType sampleType = 0)
     {
-        GL_TEXTURE_TYPE = GL_TEXTURE_2D;
         this.sampleType = sampleType;
+        this.name = name;
 
         if (!LoadImageFile(filePath)) // Failed to load texture
         {
@@ -24,6 +23,7 @@ public class Texture2D : Texture
         }
     }
 
+    protected override int GetGL_TEXTURE_TYPE() => GL_TEXTURE_2D;
     protected override void UpdateImageProperties()
     {
         if (loaded == false) return;

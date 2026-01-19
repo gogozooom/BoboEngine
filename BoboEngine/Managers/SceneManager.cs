@@ -1,10 +1,10 @@
-﻿using BoboEngine.Shaders;
-using ConsoleCommand;
+﻿using ConsoleCommand;
 
 namespace BoboEngine;
 public static class SceneManager
 {
     public static Scene currentScene;
+    public static Action sceneLoaded;
     public static void LoadScene()
     {
         UnloadScene(); // Unload Last Scene
@@ -22,20 +22,10 @@ public static class SceneManager
 
         scene.InitializeScene(objects.ToArray());
 
-        // Create FreeCam Script
-        scene.camera.gameObject.AddComponent<Move3DInput>();
         scene.camera.transform.SetRotation(new Float3(0, 0, 0));
         scene.camera.transform.position = new Float3(0, 1.1f, -5.5f);
 
-        var newObject = new GameObject();
-        newObject.AddComponent<Rotater>();
-        var mesh = newObject.AddComponent<Mesh>();
-        mesh.LoadObjFile(Program.GetLocalModelPath("Cube"));
-
-        ShaderManager.CreateShader("cube");
-
-        var material = new Material("cube", new Texture2D(Program.GetLocalTexturePath("Sample")));
-        mesh.material = material;
+        sceneLoaded?.Invoke();
 
         /* Block Look Direction Testing
         var obj = new GameObject("Debug");
@@ -81,7 +71,7 @@ public static class SceneManager
 
         if (!string.IsNullOrEmpty(textureName))
         {
-            var texture = new Texture2D(Program.GetLocalTexturePath(textureName));
+            var texture = new Texture2D(Program.GetLocalTexturePath(textureName), textureName);
 
             material = new Material(texture: texture);
         }

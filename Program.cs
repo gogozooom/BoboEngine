@@ -35,28 +35,48 @@ internal static class Program
                 if (input != null)
                 {
                     ConsoleInputted?.Invoke(input);
+
+                    if (!WindowManager.Initialized)
+                    {
+                        // Safe to run commands!
+                        ConsoleCmd.HandleConsoleInput(input);
+                    }
                 }
             }
         });
 
-        StartProgram();
+        InitializeProgram();
     }
 
+    /// <summary>
+    /// Idk why I still have this...
+    /// </summary>
     public static void Test(float input, float expected)
     {
         if (input == expected)
         {
-            Log($"Passed test!  E: '{expected}' == R: '{input}' !");
+            Log($"Passed test!  Expected: '{expected}' == Result: '{input}' !");
         }
         else
         {
-            LogWarning($"Failed test! E: '{expected}' == R: '{input}' !");
+            LogWarning($"Failed test! Expected: '{expected}' == Result: '{input}' !");
         }
     }
 
-    public static void StartProgram()
+    public static void InitializeProgram()
     {
-        WindowManager.InitializeRenderLoop(800, 600);
+        var methods = AppDomain.CurrentDomain.GetAssemblies()
+            .SelectMany(x => x.GetTypes())
+            .Where(x => x.IsClass)
+            .SelectMany(x => x.GetMethods())
+            .Where(x => x.GetCustomAttributes(typeof(OnProgramInitializeAttribute), false).FirstOrDefault() != null);
+
+        foreach (var method in methods)
+        {
+            method.Invoke(null, []);
+        }
+
+        WindowManager.InitializeRenderLoop(854, 480);
     }
 
     public static string GetLocalModelPath(string model = null)
@@ -146,3 +166,9 @@ internal static class Program
     }
     #endregion
 }
+
+/// <summary>
+/// Will fire the connected static method once the program starts
+/// </summary>
+[AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
+class OnProgramInitializeAttribute : Attribute {}

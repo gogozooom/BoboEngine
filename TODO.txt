@@ -1,37 +1,25 @@
 ﻿Known Issues:
-	- 3DConnexion event inputs being handeled on a separate thread causing errors when accessing data used by the window thread
-		* Solution: Create beforeRender and afterRender event actions and use those to update the 3D mouse input *(And the same for the CMDConsoleBuffer making the ObjectBehavior script reduntant)*
 	- Selection Outline clipping issues near corners and back of block
-		* Solution: Check for what the clear flags do in the origonal minecraft, presumably the depth gets set to a spesific value allowing only certain parts of the world to be culled
-
-Known Optimizations:
-	- Decouple BindOpenGL() method, add support for data conversion to be done on a separate thread.
-
+		* Solution: Probably something to do with the blend flags origonally in minecraft
+	- Chunks not updating when under a lot of stress
+		* Just break blocks while the chunks are initially generating, you'll see
+	- Known Player Controller Issues
+		* Eye height interpolation not accurate to minecraft
+	- 3DConnexion event inputs being handeled on a separate thread causing errors when accessing data used by the window thread
+		* Solution: Create input buffer handled 
+	
 TODO:
 
-	- Read and write .mca and .nbt data! (https://minecraft.fandom.com/wiki/Region_file_format) (Also look into GZip)
+	- Add perspective toggle
+	- Add player model
 
+	- Rewrite GetTriangulatedFaces() and make it non static using instance data
 
-	- Implement block facing directions, and update the model and culling faces accordingly
-
-	- Buffer input event actions to be handled before update
-
-	- Tick Based System!
-	- Do some research on UVs and Arrays for glsl vertex shaders possibly enabling seamless animated blocks
-	- Maybe frag shader too? To help with artifacts far away
-
-	
-	- Entity Base Class!
-	- Collision!
-	- Player Controller!
-	- UI!
-	- Cursor States!
-	
-
-
-	- Extra Features When Needed:
-		* Add FindObjectOfType<>() + FindObject**s**OfType<>() to ObjectBehaivor class
-		* [Transform.cs] [Mesh.cs] [WindowManager.cs] Add support for static objects and caching their mesh with transforms applied + General Matrix caching
+	- World Generation (Flat world)
+	- Save File Loading (Real Minecraft loaded into fake Minecraft)
+	- UI support
+	- Particle support
+	- Block model rotation and properties
 
 
 FINNISHED:
@@ -97,6 +85,8 @@ FINNISHED:
 		* Faces culling needs to be more sophisticated than simply adjasentBlock == "air"
 		* Only load json files as needed
 		* Rework block data from json to proper classes
+
+	- Occlusion Culling!
 OLD:
 
 	- Create scene skyboxes

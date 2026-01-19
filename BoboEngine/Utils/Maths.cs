@@ -29,6 +29,10 @@ public static class Maths
     /// </summary>
     public static float Min(float a, float b) => (a < b) ? a : b;
     /// <summary>
+    /// Returns the smallest of the spesified numbers
+    /// </summary>
+    public static int Min(int a, int b) => (a < b) ? a : b;
+    /// <summary>
     /// Returns the biggest of the spesified numbers
     /// </summary>
     public static float Max(float a, float b, float c)
@@ -39,13 +43,19 @@ public static class Maths
     /// Returns the biggest of the spesified numbers
     /// </summary>
     public static float Max(float a, float b) => (a > b) ? a : b;
+    /// <summary>
+    /// Returns the biggest of the spesified numbers
+    /// </summary>
+    public static int Max(int a, int b) => (a > b) ? a : b;
 
-    
+
     /// <summary>
     /// Will wrap the input value to go between 0 and range; <br/>
     /// (SAME AS MOD!)
     /// </summary>
     public static float Wrap(float input, float range) => Mod(input, range);
+
+    public static int Wrap(int input, int range) => Mod(input, range);
 
     /// <summary>
     /// Will wrap the input value to go between value1 and value2 <br/>
@@ -76,11 +86,10 @@ public static class Maths
     /// <param name="absRange">The positive and negative min and maxes of the output value</param>
     public static float WrapAbs(float input, float absRange) => Mod(input - absRange, absRange * 2) - absRange;
 
+    public static double BasicRound(double v) { if (Math.Abs(v - Math.Floor(v)) <= 1.0E-5) { return Math.Floor(v); } else return v; }
+
     /// <summary>
     /// SLIGHTLY INACURATE! <br/>
-    /// <br/>
-    /// Sould be = mod(-10,10) => 0 <br/>
-    /// Function results in = mod(-10,10) => -10 <br/>
     /// <br/>
     /// Desmos: <br/>
     /// r_{em}\left(x,r\right)=\operatorname{sign}\left(x\right)\cdot\operatorname{mod}\left(\operatorname{abs}\left(x\right),r\right) <br/>
@@ -92,6 +101,26 @@ public static class Maths
     /// In Desmos
     /// </summary>
     public static float Mod(float input1, float input2) => (input1 % input2) + input2 * (input1 < 0 ? 1 : 0);
+    public static double Mod(double input1, double input2) => (input1 % input2) + input2 * (input1 < 0 ? 1 : 0);
+    public static int Mod(int input1, int input2) => (input1 % input2) + input2 * (input1 < 0 ? 1 : 0);
+    public static bool Equal(double a, double b) => Math.Abs(b - a) < 1.0E-5; 
+
+    public static int Floor(double value) => (int)Math.Floor(value);
+    public static int RoundUp(double value)
+    {
+        var floor = (int)Math.Floor(value);
+
+        if(value == floor)
+        {
+            return floor;
+        }
+        else
+        {
+            return floor + 1;
+        }
+    }
+    public static float Lerp(float a, float b, float t) => a + (b - a) * t;
+    public static double Lerp(double a, double b, double t) => a + (b - a) * t;
 
     /// <summary>
     /// Sin in degrees
@@ -212,7 +241,35 @@ public static class Maths
 
         float slope = (planeOffset - p.y) / v.y;
 
-        Float3 result = new (slope * v.x + p.x, planeOffset, slope * v.z + p.z);
+        Float3 result = new(slope * v.x + p.x, planeOffset, slope * v.z + p.z);
+
+        switch (axis)
+        {
+            case Axis.Xaxis:
+                return new(result.y, result.x, result.z);
+            case Axis.Zaxis:
+                return new(result.x, result.z, result.y);
+        }
+
+        return result;
+    }
+    public static Double3 PlanePointIntersection(Double3 p, Double3 v, Axis axis, float planeOffset = 0)
+    {
+        switch (axis)
+        {
+            case Axis.Xaxis:
+                p = new(p.y, p.x, p.z);
+                v = new(v.y, v.x, v.z);
+                break;
+            case Axis.Zaxis:
+                p = new(p.x, p.z, p.y);
+                v = new(v.x, v.z, v.y);
+                break;
+        }
+
+        double slope = (planeOffset - p.y) / v.y;
+
+        Double3 result = new(slope * v.x + p.x, planeOffset, slope * v.z + p.z);
 
         switch (axis)
         {

@@ -11,7 +11,7 @@ namespace BoboEngine
         private void SetFOV(float v) => _fov = Math.Clamp(v, 0.1f, 179.9f);
 
         public float nearPlane = 0.01f;
-        public float farPlane = 100f;
+        public float farPlane = 1000f;
 
         public Camera()
         {
@@ -23,15 +23,23 @@ namespace BoboEngine
             main = this;
         }
 
-        public Matrix4x4 GetProjectionMatrix()
+        public Matrix4x4 GetProjectionMatrix(bool applyTransform = true, bool applyRotation = true)
         {
             var perspectiveMatrix = Matrix4x4.CreateScale(new Vector3(-1, 1, -1)) * Matrix4x4.CreatePerspectiveFieldOfView(Maths.ToRad(fov), WindowManager.WindowAspectRatio, nearPlane, farPlane);
 
+            Matrix4x4 transM = Matrix4x4.Identity;
+            Matrix4x4 rotM = Matrix4x4.Identity;
 
+            if (applyTransform) transM = GetProjectionPositionMatrix();
+            if (applyRotation) rotM = transform.MatrixInverseRot;
 
+            return transM * rotM * perspectiveMatrix;
+        }
+        public Matrix4x4 GetProjectionPositionMatrix()
+        {
             Matrix4x4.Invert(transform.MatrixTrans, out var transM);
 
-            return transM * transform.MatrixInverseRot * perspectiveMatrix;
+            return transM;
         }
 
         public Matrix4x4 Get2DProjectionMatrix()

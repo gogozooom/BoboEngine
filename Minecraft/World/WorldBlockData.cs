@@ -1,8 +1,10 @@
-﻿namespace Minecraft;
+﻿namespace Minecraft.World;
 
 public struct WorldBlockData
 {
     public string block_id;
+
+    public static readonly WorldBlockData AIR = new();
 
     public WorldBlockData()
     {

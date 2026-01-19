@@ -1,5 +1,4 @@
 ﻿using GLFW;
-using System.Windows.Input;
 
 namespace BoboEngine.Input;
 public static class InputSystem
@@ -44,8 +43,6 @@ public static class InputSystem
             _inputStates[key] = inputDown;
         }
     }
-
-
 }
 public static class Cursor
 {
@@ -67,6 +64,29 @@ public static class Cursor
     public static Action<MouseInputState> onMouseButtonUp;
     public static Action<Float2> onScroll;
 
+    private static readonly Dictionary<MouseButton, bool> _inputStates = new();
+
+    public static bool GetMouseButton(MouseButton button)
+    {
+        if (_inputStates.TryGetValue(button, out var s))
+        {
+            return s;
+        }
+
+        _inputStates.Add(button, false);
+        return false;
+    }
+
+    private static void UpdateMouseButtonInput(MouseButton button, bool value)
+    {
+        if (_inputStates.TryAdd(button, value))
+        {
+            return;
+        }
+
+        _inputStates[button] = value;
+    }
+
     public static void mouse_button_callback(Window window, MouseButton button, GLFW.InputState state, ModifierKeys mods)
     {
         var inputState = new MouseInputState(button, state, mods);
@@ -76,10 +96,12 @@ public static class Cursor
         if (state == GLFW.InputState.Press)
         {
             onMouseButtonDown?.Invoke(inputState);
+            UpdateMouseButtonInput(button, true);
         }
         else if (state == GLFW.InputState.Release)
         {
             onMouseButtonUp?.Invoke(inputState);
+            UpdateMouseButtonInput(button, false);
         }
     }
     public static void mouse_scroll_callback(Window window, double x, double y)

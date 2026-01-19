@@ -104,14 +104,14 @@ public class Shader
         return _id;
     }
 
-    public void Bind()
+    public void glBind()
     {
         if (!isCompiled) CreateShader();
 
         glUseProgram(shaderRef);
     }
 
-    public void Unbind()
+    public void glUnbind()
     {
         glUseProgram(0);
     }
@@ -121,19 +121,43 @@ public class Shader
         glDeleteShader(shaderRef);
     }
 
-    public void SetMatrix4x4(string uniformName, Matrix4x4 input)
+    public void glSetMatrix4x4(string uniformName, Matrix4x4 input)
     {
         int location = glGetUniformLocation(shaderRef, uniformName);
 
         glUniformMatrix4fv(location, 1, false, MatrixToData(input));
     }
+    public void glSetInt(string uniformName, int input)
+    {
+        int location = glGetUniformLocation(shaderRef, uniformName);
 
-    public void SetVec2(string uniformName, Float2 input)
+        glUniform1i(location, input);
+    }
+    public void glSetVec4(string uniformName, Float4 input)
+    {
+        int location = glGetUniformLocation(shaderRef, uniformName);
+
+        glUniform4f(location, input.x, input.y, input.z, input.w);
+    }
+    public void glSetVec3(string uniformName, Float3 input)
+    {
+        int location = glGetUniformLocation(shaderRef, uniformName);
+
+        glUniform3f(location, input.x, input.y, input.z);
+    }
+    public void glSetVec2(string uniformName, Float2 input)
     {
         int location = glGetUniformLocation(shaderRef, uniformName);
 
         glUniform2f(location, input.x, input.y);
     }
+    public void glSetFloat(string uniformName, float input)
+    {
+        int location = glGetUniformLocation(shaderRef, uniformName);
+
+        glUniform1f(location, input);
+    }
+
 
     public float[] MatrixToData(Matrix4x4 m) =>
     [

@@ -1,9 +1,6 @@
 ﻿using BoboEngine.Input;
-using BoboEngine.Shaders;
 using ConsoleCommand;
 using GLFW;
-using Minecraft;
-using StbImageSharp;
 using System.Drawing;
 using System.Numerics;
 using static OpenGL.GL;
@@ -20,7 +17,7 @@ namespace BoboEngine
         public static Window Window { get; private set; }
         public static Float2 WindowSize { get; private set; }
         public static float WindowAspectRatio => WindowSize.x / WindowSize.y;
-        public static Vector4 ClearColor { get; private set; }
+        public static Float3 ClearColor { get; private set; }
 
         public static Action update;
         public static Action afterUpdate;
@@ -33,14 +30,7 @@ namespace BoboEngine
         {
             CreateWindow(windowWidth, windowHeight, Program.TITLE);
 
-            // After window creation to prevent errors
-            StbImage.stbi_set_flip_vertically_on_load(1);
-            TextureManager.GenerateAtlas();
-            BlockTypeManager.GenerateBlockData();
             SceneManager.LoadScene();
-            WorldDataManager.GenerateTestChunk();
-
-            SetClearColor(new Vector4(0.2f, 0.2f, 0.4f, 1f));
 
             float timeLastFrame = Time.time;
 
@@ -131,11 +121,9 @@ namespace BoboEngine
 
                 ClearBuffer();
 
-                Matrix4x4 cameraMatrix = Camera.main.GetProjectionMatrix();
-
                 List<Mesh> targetMeshes = new();
 
-                foreach (var obj in SceneManager.currentScene.objects)
+                foreach (var obj in SceneManager.currentScene.objects.ToArray())
                 {
                     if (!obj.enabled) continue;
 
@@ -152,28 +140,18 @@ namespace BoboEngine
 
                 targetMeshes.Sort();
 
+                Matrix4x4 cameraMatrix = Camera.main.GetProjectionMatrix();
+                Matrix4x4 cameraMatrixTransformLocal = Camera.main.GetProjectionMatrix(false);
+
                 foreach (Mesh targetMesh in targetMeshes)
                 {
-                    Shader targetShader = targetMesh.material.shader;
+                    targetMesh.glBind();
 
-                    targetShader.Bind();
-                    targetShader.SetMatrix4x4("projection", cameraMatrix);
-                    targetShader.SetMatrix4x4("model", targetMesh.transform.Matrix);
-                    targetShader.SetVec2("ScreenSize", WindowSize);
+                    targetMesh.glSetProperties(cameraMatrix, cameraMatrixTransformLocal);
 
-                    targetMesh.material.texture?.BindTexture();
+                    targetMesh.glDraw();
 
-                    targetMesh.BindVAO();
-
-                    if (targetMesh.material.cullBackFaces) glEnable(GL_CULL_FACE); else glDisable(GL_CULL_FACE);
-
-                    glDrawArrays(GL_TRIANGLES, 0, (int)targetMesh.vertexBufferSize);
-
-                    targetMesh.UnBindVAO();
-
-                    targetMesh.material.texture?.UnbindTexture();
-
-                    targetShader.Unbind();
+                    targetMesh.glUnBind();
                 }
 
                 /*// Draw Grid
@@ -190,12 +168,10 @@ namespace BoboEngine
 
                 Glfw.SwapBuffers(Window);
 
-
                 // Limit Framerate
                 if (targetFPS > 0)
                     while ((1f / targetFPS) >= (Time.time - timeLastFrame)); // Much better than Thread.Sleep :sob:
             }
-
 
             CloseWindow();
             SceneManager.UnloadScene();
@@ -247,7 +223,6 @@ namespace BoboEngine
 
             glEnable(GL_BLEND);
             glEnable(GL_CULL_FACE);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
             glEnable(GL_DEPTH_TEST);
             glEnable(GL_LEQUAL);
@@ -302,10 +277,10 @@ namespace BoboEngine
         /// <summary>
         /// Sets <see cref="ClearColor"/>
         /// </summary>
-        public static void SetClearColor(Vector4 _clearColor)
+        public static void SetClearColor(Float3 _clearColor)
         {
             ClearColor = _clearColor;
-            if (Initialized) glClearColor(ClearColor.X, ClearColor.Y, ClearColor.Z, ClearColor.W);
+            if (Initialized) glClearColor(_clearColor.r, _clearColor.g, _clearColor.b, 1);
         }
 
 

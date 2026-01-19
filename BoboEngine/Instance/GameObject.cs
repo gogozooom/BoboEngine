@@ -41,9 +41,9 @@ public class GameObject
     }
     public T GetComponent<T>() where T : ObjectBehavior
     {
-        foreach (var com in components)
+        foreach (var com in components.ToArray())
         {
-            if (com.GetType() == typeof(T))
+            if (com.GetType() == typeof(T) || com.GetType().IsSubclassOf(typeof(T)))
             {
                 return (T)com;
             }
@@ -62,7 +62,10 @@ public class GameObject
     {
         return SceneManager.currentScene?.Find(name);
     }
-
+    public void Destroy()
+    {
+        connectedScene.DestroyObject(this);
+    }
     /// <summary>
     /// Runs right before getting destroyed
     /// </summary>

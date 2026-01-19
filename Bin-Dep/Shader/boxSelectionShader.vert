@@ -8,6 +8,7 @@ uniform mat4 projection;
 uniform mat4 model;
 
 uniform vec2 ScreenSize;
+uniform vec4 Color;
 const float LineWidth = 4;
 
 // Minecraft Block Outline Shader
@@ -34,6 +35,6 @@ void main() {
         gl_Position = vec4((ndc1 - vec3(lineOffset, 0.0)) * linePosStart.w, linePosStart.w);
     }
 
-    v_VertexColor = vec4(0, 0, 0, 0.4);
+    v_VertexColor = Color;
     //v_VertexColor = vec4(a_Normal,1); Debug Normals
 }

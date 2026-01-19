@@ -1,9 +1,13 @@
 ﻿using BoboEngine;
+using System.Collections.Immutable;
 
 namespace Minecraft;
 
 public struct BlockFace
 {
+    private static readonly ImmutableList<Axis> YXZ_AXIS_ORDER = [Axis.Yaxis, Axis.Xaxis, Axis.Zaxis];
+    private static readonly ImmutableList<Axis> YZX_AXIS_ORDER = [Axis.Yaxis, Axis.Zaxis, Axis.Xaxis];
+
     public BlockDirection direction;
 
     public BlockFace(BlockDirection direction = BlockDirection.SELF)
@@ -86,6 +90,11 @@ public struct BlockFace
             default:
                 return BlockDirection.SELF;
         }
+    }
+
+    public static ImmutableList<Axis> AxisStepOrder(Double3 movement)
+    {
+        return Math.Abs(movement.x) < Math.Abs(movement.z) ? YZX_AXIS_ORDER : YXZ_AXIS_ORDER;
     }
 
     public override string ToString()

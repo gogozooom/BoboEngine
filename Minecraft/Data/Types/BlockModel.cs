@@ -33,19 +33,21 @@ public class BlockModel
 
 public class BlockModelElement
 {
-    public Float3 from;
-    public Float3 to;
+    public readonly Float3 from;
+    public readonly Float3 to;
 
-    public BlockModelRotation rotation;
+    public readonly BlockModelRotation rotation;
 
-    public bool shade;
+    public readonly bool shade;
 
-    public BlockModelFace down;
-    public BlockModelFace up;
-    public BlockModelFace north;
-    public BlockModelFace south;
-    public BlockModelFace west;
-    public BlockModelFace east;
+    public readonly BlockModelFace down;
+    public readonly BlockModelFace up;
+    public readonly BlockModelFace north;
+    public readonly BlockModelFace south;
+    public readonly BlockModelFace west;
+    public readonly BlockModelFace east;
+
+    public readonly bool HasFaceData;
 
     public BlockModelElement(Float3 from, Float3 to, BlockModelRotation rotation, bool shade, BlockModelFace down, BlockModelFace up, BlockModelFace north, BlockModelFace south, BlockModelFace west, BlockModelFace east)
     {
@@ -62,6 +64,8 @@ public class BlockModelElement
         this.south = south;
         this.west = west;
         this.east = east;
+
+        HasFaceData = down || up || north || south || west || east;
     }
 
     public static BlockModelElement LoadFromJson(DynamicData elementData)
@@ -107,18 +111,22 @@ public class BlockModelElement
         return new(from, to, rotation, shade, down, up, north, south, west, east);
     }
 
-    public bool HasFaceData() => down || up || north || south || west || east;
-
+    Float3[] _cachedVerts;
+    public Float3[] GetCachedVerticies()
+    {
+        return _cachedVerts;
+    }
+    public void CacheVerticies(Float3[] v) => _cachedVerts = v;
 
     public static implicit operator bool(BlockModelElement v) => v != null;
 }
 
 public class BlockModelRotation
 {
-    public Float3 origin;
-    public Axis axis;
-    public float angle;
-    public bool rescale;
+    public readonly Float3 origin;
+    public readonly Axis axis;
+    public readonly float angle;
+    public readonly bool rescale;
 
     public BlockModelRotation(Float3 origin, Axis axis, float angle, bool rescale)
     {
@@ -161,10 +169,10 @@ public class BlockModelRotation
 
 public class BlockModelFace
 {
-    public UVRect uv;
-    public string texture;
-    public float rotation;
-    public string cullface;
+    public readonly UVRect uv;
+    public readonly string texture;
+    public readonly float rotation;
+    public readonly string cullface;
 
     public BlockModelFace(UVRect uv, string texture, float rotation, string cullface)
     {

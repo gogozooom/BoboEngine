@@ -3,7 +3,9 @@
     public class Scene
     {
         public Camera camera;
+        public Skybox skybox;
         public List<GameObject> objects = new();
+        
         public Action<GameObject> ObjectAdded;
         public Action<GameObject> DestroyingObject;
 
@@ -11,9 +13,9 @@
 
         public void InitializeScene(GameObject[] objects)
         {
-            GameObject cameraObject = new("Camera");
-            camera = cameraObject.AddComponent<Camera>();
-
+            camera = new GameObject("Camera").AddComponent<Camera>();
+            skybox = new GameObject("Skybox").AddComponent<Skybox>();
+            
             foreach (var obj in objects)
             {
                 AddObject(obj);
@@ -44,7 +46,7 @@
             }
         }
         /// <summary>
-        /// Destroys all buffered objects for removal
+        /// Destroys object next frame
         /// </summary>
         public void DestroyObject(GameObject gameObject)
         {
@@ -53,12 +55,11 @@
         }
         public void DestroyBufferedObjects()
         {
-            foreach (var obj in _objectsBufferedForRemoval)
+            foreach (var obj in _objectsBufferedForRemoval.ToArray())
             {
                 obj.OnDestroy();
+                _objectsBufferedForRemoval.Remove(obj);
             }
-
-            _objectsBufferedForRemoval.Clear();
         }
         /// <summary>
         /// Adds an object to the scene
@@ -119,21 +120,21 @@
         {
             foreach (var component in gObject.components)
             {
-                component.Start();
+                component?.Start();
             }
         }
         private void UpdateObject(GameObject gObject)
         {
             foreach (var component in gObject.components)
             {
-                component.Update();
+                component?.Update();
             }
         }
         private void LateUpdateObject(GameObject gObject)
         {
             foreach (var component in gObject.components)
             {
-                component.LateUpdate();
+                component?.LateUpdate();
             }
         }
     }
