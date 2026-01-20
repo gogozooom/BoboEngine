@@ -24,12 +24,12 @@ public static class ShaderManager
     {
         if (name.Trim() == "")
         {
-            Program.LogError("Cannot create a shader with an empty name!");
+            Engine.LogError("Cannot create a shader with an empty name!");
             return null;
         }
         if (_shaders.ContainsKey(name))
         {
-            Program.LogError($"Shader already loaded with name '{name}'");
+            Engine.LogError($"Shader already loaded with name '{name}'");
             return null;
         }
 

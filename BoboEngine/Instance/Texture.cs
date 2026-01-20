@@ -14,7 +14,7 @@ public abstract class Texture
 
     protected void LoadNullTexture()
     {
-        LoadImageFile(Program.GetLocalTexturePath("NULL"));
+        LoadImageFile(Engine.GetLocalTexturePath("NULL"));
     }
 
     protected abstract void UpdateImageProperties();
@@ -25,12 +25,12 @@ public abstract class Texture
         // -- Error Checks --
         if (string.IsNullOrEmpty(filePath))
         {
-            Program.LogError($"Please specify a file to load!");
+            Engine.LogError($"Please specify a file to load!");
             return null;
         }
         if (!File.Exists(filePath))
         {
-            Program.LogError($"Could find texture file '{filePath}'");
+            Engine.LogError($"Could find texture file '{filePath}'");
             return null;
         }
 
@@ -92,13 +92,13 @@ public abstract class Texture
     {
         if (!WindowManager.Initialized)
         {
-            Program.LogError("Cannot bind open gl without a window!");
+            Engine.LogError("Cannot bind open gl without a window!");
             return false;
         }
 
         if (!loaded)
         {
-            Program.LogError("Cannot bind open gl without a loaded texture!");
+            Engine.LogError("Cannot bind open gl without a loaded texture!");
             return false;
         }
 
@@ -184,9 +184,9 @@ public abstract class Texture
         }
         catch (Exception e)
         {
-            Program.LogError("Failed to bind texture to OpenGL!");
-            Program.LogError("--- Exception: \n" + e.Message);
-            Program.LogError("--- Inner Exception: \n" + e.InnerException);
+            Engine.LogError("Failed to bind texture to OpenGL!");
+            Engine.LogError("--- Exception: \n" + e.Message);
+            Engine.LogError("--- Inner Exception: \n" + e.InnerException);
         }
         finally
         {

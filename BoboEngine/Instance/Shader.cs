@@ -20,12 +20,12 @@ public class Shader
     {
         if (!File.Exists(_vertexFilepath))
         {
-            Program.LogError($"File path for '{_vertexFilepath}' does not exist!");
+            Engine.LogError($"File path for '{_vertexFilepath}' does not exist!");
             return;
         }
         if (!File.Exists(_fragmentFilepath))
         {
-            Program.LogError($"File path for '{_fragmentFilepath}' does not exist!");
+            Engine.LogError($"File path for '{_fragmentFilepath}' does not exist!");
             return;
         }
 
@@ -40,8 +40,8 @@ public class Shader
         }
         catch (Exception e)
         {
-            Program.LogError("Could not load shaders!");
-            Program.LogError(e.Message);
+            Engine.LogError("Could not load shaders!");
+            Engine.LogError(e.Message);
             return;
         }
     }
@@ -50,18 +50,18 @@ public class Shader
     {
         if (!WindowManager.Initialized)
         {
-            Program.LogError("Cannot CreateShader without a window!");
+            Engine.LogError("Cannot CreateShader without a window!");
             return;
         }
 
         if(_vertexCode == null || _vertexCode == "")
         {
-            Program.LogError($"'{this}' No vertex shader loaded!");
+            Engine.LogError($"'{this}' No vertex shader loaded!");
             return;
         }
         if(_fragmentCode == null || _fragmentCode == "")
         {
-            Program.LogError($"'{this}'No fragment shader loaded!");
+            Engine.LogError($"'{this}'No fragment shader loaded!");
             return;
         }
 

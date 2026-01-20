@@ -1,4 +1,5 @@
 using System.Reflection;
+using BoboEngine;
 
 namespace ConsoleCommand;
 
@@ -6,7 +7,7 @@ namespace ConsoleCommand;
 /// Automatically creates a command to be used in the console
 /// </summary>
 [AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = false)]
-class CommandAttribute : Attribute
+public class CommandAttribute : Attribute
 {
     public string command;
     public string description;
@@ -82,7 +83,7 @@ public static class ConsoleCmd
 
         if (Commands == null)
         {
-            Program.LogWarning($"[Warning] No Commands Exist!");
+            Engine.LogWarning($"[Warning] No Commands Exist!");
             return;
         }
 
@@ -90,7 +91,7 @@ public static class ConsoleCmd
 
         if (commandFound == null)
         {
-            Program.LogWarning($"[Warning] Command '{commandT}' not found!");
+            Engine.LogWarning($"[Warning] Command '{commandT}' not found!");
             return;
         }
 
@@ -106,8 +107,8 @@ public static class ConsoleCmd
             }
             catch (Exception e)
             {
-                Program.LogError($"[ERROR] Failed to invoke command '{commandFound.command}'!");
-                Program.LogError($"Error: {e.InnerException}");
+                Engine.LogError($"[ERROR] Failed to invoke command '{commandFound.command}'!");
+                Engine.LogError($"Error: {e.InnerException}");
             }
         }
     }
@@ -120,7 +121,7 @@ public static class ConsoleCmd
 
         if (Commands.Any(c => c.command == command))
         {
-            Program.LogWarning($"[Warning] Command '{command}' already exists!");
+            Engine.LogWarning($"[Warning] Command '{command}' already exists!");
             return false;
         }
 
@@ -150,7 +151,7 @@ static class BaseCommands
     {
         ConsoleCmd.Commands.Sort();
 
-        Program.LogLine();
+        Engine.LogLine();
 
         Type lastType = null;
 
@@ -160,7 +161,7 @@ static class BaseCommands
 
             if (lastType != type)
             {
-                Program.LogMessage($"  [{type}]");
+                Engine.LogMessage($"  [{type}]");
                 lastType = type;
             }
 
@@ -169,7 +170,7 @@ static class BaseCommands
     }
     public static void Help(CommandInfo cmd)
     {
-        Program.LogMessage($"    - {cmd.command} - {cmd.description}");
+        Engine.LogMessage($"    - {cmd.command} - {cmd.description}");
     }
     [Command("debug", "Enables more detailed stack trace when executing commands")]
     public static void ToggleDebug(string input)
@@ -183,7 +184,7 @@ static class BaseCommands
 
         ConsoleCmd.debugTraceEnabled = valueToToggleTo;
 
-        Program.LogMessage($"debugTraceEnabled is now set to '{valueToToggleTo}'");
+        Engine.LogMessage($"debugTraceEnabled is now set to '{valueToToggleTo}'");
     }
 }
 public class CommandInfo : IComparable<CommandInfo>

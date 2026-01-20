@@ -8,7 +8,7 @@ public static class FileParser
     {
         if(data == "{}")
         {
-            Program.LogWarning($"Tried to load {name} which is empty!");
+            Engine.LogWarning($"Tried to load {name} which is empty!");
 
             return new DynamicData(name, DataType.Array, data);
         }
@@ -141,7 +141,7 @@ public class DynamicData
         _rawData = rawData;
         _dataType = dataType;
 
-        if (dataType == DataType.Value && rawData == null) Program.LogWarning("DynamicData created as a value with no data!");
+        if (dataType == DataType.Value && rawData == null) Engine.LogWarning("DynamicData created as a value with no data!");
     }
 
     public DataType GetDataType() => _dataType;
@@ -149,13 +149,13 @@ public class DynamicData
     {
         if (_dataType == DataType.Unknown)
         {
-            Program.LogWarning($"Cannot get value of an empty data list!");
+            Engine.LogWarning($"Cannot get value of an empty data list!");
             return default;
         }
 
         if (_dataType == DataType.Array)
         {
-            Program.LogWarning($"Property of '{name}' is an array! Please use GetItem()!");
+            Engine.LogWarning($"Property of '{name}' is an array! Please use GetItem()!");
             return default;
         }
 
@@ -165,7 +165,7 @@ public class DynamicData
         {
             if (_dataType != DataType.Value)
             {
-                Program.LogError($"Type of '{name}' is not a Value! Cannot convert to '{typeof(bool)}'!");
+                Engine.LogError($"Type of '{name}' is not a Value! Cannot convert to '{typeof(bool)}'!");
                 return default;
             }
 
@@ -178,7 +178,7 @@ public class DynamicData
                     return (T)Convert.ChangeType(true, typeof(bool));
 
                 default:
-                    Program.LogError($"Could not parse bool out of '{_rawData}' from '{name}'!");
+                    Engine.LogError($"Could not parse bool out of '{_rawData}' from '{name}'!");
                     return default;
             }
         }
@@ -187,13 +187,13 @@ public class DynamicData
         {
             if (_dataType != DataType.Value)
             {
-                Program.LogError($"Type of '{name}' is not a Value! Cannot convert to '{typeof(float)}'!");
+                Engine.LogError($"Type of '{name}' is not a Value! Cannot convert to '{typeof(float)}'!");
                 return default;
             }
 
             if(!float.TryParse(_rawData, out var value))
             {
-                Program.LogError($"Could not parse float out of '{_rawData}' from '{name}'!");
+                Engine.LogError($"Could not parse float out of '{_rawData}' from '{name}'!");
                 return default;
             }
 
@@ -204,13 +204,13 @@ public class DynamicData
         {
             if (_dataType != DataType.Value)
             {
-                Program.LogError($"Type of '{name}' is not a Value! Cannot convert to '{typeof(int)}'!");
+                Engine.LogError($"Type of '{name}' is not a Value! Cannot convert to '{typeof(int)}'!");
                 return default;
             }
 
             if (!int.TryParse(_rawData, out var value))
             {
-                Program.LogError($"Could not parse int out of '{_rawData}' from '{name}'!");
+                Engine.LogError($"Could not parse int out of '{_rawData}' from '{name}'!");
                 return default;
             }
 
@@ -221,7 +221,7 @@ public class DynamicData
         {
             if(_dataType != DataType.ValueArray)
             {
-                Program.LogError($"Type of '{name}' is not a ValueArray! Cannot convert to '{typeof(Float3)}'!");
+                Engine.LogError($"Type of '{name}' is not a ValueArray! Cannot convert to '{typeof(Float3)}'!");
                 return default;
             }
 
@@ -244,7 +244,7 @@ public class DynamicData
         {
             if (_dataType != DataType.ValueArray)
             {
-                Program.LogError($"Type of '{name}' is not a ValueArray! Cannot convert to '{typeof(Float3)}'!");
+                Engine.LogError($"Type of '{name}' is not a ValueArray! Cannot convert to '{typeof(Float3)}'!");
                 return default;
             }
 
@@ -270,7 +270,7 @@ public class DynamicData
         {
             if (_dataType != DataType.Value)
             {
-                Program.LogError($"Type of '{name}' is not a Value! Cannot convert to '{typeof(Axis)}'!");
+                Engine.LogError($"Type of '{name}' is not a Value! Cannot convert to '{typeof(Axis)}'!");
                 return default;
             }
 
@@ -285,31 +285,31 @@ public class DynamicData
                 case "z":
                     return (T)Convert.ChangeType(Axis.Zaxis, typeof(Axis));
                 default:
-                    Program.LogError($"Could not parse axis out of '{_rawData}' from '{name}'!");
+                    Engine.LogError($"Could not parse axis out of '{_rawData}' from '{name}'!");
                     return default;
             }
         }
 
-        Program.LogError($"Type of '{name}' cannot be converted to type: '{typeof(T)}' as this data is of type: '{_dataType}'!");
+        Engine.LogError($"Type of '{name}' cannot be converted to type: '{typeof(T)}' as this data is of type: '{_dataType}'!");
         return default;
     }
     public void SetValue(string value)
     {
         if (_dataType == DataType.Unknown)
         {
-            Program.LogWarning($"Cannot set value of an empty data list!");
+            Engine.LogWarning($"Cannot set value of an empty data list!");
             return;
         }
 
         if (_dataType != DataType.Value)
         {
-            Program.LogWarning($"Property of '{name}' is an array! Cannot set value!");
+            Engine.LogWarning($"Property of '{name}' is an array! Cannot set value!");
             return;
         }
 
         if (ValueIllegal(value))
         {
-            Program.LogWarning($"Value '{value}' contains illegal characters!");
+            Engine.LogWarning($"Value '{value}' contains illegal characters!");
             return;
         }
 
@@ -322,7 +322,7 @@ public class DynamicData
     {
         if(data.Count == 0)
         {
-            Program.LogWarning($"Property of '{name}' is not an array! Please use GetValue()!");
+            Engine.LogWarning($"Property of '{name}' is not an array! Please use GetValue()!");
             return null;
         }
 
@@ -357,7 +357,7 @@ public class DynamicData
     {
         if (data.Count == 0)
         {
-            Program.LogWarning($"Property of '{name}' is not an array!");
+            Engine.LogWarning($"Property of '{name}' is not an array!");
         }
 
         return data.ContainsKey(id);
@@ -373,7 +373,7 @@ public class DynamicData
 
         if(_dataType != DataType.Array)
         {
-            Program.LogWarning("Cannot Merge value data type!");
+            Engine.LogWarning("Cannot Merge value data type!");
             return;
         }
 
@@ -395,7 +395,7 @@ public class DynamicData
 
             if (conflictingItem.GetDataType() != targetDataType)
             {
-                Program.LogWarning($"Item property '{item.name}' has a type miss-match! '{targetDataType}' != '{conflictingItem.GetDataType()}'!");
+                Engine.LogWarning($"Item property '{item.name}' has a type miss-match! '{targetDataType}' != '{conflictingItem.GetDataType()}'!");
                 continue;
             }
 
@@ -425,7 +425,7 @@ public class DynamicData
 
                     break;
                 default:
-                    Program.LogWarning($"Cannot merge item '{item}' continuing...");
+                    Engine.LogWarning($"Cannot merge item '{item}' continuing...");
                     continue;
             }
         }

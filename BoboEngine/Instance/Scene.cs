@@ -70,7 +70,7 @@
             if (_object == null) return;
             if (objects.Contains(_object))
             {
-                Program.LogWarning($"Already have '{_object}' !");
+                Engine.LogWarning($"Already have '{_object}' !");
                 return;
             }
 

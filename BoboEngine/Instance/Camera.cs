@@ -60,7 +60,7 @@ namespace BoboEngine
         {
             if (!WindowManager.Initialized)
             {
-                Program.LogError("Cannot use VertexToScreen() without a window!");
+                Engine.LogError("Cannot use VertexToScreen() without a window!");
                 return Float3.zero;
             }
 

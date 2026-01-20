@@ -41,7 +41,7 @@ public static class _3DMouse
 
         if (inputDevice == null)
         {
-            Program.LogError($"Could not find targetID = '{targetID}'");
+            Engine.LogError($"Could not find targetID = '{targetID}'");
             return false;
         }
 
@@ -49,7 +49,7 @@ public static class _3DMouse
 
         if (!success)
         {
-            Program.LogError($"Could not open inputStream!");
+            Engine.LogError($"Could not open inputStream!");
             return false;
         }
 
@@ -65,7 +65,7 @@ public static class _3DMouse
         {
             if (readInputLoop.IsAlive)
             {
-                Program.LogWarning("Already Reading Input!");
+                Engine.LogWarning("Already Reading Input!");
                 return;
             }
         }
@@ -100,7 +100,7 @@ public static class _3DMouse
             {
                 if (!inputReceiver.IsRunning) // Disconnected?
                 {
-                    Program.LogError("DEVICE DISCONNECTED WHILE READING INPUT!");
+                    Engine.LogError("DEVICE DISCONNECTED WHILE READING INPUT!");
 
                     inputDevice = null;
                     inputStream = null;

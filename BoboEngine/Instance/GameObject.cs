@@ -16,7 +16,7 @@ public class GameObject
         }
         else
         {
-            Program.LogWarning($"Adding Object '{name}'!");
+            Engine.LogWarning($"Adding Object '{name}'!");
         }
 
         this.name = name;

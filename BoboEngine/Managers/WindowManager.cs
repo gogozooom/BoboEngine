@@ -28,7 +28,7 @@ namespace BoboEngine
         /// </summary>
         public static unsafe void InitializeRenderLoop(int windowWidth, int windowHeight)
         {
-            CreateWindow(windowWidth, windowHeight, Program.TITLE);
+            CreateWindow(windowWidth, windowHeight, Engine.TITLE);
 
             SceneManager.LoadScene();
 
@@ -298,7 +298,7 @@ namespace BoboEngine
                     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
                     break;
                 default:
-                    Program.Log($"Invalid mode: '{mode}'");
+                    Engine.Log($"Invalid mode: '{mode}'");
                     break;
             }
         }

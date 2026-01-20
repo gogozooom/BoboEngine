@@ -81,7 +81,7 @@ public class Texture2DArray : Texture
 
         if(spritesAlongX != (float)image.Width/width || spritesAlongY != (float)image.Height/height)
         {
-            Program.LogError($"Could not evenly load image '({image.Width},{image.Height})' with width and height of ({width},{height})");
+            Engine.LogError($"Could not evenly load image '({image.Width},{image.Height})' with width and height of ({width},{height})");
             return false;
         }
 

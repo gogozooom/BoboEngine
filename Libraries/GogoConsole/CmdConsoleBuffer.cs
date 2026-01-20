@@ -8,7 +8,7 @@ internal static class CmdConsoleBuffer
     public static void Initialize()
     {
         WindowManager.update += BeforeRender;
-        Program.ConsoleInputted += ConsoleInput;
+        Engine.ConsoleInputted += ConsoleInput;
     }
     private static void ConsoleInput(string input)
     {

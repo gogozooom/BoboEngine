@@ -35,7 +35,7 @@ public class Material
 
         if(shader == null)
         {
-            Program.LogError($"ShaderID of '{v}' does not exist! Please use ShaderManager.Ensure/CreateShader() to avoid this!");
+            Engine.LogError($"ShaderID of '{v}' does not exist! Please use ShaderManager.Ensure/CreateShader() to avoid this!");
             return;
         }
     }

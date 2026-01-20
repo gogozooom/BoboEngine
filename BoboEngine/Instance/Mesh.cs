@@ -34,12 +34,12 @@ public class Mesh : ObjectBehavior, IComparable<Mesh>
         // -- Error Checks --
         if (string.IsNullOrEmpty(filePath))
         {
-            Program.LogError($"Please specify a file to load!");
+            Engine.LogError($"Please specify a file to load!");
             return false;
         }
         if (!File.Exists(filePath))
         {
-            Program.LogError($"Could find model file '{filePath}'");
+            Engine.LogError($"Could find model file '{filePath}'");
             return false;
         }
 
@@ -49,7 +49,7 @@ public class Mesh : ObjectBehavior, IComparable<Mesh>
 
         if (fileName != "obj")
         {
-            Program.LogError($"'{fileName}' file type unsupported! Please supply an .obj file!");
+            Engine.LogError($"'{fileName}' file type unsupported! Please supply an .obj file!");
             return false;
         }
 
@@ -101,7 +101,7 @@ public class Mesh : ObjectBehavior, IComparable<Mesh>
     {
         if (!IsEmpty())
         {
-            Program.LogWarning("Cannot load data! Data is already loaded!");
+            Engine.LogWarning("Cannot load data! Data is already loaded!");
             return;
         }
 
@@ -116,13 +116,13 @@ public class Mesh : ObjectBehavior, IComparable<Mesh>
     {
         if (IsEmpty())
         {
-            Program.LogWarning("Mesh Empty! Skipping OpenGl Binding");
+            Engine.LogWarning("Mesh Empty! Skipping OpenGl Binding");
             return;
         }
 
         if (!WindowManager.Initialized)
         {
-            Program.LogError("Cannot bind open gl without a window!");
+            Engine.LogError("Cannot bind open gl without a window!");
             return;
         }
 
@@ -220,7 +220,7 @@ public class Mesh : ObjectBehavior, IComparable<Mesh>
                 shader.glSetMatrix4x4("projection", cameraMatrixTransformLocal);
                 break;
             default:
-                Program.LogWarning($"[{this}] Render transform mode of: '{material.transformMode}' has not been implemented!");
+                Engine.LogWarning($"[{this}] Render transform mode of: '{material.transformMode}' has not been implemented!");
                 break;
         }
 

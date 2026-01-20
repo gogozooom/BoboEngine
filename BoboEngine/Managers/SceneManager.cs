@@ -57,7 +57,7 @@ public static class SceneManager
         Mesh mesh = @object.AddComponent<Mesh>();
         mesh.material = material;
 
-        if (!mesh.LoadObjFile(Program.GetLocalModelPath(modelName))) return null; // If model fails to load
+        if (!mesh.LoadObjFile(Engine.GetLocalModelPath(modelName))) return null; // If model fails to load
 
         return @object;
     }
@@ -71,7 +71,7 @@ public static class SceneManager
 
         if (!string.IsNullOrEmpty(textureName))
         {
-            var texture = new Texture2D(Program.GetLocalTexturePath(textureName), textureName);
+            var texture = new Texture2D(Engine.GetLocalTexturePath(textureName), textureName);
 
             material = new Material(texture: texture);
         }
@@ -89,11 +89,11 @@ public static class SceneManager
 
         if (obj == null)
         {
-            Program.LogError($"Could not find '{modelName}'! Try using one of the following:");
+            Engine.LogError($"Could not find '{modelName}'! Try using one of the following:");
 
             foreach (var _obj in currentScene.objects)
             {
-                Program.LogMessage($" - '{_obj.name}'");
+                Engine.LogMessage($" - '{_obj.name}'");
             }
 
             return;
@@ -114,11 +114,11 @@ public static class SceneManager
 
         if (obj == null)
         {
-            Program.LogError($"Could not find '{name}'! Try using one of the following:");
+            Engine.LogError($"Could not find '{name}'! Try using one of the following:");
 
             foreach (var _obj in currentScene.objects)
             {
-                Program.LogMessage($" - '{_obj.name}'");
+                Engine.LogMessage($" - '{_obj.name}'");
             }
 
             return;
@@ -133,11 +133,11 @@ public static class SceneManager
 
         if (obj == null)
         {
-            Program.LogError($"Could not find '{name}'! Try using one of the following:");
+            Engine.LogError($"Could not find '{name}'! Try using one of the following:");
 
             foreach (var _obj in currentScene.objects)
             {
-                Program.LogMessage($" - '{_obj.name}'");
+                Engine.LogMessage($" - '{_obj.name}'");
             }
 
             return;
@@ -152,11 +152,11 @@ public static class SceneManager
 
         if (obj == null)
         {
-            Program.LogError($"Could not find '{name}'! Try using one of the following:");
+            Engine.LogError($"Could not find '{name}'! Try using one of the following:");
 
             foreach (var _obj in currentScene.objects)
             {
-                Program.LogMessage($" - '{_obj.name}'");
+                Engine.LogMessage($" - '{_obj.name}'");
             }
 
             return;
