@@ -31,8 +31,8 @@ public class Transform : ObjectBehavior
     /// </summary>
     public float roll { get => _roll; set => SetRotation(new(_pitch, _yaw, value)); }
 
-    public BaseVectors baseVectors;
-    public BaseVectors inv_baseVectors;
+    public BaseVectors baseVectors { get; private set; }
+    public BaseVectors inv_baseVectors { get; private set; }
 
     // TODO: Cache Matrix! Add support for static objects!
     public Matrix4x4 MatrixTrans => Matrix4x4.CreateTranslation(new Vector3(position.x, position.y, position.z));
@@ -65,7 +65,7 @@ public class Transform : ObjectBehavior
         _yaw = Maths.WrapAbs(rotation.y, 180);
         _roll = Maths.WrapAbs(rotation.z, 180);
 
-        baseVectors = GetBasisVectors();
+        baseVectors = CalculateBasisVectors();
         inv_baseVectors = GetInverseBasisVectors();
     }
     public void SetPosition(Float3 position)
@@ -87,7 +87,7 @@ public class Transform : ObjectBehavior
                    new Float3(baseVectors.leftVector.y, baseVectors.upVector.y, baseVectors.forwardVector.y),
                    new Float3(baseVectors.leftVector.z, baseVectors.upVector.z, baseVectors.forwardVector.z));
     }
-    BaseVectors GetBasisVectors()
+    BaseVectors CalculateBasisVectors()
     {
         return BaseVectors.FromRotation(rotation);
     }
@@ -111,7 +111,17 @@ public class Transform : ObjectBehavior
     {
         return baseVectors.TransformVector(point);
     }
-
+    
+    /// <summary>
+    /// parents to be implemented
+    /// </summary>
+    /// <param name="name"></param>
+    /// <returns></returns>
+    /// <exception cref="NotImplementedException"></exception>
+    public GameObject Find(string name)
+    {
+        throw new NotImplementedException("parents to be implemented");
+    }
     public override string ToString()
     {
         return $"P:({position}) R:({rotation}) S:({scale})";
