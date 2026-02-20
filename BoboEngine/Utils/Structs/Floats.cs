@@ -212,7 +212,6 @@ public struct BaseVectors(Float3 leftVector, Float3 upVector, Float3 forwardVect
 
     public Float3 TransformVector(Float3 point)
     {
-        Engine.Log(upVector);
         return leftVector * point.x + upVector * point.y + forwardVector * point.z;
     }
     public Double3 TransformVector(Double3 point)
