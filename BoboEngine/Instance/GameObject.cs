@@ -27,6 +27,19 @@ public class GameObject
         transform.gameObject = this;
     }
 
+    /// <summary>
+    /// Attempts to GetComponent and return it's results,
+    /// Otherwise it runs AddComponent
+    /// </summary>
+    /// <returns>The found or created component</returns>
+    public T RequireComponent<T>() where T : ObjectBehavior, new()
+    {
+        var result = GetComponent<T>();
+
+        if (!result) result = AddComponent<T>();
+
+        return result;
+    }
     public T AddComponent<T>() where T : ObjectBehavior, new()
     {
         T t = new T
