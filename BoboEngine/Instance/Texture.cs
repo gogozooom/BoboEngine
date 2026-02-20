@@ -148,8 +148,8 @@ public abstract class Texture
                 break;
         }
 
-        glTexParameteri(GL_TEXTURE_TYPE, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_TYPE, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_TYPE, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_TYPE, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
         // Set to higher value depending on how big the texture atlas is
         //glTexParameteri(GL_TEXTURE_TYPE, GL_TEXTURE_MAX_LEVEL, 0);
