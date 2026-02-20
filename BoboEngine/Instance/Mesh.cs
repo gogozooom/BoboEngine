@@ -1,28 +1,13 @@
-﻿using BoboEngine.Shaders;
-using System.Numerics;
-using static OpenGL.GL;
+﻿using static OpenGL.GL;
 
 namespace BoboEngine;
-public class Mesh : ObjectBehavior, IComparable<Mesh>
+public class Mesh : RenderObject
 {
-    /// <summary>
-    /// Vertex Array Object Reference
-    /// </summary>
-    private uint vao;
-    /// <summary>
-    /// Vertex Buffer Object Reference
-    /// </summary>
-    private uint vbo;
-
-    protected uint vertexBufferSize;
-
     public Float3[] vertices;
     public FaceInfo[] faces;
     public Float3[] normals;
     public Float3[] faceColors;
     public Float2[] textureCoords;
-
-    public Material material;
 
     public Mesh()
     {
@@ -112,7 +97,7 @@ public class Mesh : ObjectBehavior, IComparable<Mesh>
     }
 
     #region OpenGL Stuff
-    public unsafe void BindOpenGL()
+    public override unsafe void InitalizeOpenGL()
     {
         if (IsEmpty())
         {
@@ -182,7 +167,6 @@ public class Mesh : ObjectBehavior, IComparable<Mesh>
 
         return vertexData;
     }
-
     protected virtual unsafe void glBindPointers()
     {
         // Position (x,y,z)
@@ -198,85 +182,6 @@ public class Mesh : ObjectBehavior, IComparable<Mesh>
         glEnableVertexAttribArray(2);
     }
 
-    public void glBind()
-    {
-        material.shader.glBind();
-
-        material.texture?.glBindTexture();
-
-        glBindVAO();
-    }
-
-    public void glSetProperties(Matrix4x4 cameraMatrix, Matrix4x4 cameraMatrixTransformLocal)
-    {
-        Shader shader = material.shader;
-
-        switch (material.transformMode)
-        {
-            case RenderTranformMode.Global:
-                shader.glSetMatrix4x4("projection", cameraMatrix);
-                break;
-            case RenderTranformMode.LocalTransform:
-                shader.glSetMatrix4x4("projection", cameraMatrixTransformLocal);
-                break;
-            default:
-                Engine.LogWarning($"[{this}] Render transform mode of: '{material.transformMode}' has not been implemented!");
-                break;
-        }
-
-        shader.glSetMatrix4x4("model", transform.Matrix);
-
-        material.GlBindShaderProperties();
-
-        switch (material.blendMode)
-        {
-            case BlendMode.Normal:
-                glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-                glEnable(GL_BLEND);
-                break;
-            case BlendMode.Blend:
-                glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE, GL_ONE, GL_ZERO);
-                glEnable(GL_BLEND);
-                break;
-            case BlendMode.Disable:
-                glDisable(GL_BLEND);
-                break;
-        }
-
-        if (material.useDepth) glEnable(GL_DEPTH_TEST); else glDisable(GL_DEPTH_TEST);
-        if (material.cullBackFaces) glEnable(GL_CULL_FACE); else glDisable(GL_CULL_FACE);
-    }
-
-    public void glUnBind()
-    {
-        glUnBindVAO();
-
-        material.texture?.glUnbindTexture();
-
-        material.shader.glUnbind();
-    }
-
-    public virtual void glDraw()
-    {
-        glDrawArrays(GL_TRIANGLES, 0, (int)vertexBufferSize);
-    }
-
-    /// <summary>
-    /// Bind "Vertex Buffer Object"
-    /// </summary>
-    protected void glBindVAO()
-    {
-        if (vao == 0) BindOpenGL();
-
-        glBindVertexArray(vao);
-    }
-    /// <summary>
-    /// Unbind "Vertex Buffer Object"
-    /// </summary>
-    protected void glUnBindVAO()
-    {
-        glBindVertexArray(0);
-    }
     #endregion
 
     public void DeleteMesh()
@@ -307,18 +212,20 @@ public class Mesh : ObjectBehavior, IComparable<Mesh>
         return false;
     }
 
+    public override bool ShouldRender()
+    {
+        if (IsEmpty()) return false;
+        if (material == null) return false;
+        if (material.shader == null) return false;
+        if (!material.shader.isLoaded) return false;
+
+        return true;
+    }
     public override void OnDestroy()
     {
         base.OnDestroy();
 
         DeleteMesh();
-    }
-
-    public int CompareTo(Mesh other)
-    {
-        if (!other) return 1;
-
-        return material.renderOrder.CompareTo(other.material.renderOrder);
     }
 }
 

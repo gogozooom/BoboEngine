@@ -22,6 +22,9 @@ namespace BoboEngine
         public static Action update;
         public static Action afterUpdate;
 
+        public static Matrix4x4 cameraMatrixThisFrame { get; private set; }
+        public static Matrix4x4 localCameraMatrixThisFrame { get; private set; }
+
         /// <summary>
         /// Opens a window and starts rendering the currently loaded scene
         /// Returns once window is closed
@@ -33,75 +36,6 @@ namespace BoboEngine
             SceneManager.LoadScene();
 
             float timeLastFrame = Time.time;
-
-            /* 3D point grid
-
-            // Define Grid
-
-            const int areaSquared = 20;
-
-            float[] gridData = new float[areaSquared * areaSquared * areaSquared * 3];
-
-            int index = 0;
-
-            for (int xI = 0; xI < areaSquared; xI++)
-            {
-                for (int zI = 0; zI < areaSquared; zI++)
-                {
-                    for (int yI = 0; yI < areaSquared; yI++)
-                    {
-                        int x = xI - areaSquared / 2;
-                        int y = yI - areaSquared / 2;
-                        int z = zI - areaSquared / 2;
-
-                        gridData[index++] = x;
-                        gridData[index++] = y;
-                        gridData[index++] = z;
-                    }
-                }
-            }
-
-            uint gridVBO = glGenVertexArray();
-            uint gridVAO = glGenBuffer();
-
-            glBindVertexArray(gridVBO);
-            glBindBuffer(GL_ARRAY_BUFFER, gridVAO);
-
-            fixed (float* ptrVertices = &gridData[0])
-            {
-                glBufferData(GL_ARRAY_BUFFER, sizeof(float) * gridData.Length, ptrVertices, GL_STATIC_DRAW);
-            }
-
-            // Position (x,y,z)
-            glVertexAttribPointer(0, 3, GL_FLOAT, false, 3 * sizeof(float), (void*)0);
-            glEnableVertexAttribArray(0);
-
-            glBindBuffer(GL_ARRAY_BUFFER, 0);
-            glBindVertexArray(0);
-
-            // Grid Shader
-
-            var gridShader = new Shader("""
-            #version 330 core
-            layout (location = 0) in vec3 a_Position;
-
-            uniform mat4 projection;
-
-            void main()
-            {
-                gl_Position = projection * vec4(a_Position, 1.0); // position x, y, z, 1
-            }
-            """, """
-            #version 330 core
-            layout(location = 0) out vec4 f_color;
-
-            void main()
-            {
-                f_color = vec4(1, 1, 1, 1);
-            }
-            """);
-
-            */
 
             // Start Render
             while (!Glfw.WindowShouldClose(Window))
@@ -121,50 +55,33 @@ namespace BoboEngine
 
                 ClearBuffer();
 
-                List<Mesh> targetMeshes = new();
+                List<RenderObject> validRenderObjects = new();
 
                 foreach (var obj in SceneManager.currentScene.objects.ToArray())
                 {
                     if (!obj.enabled) continue;
 
-                    var mesh = obj.GetComponent<Mesh>();
+                    var renderObject = obj.GetComponent<RenderObject>();
 
-                    if (!mesh) continue;
-                    if (mesh.IsEmpty()) continue;
+                    if (!renderObject) continue;
+                    if (!renderObject.ShouldRender()) continue;
 
-                    if (mesh.material.shader == null) continue;
-                    if (!mesh.material.shader.isLoaded) continue;
-
-                    if (mesh) targetMeshes.Add(mesh);
+                    validRenderObjects.Add(renderObject);
                 }
 
-                targetMeshes.Sort();
+                validRenderObjects.Sort();
 
-                Matrix4x4 cameraMatrix = Camera.main.GetProjectionMatrix();
-                Matrix4x4 cameraMatrixTransformLocal = Camera.main.GetProjectionMatrix(false);
+                cameraMatrixThisFrame = Camera.main.GetProjectionMatrix();
+                localCameraMatrixThisFrame = Camera.main.GetProjectionMatrix(false);
 
-                foreach (Mesh targetMesh in targetMeshes)
+                foreach (RenderObject targetRenderObject in validRenderObjects)
                 {
-                    targetMesh.glBind();
+                    targetRenderObject.glBind();
 
-                    targetMesh.glSetProperties(cameraMatrix, cameraMatrixTransformLocal);
+                    targetRenderObject.glDraw();
 
-                    targetMesh.glDraw();
-
-                    targetMesh.glUnBind();
+                    targetRenderObject.glUnBind();
                 }
-
-                /*// Draw Grid
-
-                gridShader.Bind();
-                gridShader.SetMatrix4x4("projection", cameraMatrix);
-                glBindVertexArray(gridVAO);
-
-                glDrawArrays(GL_POINTS, 0, areaSquared * areaSquared * areaSquared * 3);
-
-                glBindVertexArray(0);
-                gridShader.Unbind();
-                */
 
                 Glfw.SwapBuffers(Window);
 
