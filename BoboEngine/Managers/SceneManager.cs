@@ -47,25 +47,8 @@ public static class SceneManager
             currentScene = null;
         }
     }
-    public static GameObject CreateObjectModel(string objectName, string modelName, Material material, Float3 position, Float3 scale, Float3 rotation)
-    {
-        GameObject @object = new(objectName);
-        @object.transform.position = position;
-        @object.transform.scale = scale;
-        @object.transform.rotation = rotation;
-
-        Mesh mesh = @object.AddComponent<Mesh>();
-        mesh.material = material;
-
-        if (!mesh.LoadObjFile(Engine.GetLocalModelPath(modelName))) return null; // If model fails to load
-
-        return @object;
-    }
-        
-    public static GameObject CreateObjectModel(string objectName, string modelName, Material material) => CreateObjectModel(objectName, modelName, material, Float3.zero, Float3.one, Float3.zero);
-    public static GameObject CreateObjectModel(string objectName, string modelName, Material material, Float3 position) => CreateObjectModel(objectName, modelName, material, position, Float3.one, Float3.zero);
-    public static GameObject CreateObjectModel(string objectName, string modelName, Material material, Float3 position, Float3 scale) => CreateObjectModel(objectName, modelName, material, position, scale, Float3.zero);
-    public static GameObject CreateObjectModel(string objectName, string modelName, string textureName, Float3 position, Float3 scale, Float3 rotation)
+    
+    private static Material GetLocalMaterialWithTexture(string textureName)
     {
         Material material;
 
@@ -78,10 +61,53 @@ public static class SceneManager
         else
             material = new Material();
 
-        return CreateObjectModel(objectName, modelName, material, position, scale, rotation);
+        return material;
+    }
+    private static Mesh GetLocalModelWithName(string modelName)
+    {
+        Mesh mesh = new Mesh();
+        if (!mesh.LoadObjFile(Engine.GetLocalModelPath(modelName))) // If model fails to load
+        {
+            return null;
+        }
+
+        return mesh;
+    }
+    public static GameObject CreateObjectModel(string objectName, Mesh mesh, Material material)
+    {
+        GameObject @object = new(objectName);
+
+        MeshFilter meshFilter = @object.AddComponent<MeshFilter>();
+        meshFilter.mesh = mesh;
+
+        MeshRenderer meshRenderer = @object.AddComponent<MeshRenderer>();
+        meshRenderer.material = material;
+
+        return @object;
+    }
+    public static GameObject CreateObjectModel(string objectName, Mesh mesh, string textureName)
+    {
+        var material = GetLocalMaterialWithTexture(textureName);
+
+        return CreateObjectModel(objectName, mesh, material);
+    }
+    public static GameObject CreateObjectModel(string objectName, string modelName, Material material)
+    {
+        var mesh = GetLocalModelWithName(modelName);
+
+        if (!mesh) return null;
+
+        return CreateObjectModel(objectName, mesh, material);
     }
 
-        
+    public static GameObject CreateObjectModel(string objectName, string modelName, string textureName)
+    {
+        var material = GetLocalMaterialWithTexture(textureName);
+
+        return CreateObjectModel(objectName, modelName, material);
+    }
+
+    #region Commands
     [Command("RemoveObject", "['name'] Deletes the specified object")]
     public static void RemoveObject(string modelName)
     {
@@ -99,12 +125,13 @@ public static class SceneManager
             return;
         }
 
-        obj.OnDestroy();
+        obj.Destroy();
     }
-    [Command("SpawnMesh", "['name', 'textureName', x, y, z] Creates a new mesh object at the specified position")]
-    public static void SpawnObject(string modelName, string textureName, float x, float y, float z)
+    [Command("SpawnMesh", "['name', 'meshName', 'textureName', x, y, z] Creates a new mesh object at the specified position")]
+    public static void SpawnObject(string objectName, string meshName, string textureName, float x, float y, float z)
     {
-        CreateObjectModel(modelName, modelName, textureName, new(x, y, z), Float3.one, Float3.zero);
+        var obj = CreateObjectModel(objectName, meshName, textureName);
+        if(obj) obj.transform.position = new(x, y, z);
     }
 
     [Command("RotateObject", "['name', x, y, z] Sets the selected model to the specified rotation")]
@@ -143,7 +170,7 @@ public static class SceneManager
             return;
         }
 
-        obj.transform.position = new(x,y,z);
+        obj.transform.position = new(x, y, z);
     }
     [Command("ScaleObject", "['name', x, y, z] Sets the selected model to the specified scale")]
     public static void SetObjectScale(string name, float x, float y, float z)
@@ -164,4 +191,5 @@ public static class SceneManager
 
         obj.transform.scale = new(x, y, z);
     }
+    #endregion
 }

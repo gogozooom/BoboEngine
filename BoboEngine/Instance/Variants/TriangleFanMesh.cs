@@ -12,7 +12,7 @@ public class TriangleFanMesh : Mesh
         this.colors = colors;
     }
 
-    protected override float[] glConvertToData()
+    protected override (float[] data, uint vertexBufferSize) glConvertToData()
     {
         int dataPointCount = 7;
         var vertexData = new float[vertices.Length * dataPointCount];
@@ -35,11 +35,8 @@ public class TriangleFanMesh : Mesh
             index += 1;
         }
 
-        vertexBufferSize = (uint)vertices.Length;
-
-        return vertexData;
+        return (vertexData, (uint)vertices.Length);
     }
-
     protected override unsafe void glBindPointers()
     {
         // Position (x,y,z)

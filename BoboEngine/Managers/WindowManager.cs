@@ -55,13 +55,13 @@ namespace BoboEngine
 
                 ClearBuffer();
 
-                List<RenderObject> validRenderObjects = new();
+                List<MeshRenderer> validRenderObjects = new();
 
                 foreach (var obj in SceneManager.currentScene.objects.ToArray())
                 {
                     if (!obj.enabled) continue;
 
-                    var renderObject = obj.GetComponent<RenderObject>();
+                    var renderObject = obj.GetComponent<MeshRenderer>();
 
                     if (!renderObject) continue;
                     if (!renderObject.ShouldRender()) continue;
@@ -74,7 +74,7 @@ namespace BoboEngine
                 cameraMatrixThisFrame = Camera.main.GetProjectionMatrix();
                 localCameraMatrixThisFrame = Camera.main.GetProjectionMatrix(false);
 
-                foreach (RenderObject targetRenderObject in validRenderObjects)
+                foreach (MeshRenderer targetRenderObject in validRenderObjects)
                 {
                     targetRenderObject.glBind();
 

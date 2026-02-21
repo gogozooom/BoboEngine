@@ -1,18 +1,14 @@
 ﻿using static OpenGL.GL;
 
 namespace BoboEngine;
-public class Mesh : RenderObject
+
+public class Mesh
 {
     public Float3[] vertices;
     public FaceInfo[] faces;
     public Float3[] normals;
-    public Float3[] faceColors;
+    //public Float3[] faceColors;
     public Float2[] textureCoords;
-
-    public Mesh()
-    {
-        material = new();
-    }
 
     public bool LoadObjFile(string filePath)
     {
@@ -41,7 +37,7 @@ public class Mesh : RenderObject
         List<Float3> vertices = new();
         List<FaceInfo> faces = new();
         List<Float3> normals = new();
-        List<Float3> faceColors = new();
+        //List<Float3> faceColors = new();
         List<Float2> textureCoords = new();
 
         string[] data = File.ReadAllLines(filePath);
@@ -58,7 +54,7 @@ public class Mesh : RenderObject
                 float[] axes = line[3..].Split(' ').Select(float.Parse).ToArray(); // Have to start with a 3???
                 normals.Add(new(axes[0], axes[1], axes[2]));
             }
-            else if(line.StartsWith("vt ")) // Vertex Texture Chords
+            else if (line.StartsWith("vt ")) // Vertex Texture Chords
             {
                 float[] axes = line[3..].Split(' ').Select(float.Parse).ToArray(); // This one too????
                 textureCoords.Add(new(axes[0], axes[1]));
@@ -76,7 +72,7 @@ public class Mesh : RenderObject
 
         this.vertices = vertices.ToArray();
         this.faces = faces.ToArray();
-        this.faceColors = faceColors.ToArray();
+        //this.faceColors = faceColors.ToArray();
         this.normals = normals.ToArray();
         this.textureCoords = textureCoords.ToArray();
 
@@ -95,9 +91,19 @@ public class Mesh : RenderObject
         this.normals = normals ?? ([]);
         this.textureCoords = textureCoords ?? ([]);
     }
+    public virtual bool IsEmpty()
+    {
+        if (vertices == null) return true;
+        else if (vertices.Length == 0) return true;
 
-    #region OpenGL Stuff
-    public override unsafe void InitalizeOpenGL()
+        if (faces == null) return true;
+        else if (faces.Length == 0) return true;
+
+        return false;
+    }
+
+    #region OpenGL
+    protected unsafe void InitalizeOpenGL()
     {
         if (IsEmpty())
         {
@@ -113,7 +119,7 @@ public class Mesh : RenderObject
 
         // OpenGl Time
 
-        var vertexData = glConvertToData();
+        (var vertexData, vertexBufferSize) = glConvertToData();
 
         vao = glGenVertexArray();
         vbo = glGenBuffer();
@@ -131,7 +137,7 @@ public class Mesh : RenderObject
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
     }
-    protected virtual float[] glConvertToData()
+    protected virtual (float[] data, uint vertexBufferSize) glConvertToData()
     {
         var vertexData = new float[faces.Length * 24];
 
@@ -161,11 +167,8 @@ public class Mesh : RenderObject
                 faceIndex += 8;
             }
         }
-        
 
-        vertexBufferSize = (uint)faces.Length * 3;
-
-        return vertexData;
+        return (vertexData, (uint)faces.Length * 3);
     }
     protected virtual unsafe void glBindPointers()
     {
@@ -181,9 +184,37 @@ public class Mesh : RenderObject
         glVertexAttribPointer(2, 2, GL_FLOAT, false, 8 * sizeof(float), (void*)(6 * sizeof(float)));
         glEnableVertexAttribArray(2);
     }
+    public virtual void glDraw()
+    {
+        glDrawArrays(GL_TRIANGLES, 0, (int)vertexBufferSize);
+    }
+    /// <summary>
+    /// Vertex Array Object Reference
+    /// </summary>
 
-    #endregion
+    protected uint vao;
+    /// <summary>
+    /// Vertex Buffer Object Reference
+    /// </summary>
+    protected uint vbo;
+    protected uint vertexBufferSize;
 
+    /// <summary>
+    /// Bind "Vertex Buffer Object"
+    /// </summary>
+    public void glBindVAO()
+    {
+        if (vao == 0) InitalizeOpenGL();
+
+        glBindVertexArray(vao);
+    }
+    /// <summary>
+    /// Unbind "Vertex Buffer Object"
+    /// </summary>
+    public void glUnBindVAO()
+    {
+        glBindVertexArray(0);
+    }
     public void DeleteMesh()
     {
         if (vao != 0)
@@ -195,38 +226,15 @@ public class Mesh : RenderObject
         vertices = null;
         faces = null;
         normals = null;
-        faceColors = null;
         textureCoords = null;
 
         vao = 0;
         vbo = 0;
     }
-    public virtual bool IsEmpty()
-    {
-        if (vertices == null) return true;
-        else if (vertices.Length == 0) return true;
+    #endregion
 
-        if (faces == null) return true;
-        else if (faces.Length == 0) return true;
 
-        return false;
-    }
-
-    public override bool ShouldRender()
-    {
-        if (IsEmpty()) return false;
-        if (material == null) return false;
-        if (material.shader == null) return false;
-        if (!material.shader.isLoaded) return false;
-
-        return true;
-    }
-    public override void OnDestroy()
-    {
-        base.OnDestroy();
-
-        DeleteMesh();
-    }
+    public static implicit operator bool(Mesh o) => o != null;
 }
 
 public class FaceInfo
@@ -248,12 +256,12 @@ public class FaceInfo
                 vertex_indexs.Add(indexes[0] - 1);
             }
 
-            if(indexes.Length >= 2)
+            if (indexes.Length >= 2)
             {
                 texture_indexs.Add(indexes[1] - 1);
             }
 
-            if(indexes.Length >= 3)
+            if (indexes.Length >= 3)
             {
                 normal_indexs.Add(indexes[2] - 1);
             }

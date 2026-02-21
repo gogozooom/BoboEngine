@@ -1,22 +1,22 @@
 ﻿using static OpenGL.GL;
 
 namespace BoboEngine;
-public abstract class RenderObject : ObjectBehavior, IComparable<RenderObject>
+public class MeshRenderer : ObjectBehavior, IComparable<MeshRenderer>
 {
-    /// <summary>
-    /// Vertex Array Object Reference
-    /// </summary>
-    protected uint vao;
-    /// <summary>
-    /// Vertex Buffer Object Reference
-    /// </summary>
-    protected uint vbo;
-
-    protected uint vertexBufferSize;
+    protected MeshFilter meshFilter;
 
     public Material material;
 
-    public abstract void InitalizeOpenGL();
+    public MeshRenderer()
+    {
+        material = new();
+    }
+
+    public override void Start()
+    {
+        base.Start();
+        meshFilter = gameObject.RequireComponent<MeshFilter>();
+    }
 
     public void glBind()
     {
@@ -24,7 +24,7 @@ public abstract class RenderObject : ObjectBehavior, IComparable<RenderObject>
 
         material.texture?.glBindTexture();
 
-        glBindVAO();
+        meshFilter.mesh.glBindVAO();
     }
 
     public virtual void glDraw()
@@ -64,39 +64,30 @@ public abstract class RenderObject : ObjectBehavior, IComparable<RenderObject>
         if (material.useDepth) glEnable(GL_DEPTH_TEST); else glDisable(GL_DEPTH_TEST);
         if (material.cullBackFaces) glEnable(GL_CULL_FACE); else glDisable(GL_CULL_FACE);
 
-        glDrawArrays(GL_TRIANGLES, 0, (int)vertexBufferSize);
+        meshFilter.mesh.glDraw();
     }
 
     public void glUnBind()
     {
-        glUnBindVAO();
+        meshFilter.mesh.glUnBindVAO();
 
         material.texture?.glUnbindTexture();
 
         material.shader.glUnbind();
     }
 
-
-    /// <summary>
-    /// Bind "Vertex Buffer Object"
-    /// </summary>
-    protected void glBindVAO()
+    public virtual bool ShouldRender()
     {
-        if (vao == 0) InitalizeOpenGL();
+        if (!meshFilter.mesh) return false;
+        if (meshFilter.mesh.IsEmpty()) return false;
+        if (material == null) return false;
+        if (material.shader == null) return false;
+        if (!material.shader.isLoaded) return false;
 
-        glBindVertexArray(vao);
-    }
-    /// <summary>
-    /// Unbind "Vertex Buffer Object"
-    /// </summary>
-    protected void glUnBindVAO()
-    {
-        glBindVertexArray(0);
+        return true;
     }
 
-    public virtual bool ShouldRender() => true;
-
-    public virtual int CompareTo(RenderObject other)
+    public virtual int CompareTo(MeshRenderer other)
     {
         if (!other) return 1;
 
