@@ -122,5 +122,6 @@ public enum BlendMode
 {
     Normal,
     Blend,
+    Invert,
     Disable
 }

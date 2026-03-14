@@ -27,7 +27,7 @@ public class MeshRenderer : ObjectBehavior, IComparable<MeshRenderer>
         meshFilter.mesh.glBindVAO();
     }
 
-    public virtual void glDraw()
+    protected virtual void glSetMatrixes()
     {
         switch (material.transformMode)
         {
@@ -43,6 +43,11 @@ public class MeshRenderer : ObjectBehavior, IComparable<MeshRenderer>
         }
 
         material.shader.glSetMatrix4x4("model", transform.Matrix);
+    }
+
+    public void glDraw()
+    {
+        glSetMatrixes();
 
         material.GlBindShaderProperties();
 
@@ -54,6 +59,10 @@ public class MeshRenderer : ObjectBehavior, IComparable<MeshRenderer>
                 break;
             case BlendMode.Blend:
                 glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE, GL_ONE, GL_ZERO);
+                glEnable(GL_BLEND);
+                break;
+            case BlendMode.Invert:
+                glBlendFuncSeparate(GL_ONE_MINUS_DST_COLOR, GL_ONE_MINUS_SRC_COLOR, GL_ONE, GL_ZERO);
                 glEnable(GL_BLEND);
                 break;
             case BlendMode.Disable:
