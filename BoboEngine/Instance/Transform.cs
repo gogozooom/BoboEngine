@@ -36,7 +36,7 @@ public class Transform : ObjectBehavior
 
     // TODO: Cache Matrix! Add support for static objects!
     public Matrix4x4 MatrixTrans => Matrix4x4.CreateTranslation(new Vector3(position.x, position.y, position.z));
-    public Matrix4x4 MatrixScale => Matrix4x4.CreateScale(new Vector3(1, 1, 1)) * Matrix4x4.CreateScale(scale);
+    public Matrix4x4 MatrixScale => Matrix4x4.CreateScale(scale);
     public Matrix4x4 MatrixRot => Matrix4x4.CreateRotationZ(Maths.ToRad(-roll)) * Matrix4x4.CreateRotationX(Maths.ToRad(pitch)) * Matrix4x4.CreateRotationY(Maths.ToRad(-yaw));
     public Matrix4x4 MatrixInverseRot => Matrix4x4.CreateRotationY(Maths.ToRad(yaw)) * Matrix4x4.CreateRotationX(Maths.ToRad(-pitch)) * Matrix4x4.CreateRotationZ(Maths.ToRad(roll));
 
