@@ -11,6 +11,7 @@
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <Title>BoboEngine</Title>
     <Description>A fully custom 3D engine made by Bobo!</Description>
+    <Version>0.1.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
