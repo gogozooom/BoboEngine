@@ -59,6 +59,7 @@
             {
                 obj.OnDestroy();
                 _objectsBufferedForRemoval.Remove(obj);
+                objects.Remove(obj);
             }
         }
         /// <summary>
