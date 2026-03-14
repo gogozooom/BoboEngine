@@ -16,7 +16,7 @@ public class Shader
     private string _vertexCode;
     private string _fragmentCode;
 
-    public Shader(Texture texture = null, string _vertexFilepath = "Shader/modelShader.vert", string _fragmentFilepath = "Shader/modelShader.frag")
+    public Shader(string _vertexFilepath = "Shader/modelShader.vert", string _fragmentFilepath = "Shader/modelShader.frag")
     {
         if (!File.Exists(_vertexFilepath))
         {

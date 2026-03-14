@@ -33,7 +33,7 @@ public static class ShaderManager
             return null;
         }
 
-        var shader = new Shader(null, vertexFilepath, fragmentFilepath);
+        var shader = new Shader(vertexFilepath, fragmentFilepath);
 
         _shaders.Add(name, shader);
         return shader;
