@@ -74,7 +74,9 @@ public static class Engine
     {
         if (texture == null) return Path.Combine(ProgramDirectory, "Textures");
 
-        return Path.Combine(ProgramDirectory, "Textures", texture + ".bmp");
+        if (texture.Split('.').Length == 1) texture += ".bmp";
+
+        return Path.Combine(ProgramDirectory, "Textures", texture);
     }
 
     #region ConsoleLogging
