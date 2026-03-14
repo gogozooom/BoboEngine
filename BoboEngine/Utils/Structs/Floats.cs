@@ -161,10 +161,13 @@ public struct Float2(float x = 0, float y = 0)
     public static float Determinant(Float2 a, Float2 b) => a.x * b.y - a.y * b.x;
 
     public static Float2 operator +(Float2 a, Float2 b) => new(a.x + b.x, a.y + b.y); // Vector Adding
+    public static Float2 operator +(Float2 v, float f) => new(v.x + f, v.y + f); // Proportional Addition
     public static Float2 operator -(Float2 a, Float2 b) => new(a.x - b.x, a.y - b.y); // Vector Subracting
+    public static Float2 operator -(Float2 v, float f) => new(v.x - f, v.y - f); // Proportional Difference
     public static Float2 operator *(Float2 a, Float2 b) => new(a.x * b.x, a.y * b.y); // Vector Multiplication
     public static Float2 operator *(Float2 v, float f) => new(v.x * f, v.y * f); // Vector Length Multiplication
     public static Float2 operator /(Float2 v, float f) => new(v.x / f, v.y / f); // Vector Length Division
+    public static Float2 operator /(float f, Float2 v) => new(f / v.x, f / v.y);
     public static Float2 operator -(Float2 a) => new(-a.x, -a.y); // Negative Vector
 
     public override string ToString() => $"({x},{y})";
@@ -190,6 +193,9 @@ public struct UVRect(float uMin = 0, float vMin = 0, float uMax = 1, float vMax 
 
     public Float2 GetMin() => new(uMin, vMin);
     public Float2 GetMax() => new(uMax, vMax);
+
+    public float width => uMax - uMin;
+    public float height => vMax - vMin;
 
     public static UVRect operator /(UVRect v, float f) => new(v.uMin / f, v.vMin / f, v.uMax / f, v.vMax / f);
 
