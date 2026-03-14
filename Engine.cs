@@ -1,4 +1,5 @@
 ﻿using ConsoleCommand;
+using StbImageSharp;
 using System.Diagnostics;
 using System.Reflection;
 
