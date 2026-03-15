@@ -2,7 +2,7 @@
 
 namespace BoboEngine.UI;
 
-public class UVTransform : ObjectBehavior
+public class UITransform : ObjectBehavior
 {
     /// <summary>
     /// Offset of the UI element in pixels
@@ -27,7 +27,7 @@ public class UVTransform : ObjectBehavior
     /// </summary>
     public UVRect anchor;
 
-    public UVTransform()
+    public UITransform()
     {
         scale = new Float2(100f, 100f);
         pivot = new Float2(0.5f, 0.5f);

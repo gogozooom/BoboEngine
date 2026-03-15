@@ -2,20 +2,18 @@
 
 public class UIRenderer : MeshRenderer
 {
-    public UVTransform uvTransform { get; private set; }
-
-
+    public UITransform uvTransform { get; private set; }
 
     public override void Start()
     {
         base.Start();
-        uvTransform = gameObject.RequireComponent<UVTransform>();
+        uvTransform = gameObject.RequireComponent<UITransform>();
         meshFilter = gameObject.GetComponent<MeshFilter>();
 
         meshFilter.mesh ??= GetDefaultMesh();
     }
 
-    private Mesh defaultMesh;
+    private static Mesh defaultMesh;
     private Mesh GetDefaultMesh()
     {
         if (!defaultMesh)
