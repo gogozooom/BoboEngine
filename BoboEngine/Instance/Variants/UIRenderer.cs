@@ -2,12 +2,12 @@
 
 public class UIRenderer : MeshRenderer
 {
-    public UITransform uvTransform { get; private set; }
+    public UITransform uiTransform { get; private set; }
 
     public override void Start()
     {
         base.Start();
-        uvTransform = gameObject.RequireComponent<UITransform>();
+        uiTransform = gameObject.RequireComponent<UITransform>();
         meshFilter = gameObject.GetComponent<MeshFilter>();
 
         meshFilter.mesh ??= GetDefaultMesh();
@@ -40,6 +40,6 @@ public class UIRenderer : MeshRenderer
                 Engine.LogWarning($"[{this}] Render transform mode of: '{material.transformMode}' has not been implemented!");
                 break;
         */
-        material.shader.glSetMatrix4x4("model", transform.Matrix * uvTransform.Matrix);
+        material.shader.glSetMatrix4x4("model", transform.Matrix * uiTransform.Matrix);
     }
 }
