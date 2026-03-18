@@ -5,3 +5,81 @@ Known Issues:
 		* Solution: Create input buffer handled 
 	
 TODO:
+
+	- Scene Editor!!
+		* UI
+			* Text Renderer
+			* [DefaultUI.shader] add color multiplier and make texture optional
+			* UI Input Manager
+			* Parent Relative Positioning (UI inside of other UI actually makes a difference)
+			* Make UI Button
+			* Make UI Toggle
+			* Make UI Text Field
+			* Make UI Number Field
+			* Make UI Slider
+			* Window Object
+				* Can move with top bar
+				* Can resize (with constraints)
+				* Can enable and disable
+				* Can collapse
+			* Somehow make a UI masking componenet
+			* Create File, Edit, View, etc
+		* Scene Editor Abstract
+			* Launching BoboEngine with "-editor" property launches different window
+			* Scene Editor contains objects separated into: Editor, and Scene Editing
+				* Editor scene contains the UI to edit the Scene Editing scene
+				* The Scene Editing scene gets rendered but it's scripts do not get updated
+			* When engine gets built as release, all Scene Editor features are ignored
+		* Mesh based raycasting
+			* Try GPU frame based "raycasting"
+			* OR try to make a triangle raycaster...
+		* Camera Controls
+			* Hold right click to rotate view
+			* WASD,QE to move around (While holding right click)
+			* Scroll wheel while holding right click to adjust speed
+			* Holding shift applies a custom modifier
+			* When a scene object is selected, press "f" to focus on that object
+		* SceneEditor.cs
+			* Keeps track of editor state and things like selected object
+			* Handles conditinally sending input to the Camera Controller
+			* Handles hierarchy window
+			* Handles properties window
+			* Keeps a history of before and after for every change possible
+				* Create EditorOperation.cs abstract with Do() and Undo() methods (With logic to prevent an operation to be done or undone twice)
+				* Object adding operation
+				* Object removing operation
+				* Move operation
+				* Scale operation
+				* Rotate operation
+				* Component add operation
+				* Component remove operation
+				* Component property change operation
+				* Bulk operation which can do a list of operations in sequence all at once
+		* Scene Saving .BEScene file format (json internally)
+			* Editor State
+				* Camera position
+				* Window position
+			* Scene
+				* Objects get indexed and added to a list
+				* Add objects positions, components, and their current properties
+					* Object references get set to the object index
+		* Scene Loading
+		* Scene Testing
+			* Add support for multiple window rendering
+			* Save backup copy of scene -> load and start scene in new window -> also render realtime scene in editor window
+			* Quiting scene testing loads save backup
+
+	- Builtin Network Communications (Multiplayer)
+		* NetworkEntitiy.cs
+			* Contains IP routing information
+			* Ping()
+			* SendReliablePacket()
+			* SendUnreliablePacket()
+		* NetworkClient.cs
+			* OnDisconnect
+		* NetworkServer.cs
+			* OnClientConnect
+			* OnClientDisconnect
+			* OnClientPacketRecieved
+		* NetworkObject.cs
+			* NetworkOwner
