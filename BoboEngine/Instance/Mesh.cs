@@ -36,7 +36,6 @@ public class Mesh
         List<Float3> vertices = new();
         List<MeshFace> faces = new();
         List<Float3> normals = new();
-        //List<Float3> faceColors = new();
         List<Float2> textureCoords = new();
 
         string[] data = File.ReadAllLines(filePath);
@@ -66,7 +65,6 @@ public class Mesh
 
         this.vertices = vertices.ToArray();
         this.faces = faces.ToArray();
-        //this.faceColors = faceColors.ToArray();
         this.normals = normals.ToArray();
         this.textureCoords = textureCoords.ToArray();
 

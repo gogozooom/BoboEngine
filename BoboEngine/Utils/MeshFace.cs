@@ -45,7 +45,7 @@ public struct MeshFace
         this.vertices = vertices;
     }
 
-    public MeshFace[] GetFaceTriangulated() // Supply multiple techniques maybe?
+    public readonly MeshFace[] GetFaceTriangulated() // Supply multiple techniques maybe?
     {
         List<MeshFace> faces = new();
 
