@@ -5,8 +5,6 @@ Known Issues:
 		* Solution: Create input buffer handled 
 	
 TODO:
-	- Optimize FaceInfo and Keep info of faces with more than 3 verticies
-
 	- Scene Editor!!
 		* UI
 			* Text Renderer
