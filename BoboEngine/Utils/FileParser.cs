@@ -1,6 +1,4 @@
-﻿using Microsoft.Win32.SafeHandles;
-
-namespace BoboEngine.Utils;
+﻿namespace BoboEngine.Utils;
 
 public static class FileParser
 {
