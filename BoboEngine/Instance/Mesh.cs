@@ -5,9 +5,8 @@ namespace BoboEngine;
 public class Mesh
 {
     public Float3[] vertices;
-    public FaceInfo[] faces;
+    public MeshFace[] faces;
     public Float3[] normals;
-    //public Float3[] faceColors;
     public Float2[] textureCoords;
 
     public bool LoadObjFile(string filePath)
@@ -35,7 +34,7 @@ public class Mesh
         }
 
         List<Float3> vertices = new();
-        List<FaceInfo> faces = new();
+        List<MeshFace> faces = new();
         List<Float3> normals = new();
         //List<Float3> faceColors = new();
         List<Float2> textureCoords = new();
@@ -61,12 +60,7 @@ public class Mesh
             }
             else if (line.StartsWith("f ")) // Face Info
             {
-                foreach (var f in FaceInfo.GetTriangulatedFaces(line))
-                {
-                    var item = f;
-
-                    faces.Add(item);
-                }
+                faces.Add(new MeshFace(line));
             }
         }
 
@@ -78,7 +72,7 @@ public class Mesh
 
         return true;
     }
-    public void LoadRawData(Float3[] vertices, FaceInfo[] faces = null, Float3[] normals = null, Float2[] textureCoords = null)
+    public void LoadRawData(Float3[] vertices, MeshFace[] faces = null, Float3[] normals = null, Float2[] textureCoords = null)
     {
         if (!IsEmpty())
         {
@@ -100,6 +94,18 @@ public class Mesh
         else if (faces.Length == 0) return true;
 
         return false;
+    }
+
+    public MeshFace[] GetTriangulatedFaces()
+    {
+        List<MeshFace> triangulatedFaces = new();
+
+        foreach (var face in faces)
+        {
+            triangulatedFaces.AddRange(face.GetFaceTriangulated());
+        }
+
+        return triangulatedFaces.ToArray();
     }
 
     #region OpenGL
@@ -139,19 +145,23 @@ public class Mesh
     }
     protected virtual (float[] data, uint vertexBufferSize) glConvertToData()
     {
-        var vertexData = new float[faces.Length * 24];
+        var triangulatedFaces = GetTriangulatedFaces();
 
-        for (int i = 0; i < faces.Length; i++)
+        var vertexData = new float[triangulatedFaces.Length * 24];
+
+        for (int i = 0; i < triangulatedFaces.Length; i++)
         {
-            var face = faces[i];
+            var face = triangulatedFaces[i];
 
             var faceIndex = i * 24; // 8 * 3
 
             for (int vertexI = 0; vertexI < 3; vertexI++)
             {
-                Float3 position = vertices[face.vertex_indexs[vertexI]];
-                Float3 normal = face.normal_indexs.Count > vertexI ? normals[face.normal_indexs[vertexI]] : new();
-                Float2 uv = textureCoords.Length > 0 ? textureCoords[face.texture_indexs[vertexI]] : new(0, 0);
+                var vertex = face.vertices[vertexI];
+
+                Float3 position = vertices[vertex.vertex_coord_index];
+                Float3 normal = vertex.normal_coord_index >= 0 ? normals[vertex.normal_coord_index] : new();
+                Float2 uv = vertex.texture_coord_index >= 0 ? textureCoords[vertex.texture_coord_index] : new(0, 0);
 
                 vertexData[faceIndex + 0] = position.x;
                 vertexData[faceIndex + 1] = position.y;
@@ -168,7 +178,7 @@ public class Mesh
             }
         }
 
-        return (vertexData, (uint)faces.Length * 3);
+        return (vertexData, (uint)triangulatedFaces.Length * 3);
     }
     protected virtual unsafe void glBindPointers()
     {
@@ -235,64 +245,4 @@ public class Mesh
 
 
     public static implicit operator bool(Mesh o) => o != null;
-}
-
-public class FaceInfo
-{
-    public List<int> vertex_indexs = new();
-    public List<int> texture_indexs = new();
-    public List<int> normal_indexs = new();
-
-    public FaceInfo(string objFaceElements)
-    {
-        string[] elements = objFaceElements.Split(' ')[1..];
-
-        foreach (var vertexInfo in elements)
-        {
-            int[] indexes = vertexInfo.Split('/').Select(int.Parse).ToArray();
-
-            if (indexes.Length >= 1)
-            {
-                vertex_indexs.Add(indexes[0] - 1);
-            }
-
-            if (indexes.Length >= 2)
-            {
-                texture_indexs.Add(indexes[1] - 1);
-            }
-
-            if (indexes.Length >= 3)
-            {
-                normal_indexs.Add(indexes[2] - 1);
-            }
-
-            //throw new FormatException("Could not parse OBJ, Face elements was incomplete!");
-        }
-    }
-
-    /// <summary>
-    /// <br/>
-    /// "f vert/tex/norm ..." <br/>
-    /// E.g. "f 1/1/1 2/2/2 3/3/3 4/4/4 5/5/5"
-    /// </summary>
-    public static FaceInfo[] GetTriangulatedFaces(string objFaceElements)
-    {
-        string[] elements = objFaceElements.Split(' ')[1..];
-
-        List<FaceInfo> faces = new();
-
-        if (elements.Length <= 3)
-        {
-            faces = [new(objFaceElements)];
-        }
-        else
-        {
-            for (int i = 2; i < elements.Length; i++)
-            {
-                faces.Add(new($"f {elements[0]} {elements[i - 1]} {elements[i]}"));
-            }
-        }
-
-        return faces.ToArray();
-    }
 }
