@@ -15,25 +15,25 @@ public struct MeshFace
 
         foreach (var vertexInfo in elements)
         {
-            int[] indexes = vertexInfo.Split('/').Select(int.Parse).ToArray();
+            var indexes = vertexInfo.Split('/');
 
             int vertex_coord_index = -1;
             int texture_coord_index = -1;
             int normal_coord_index = -1;
 
-            if (indexes.Length >= 1)
+            if (indexes.Length > 0 && int.TryParse(indexes[0], out var index1))
             {
-                vertex_coord_index = indexes[0] - 1; // - 1 to convert to 0 indexed list format
+                vertex_coord_index = index1 - 1; // - 1 to convert to 0 indexed list format
             }
 
-            if (indexes.Length >= 2)
+            if (indexes.Length > 1 && int.TryParse(indexes[1], out var index2))
             {
-                texture_coord_index = indexes[1] - 1; // - 1 to convert to 0 indexed list format
+                texture_coord_index = index2 - 1; // - 1 to convert to 0 indexed list format
             }
 
-            if (indexes.Length >= 3)
+            if (indexes.Length > 2 && int.TryParse(indexes[2], out var index3))
             {
-                normal_coord_index = indexes[2] - 1; // - 1 to convert to 0 indexed list format
+                normal_coord_index = index3 - 1; // - 1 to convert to 0 indexed list format
             }
 
             vertices.Add(new MeshVertex(vertex_coord_index, texture_coord_index, normal_coord_index));
