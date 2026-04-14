@@ -1,5 +1,7 @@
 ﻿Post Build - xcopy $(ProjectDir)Bin-Dep $(TargetDir) /E /H /I /Y
 
+
+
 Known Issues:
 	- 3DConnexion event inputs being handeled on a separate thread causing errors when accessing data used by the window thread
 		* Solution: Create input buffer handled 
@@ -7,7 +9,38 @@ Known Issues:
 TODO:
 	- Scene Editor!!
 		* UI
-			* Text Renderer
+			_______________________________________ Text Renderer _______________________________________
+
+				_______ Texture2D.cs: ascii.png _______
+				   |
+				   + Material holds texture
+				   |
+				_____________ Material.cs _____________
+				   |
+				   + Text UI render holds material
+				   |
+				   |   __ *FontAssetMap.cs __
+				   |           |
+				   |           + *Creates and stores char to texture choord maps
+				   |           |
+				   |   _____________ *TextUI.cs _____________
+				   |     |              |
+				   |     |              + *Generates and stores mesh
+				   |     |              | 
+				   |     |    __ Mesh -> *TextMesh.cs __
+				   |     |              |
+				   |     |              _
+				   |     + *Transfers padding, and anchoring
+				   |     |              -
+				   |     |              |
+				   |     |              + Reads mesh data
+				   |     |              |
+				 _____________ *TextUIRenderer.cs _____________
+									|
+									+ Renders the final result
+									|
+				 _____________ WindowManager.cs _____________
+			_____________________________________________________________________________________________
 			* [DefaultUI.shader] add color multiplier and make texture optional
 			* UI Input Manager
 			* Parent Relative Positioning (UI inside of other UI actually makes a difference)
@@ -82,3 +115,59 @@ TODO:
 			* OnClientPacketRecieved
 		* NetworkObject.cs
 			* NetworkOwner
+
+
+System Structure:
+
++-----------Globals------------+
+| Glfw.cs                      |
+| Time.cs                      |
+| 3DMouse.cs                   |
+|                              |
+|                              |
+
+______ WindowManager.cs ______
+			 |
+			 + Loads Skybox, Camera, and all MeshRenderers and renders them to the window
+			 |
+______ SceneManager.cs ______
+			 |
+			 + Stores and manages currently loaded scene
+			 |
+_________ Scene.cs _________
+ |       |        |
+ |       |        + Stores reference to at least one camera object
+ |       |        |
+ |		 |	 _ Camera.cs _
+ |       |
+ |       + Stores reference to at least one skybox object
+ |       |
+ |  _ Skybox.cs _
+ | 	    
+ + Starts, updates, and manages all GameObjects in the scene
+ | 	    
+____ GameObject.cs ____
+      |
+      + Connected through ObjectBehavior compoenents
+      |
+____ MeshRenderer.cs ____
+     |     |
+     |     + Accesses properties from material
+     |     |
+     |  _ Material.cs _
+     |     |      | 
+     |     |      + Stores a shader
+     |     |      | 
+     |	   |   _ Shader.cs _
+     |     | 
+     |     + Stores a texture
+     |     | 
+     |  _ Texture.cs _
+     |
+     + Accesses mesh
+     |
+_ MeshFilter.cs _
+     |
+     + Stores a mesh
+     |
+__ Mesh.cs __
