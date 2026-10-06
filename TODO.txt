@@ -7,6 +7,9 @@ Known Issues:
 		* Solution: Create input buffer handled 
 	
 TODO:
+	- Separate the 3DMouse driver 
+	- Implement indicies into glLoadMesh r smth to reduce the amount of verticies being sent to the gpu
+
 	- Scene Editor!!
 		* UI
 			_______________________________________ Text Renderer _______________________________________
