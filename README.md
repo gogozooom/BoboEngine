@@ -1,6 +1,6 @@
 ﻿# BoboEngine
 
-A simple object oriented game engine built with C# using OpenGL.
+A simple, *unfinished*, object oriented game engine built with C# using OpenGL.
 
 # SETUP
 
