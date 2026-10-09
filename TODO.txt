@@ -7,8 +7,7 @@ Known Issues:
 		* Solution: Create input buffer handled 
 	
 TODO:
-	- Separate the 3DMouse driver
-	- Remove glfw3.dll from repo
+	- Separate BoboConsole
 	- Implement indicies into glLoadMesh r smth to reduce the amount of verticies being sent to the gpu
 
 	- Scene Editor!!
