@@ -291,6 +291,7 @@ public class DynamicData
         Engine.LogError($"Type of '{name}' cannot be converted to type: '{typeof(T)}' as this data is of type: '{_dataType}'!");
         return default;
     }
+    public string GetValue() => GetValue<String>();
     public void SetValue(string value)
     {
         if (_dataType == DataType.Unknown)
