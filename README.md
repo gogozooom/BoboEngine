@@ -6,6 +6,8 @@ A simple, *unfinished*, object oriented game engine built with C# using OpenGL.
 
 Download your prefered version of BoboEngine in the [releases tab](https://github.com/gogozooom/BoboEngine/releases).
 
+Extract the .zip file you downloaded, we will use the contents soon.
+
 Create a new C# Console app in a separate folder with ".NET 9.0" as the framework and keep everything else default.
 
 Right click "Dependencies" in the Solution Explorer and select "Add Project Reference", click "Browse", then navigate to the "BoboEngine.dll" you downloaded or built from source, and finally click "OK".
@@ -56,12 +58,14 @@ Now you can start the engine and see a few meshes with this Program.cs file:
         }
     }
 
-Running this for the first time will give an error however, and that is because we are missing the "Bin-Dep" files from the cloned project.
+Running this for the first time will give an error however, and that is because we are missing the "Bin-Dep" files for BoboEngine to work properly.
 
-Copy all contests of the "Bin-Dep" folder, and paste them in the same directory as your newly built .exe file.
+**If downloaded from releases:** Copy all the contents of the unzipped folder and paste in the same directory as your newly built .exe file.
+
+**If built form soruce:** Copy all contests of the "Bin-Dep" folder, and paste them in the same directory as your newly built .exe file.
 
 Running your project one last time should now show all the test objects we created!
 
 # BUILD FROM SOURCE
 
-Clone this repo and opening the project in Visual Studio, opening the .sln file, then right click the "BoboEngine" root in solution explorer and select "Build".
+Clone this repo and open the project in Visual Studio through .sln file, then right click the "BoboEngine" root in solution explorer and select "Build".
