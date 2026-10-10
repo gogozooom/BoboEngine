@@ -4,7 +4,7 @@ A simple, *unfinished*, object oriented game engine built with C# using OpenGL.
 
 # SETUP
 
-Download your prefered version of Boboengine in the [releases tab](https://github.com/gogozooom/BoboEngine/releases).
+Download your prefered version of BoboEngine in the [releases tab](https://github.com/gogozooom/BoboEngine/releases).
 
 Create a new C# Console app in a separate folder with ".NET 9.0" as the framework and keep everything else default.
 
