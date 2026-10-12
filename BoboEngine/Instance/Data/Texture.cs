@@ -179,6 +179,10 @@ public abstract class Texture
             {
                 throw new NotImplementedException($"Type of '{GetGL_TEXTURE_TYPE}' is not implemented!");
             }
+            if (GetError() == 1281)
+            {
+                throw new TextureSizeTooLargeException($"Texture '{name}' is too big! Texture size: {texData.Length}");
+            }
 
             glGenerateMipmap(GL_TEXTURE_TYPE);
         }
@@ -214,6 +218,8 @@ public abstract class Texture
         glDeleteTexture(textureRef);
         textureRef = 0;
     }
+
+    public class TextureSizeTooLargeException(string message) : Exception(message) { }
 }
 public enum TextureSampleType
 {
