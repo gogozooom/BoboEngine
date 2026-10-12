@@ -153,6 +153,7 @@ public struct Float2(float x = 0, float y = 0)
 
     #endregion
 
+    public static Float2 Lerp(Float2 s, Float2 e, float t) => (e - s) * t + s;
     public float Length => MathF.Sqrt(x * x + y * y);
     public float LengthSquared() => x * x + y * y;
     public Float2 Normalized() => this / Length;
