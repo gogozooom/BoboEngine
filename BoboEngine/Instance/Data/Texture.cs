@@ -179,7 +179,7 @@ public abstract class Texture
             {
                 throw new NotImplementedException($"Type of '{GetGL_TEXTURE_TYPE}' is not implemented!");
             }
-            if (GetError() == 1281)
+            if (GetError() == GL_INVALID_VALUE)
             {
                 throw new TextureSizeTooLargeException($"Texture '{name}' is too big! Texture size: {texData.Length}");
             }
