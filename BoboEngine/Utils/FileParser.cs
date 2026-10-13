@@ -333,11 +333,11 @@ public class DynamicData
 
         return result;
     }
-    public List<DynamicData> GetAllValues()
+    public List<DynamicData> GetAllValues(bool includeArrays = false)
     {
         List<DynamicData> result = new();
 
-        GetAllItems(this, ref result);
+        GetAllItems(this, ref result, includeArrays);
 
         return result;
     }
@@ -486,19 +486,19 @@ public class DynamicData
         }
     }
 
-    private static void GetAllItems(DynamicData data, ref List<DynamicData> allData)
+    private static void GetAllItems(DynamicData data, ref List<DynamicData> allData, bool includeArrays = false)
     {
         foreach (var item in data.data.Values)
         {
             var type = item.GetDataType();
 
-            if(type == DataType.Value && item.parent.GetDataType() != DataType.ValueArray) // May want to remove this last part later...
+            if(type == DataType.Value && item.parent.GetDataType() != DataType.ValueArray || (includeArrays && type == DataType.Array)) // May want to remove Parent == ValueArray later...
             {
                 allData.Add(item);
             }
             else if(type == DataType.Array || type == DataType.ValueArray)
             {
-                GetAllItems(item, ref allData);
+                GetAllItems(item, ref allData, includeArrays);
             }
         }
     }
