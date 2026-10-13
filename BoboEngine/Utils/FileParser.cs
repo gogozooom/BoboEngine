@@ -9,25 +9,26 @@ public static class FileParser
         string buffer = "";
         string key = "";
 
-        int i = 0;
+        bool isFirstChar = true;
 
         bool expectingKey = true;
         bool expectingValue = false;
         bool expectingValueArray = false;
 
+        int line = 1;
+
         foreach (var c in data.ToCharArray())
         {
-            if (c == '\r' || c == '\n' || c == ' ') continue; // Ignore whitespace
+            if (c == '\r' || c == '\n') { line++; continue; }
+            if (c == ' ') continue; // Ignore whitespace
 
-            if (c == '{' && i == 0)
+            if (c == '{' && isFirstChar)
             {
                 currentData = new DynamicData(name, DataType.Array);
-                continue;
             }
             else if (c == '[')
             {
-                if (expectingKey) throw new Exception("Unexpected '[' encountered!");
-                if (expectingValueArray) throw new Exception("'[' encountered when already expecting a ValueArray!");
+                if (expectingKey) throw new UnexpectedCharacterException(c, line);
 
                 currentData = new DynamicData(key, DataType.ValueArray, null, currentData);
 
@@ -36,8 +37,7 @@ public static class FileParser
             }
             else if (c == '{')
             {
-                if (expectingKey) throw new Exception("Unexpected '{' encountered!");
-
+                if (expectingKey) throw new UnexpectedCharacterException(c, line);
 
                 if (currentData && currentData.GetDataType() == DataType.ValueArray)
                 {
@@ -53,10 +53,8 @@ public static class FileParser
                 expectingKey = true;
                 expectingValue = false;
             }
-            else if (c == ']')
+            else if (c == ']' || c == '}')
             {
-                if (expectingKey) throw new Exception($"Unexpected '{c}' encountered!");
-
                 if (expectingValue)
                 {
                     // Value found
@@ -74,46 +72,18 @@ public static class FileParser
 
                 if (currentData.parent == null)
                 {
-                    Engine.Log("Reached end of file");
+                    //Engine.Log("Reached end of file");
                     return currentData;
                 }
                 currentData = currentData.parent;
 
                 expectingValueArray = false;
                 expectingValue = false;
-            }
-            else if (c == '}')
-            {
-                if (expectingKey) throw new Exception($"Unexpected '{c}' encountered!");
-
-                if (expectingValue)
-                {
-                    // Value found
-                    if (currentData.GetDataType() == DataType.ValueArray)
-                    {
-                        new DynamicData(currentData.data.Count.ToString(), DataType.Value, buffer, currentData);
-                    }
-                    else
-                    {
-                        new DynamicData(key, DataType.Value, buffer, currentData);
-                    }
-                    key = "";
-                    buffer = "";
-                }
-
-                expectingValueArray = false;
-                expectingValue = false;
-
-                if (currentData.parent == null)
-                {
-                    Engine.Log("Reached end of file");
-                    return currentData;
-                }
-                currentData = currentData.parent;
+                expectingKey = false;
             }
             else if (c == ',')
             {
-                if (expectingKey) throw new Exception($"Unexpected '{c}' encountered!");
+                if (expectingKey) throw new UnexpectedCharacterException(c,line);
 
                 if (expectingValue)
                 {
@@ -133,7 +103,7 @@ public static class FileParser
                     key = "";
                     buffer = "";
                 }
-                else
+                else if (currentData.GetDataType() != DataType.ValueArray)
                 {
                     expectingKey = true;
                 }
@@ -154,11 +124,18 @@ public static class FileParser
                 buffer += c;
             }
 
-            i++;
+            isFirstChar = false;
+        }
+
+        if (expectingValue)
+        {
+            currentData = new DynamicData(key, DataType.Value, buffer, currentData);
         }
 
         return currentData;
     }
+
+    public class UnexpectedCharacterException(char c, int line) : Exception($"Unexpected '{c}' encountered on line: {line}");
 }
 
 public class DynamicData
@@ -345,12 +322,6 @@ public class DynamicData
             return;
         }
 
-        if (_dataType != DataType.Value)
-        {
-            Engine.LogWarning($"Property of '{name}' is an array! Cannot set value!");
-            return;
-        }
-
         if (ValueIllegal(value))
         {
             Engine.LogWarning($"Value '{value}' contains illegal characters!");
@@ -361,6 +332,8 @@ public class DynamicData
         if (!value.EndsWith('"')) value += '"';
 
         _rawData = value;
+        data.Clear();
+        _dataType = DataType.Value;
     }
     public void SetValue(DynamicData values)
     {
@@ -375,7 +348,7 @@ public class DynamicData
     }
     public DynamicData GetItem(string id)
     {
-        if(data.Count == 0)
+        if(_dataType == DataType.Value)
         {
             Engine.LogWarning($"Property of '{name}' is not an array! Please use GetValue()!");
             return null;
@@ -420,7 +393,7 @@ public class DynamicData
     }
     public bool HasItem(string id)
     {
-        if (data.Count == 0)
+        if (_dataType == DataType.Value)
         {
             Engine.LogWarning($"Property of '{name}' is not an array!");
         }
@@ -432,66 +405,30 @@ public class DynamicData
         data.Add(d.name, d);
         d.parent = this;
     }
+
     public void Merge(DynamicData d)
     {
-        var data = d.Copy();
-
-        if(_dataType != DataType.Array)
+        if (name == d.name && _dataType == DataType.Value && d._dataType == DataType.Value)
         {
-            Engine.LogWarning("Cannot Merge value data type!");
+            SetValue(d);
             return;
         }
 
-        foreach (var item in data.data.Values)
+        if (_dataType == DataType.Array && d._dataType == DataType.Array)
         {
-            if (!HasItem(item.name))
+            foreach (var itemToMerge in d.GetImmediateChildren())
             {
-                Add(item);
-                continue;
-            }
+                var conflictD = GetItem(itemToMerge.name);
 
-            // CONFLICT!!
-
-            // Held by parent
-            var conflictingItem = GetItem(item.name);
-
-            // Held by merging child
-            var targetDataType = item.GetDataType();
-
-            if (conflictingItem.GetDataType() != targetDataType)
-            {
-                Engine.LogWarning($"Item property '{item.name}' has a type miss-match! '{targetDataType}' != '{conflictingItem.GetDataType()}'!");
-                continue;
-            }
-
-            switch (targetDataType)
-            {
-                case DataType.Value:
-
-                    conflictingItem.SetValue(item.GetValue<string>());
-                    break;
-
-                case DataType.ValueArray:
-
-                    // Split between adding and replacing with:
-                    // "array" : [ {...}, {...} ]
-                    // and:
-                    // "pos"   : [ 0, 2, 1 ]
-                    // ...
-
-                    //Program.LogWarning($"Target type of '{targetDataType}' not implemented!");
-
-                    break;
-                case DataType.Array:
-                    foreach (var v in item.data.Values)
-                    {
-                        conflictingItem.Merge(v);
-                    }
-
-                    break;
-                default:
-                    Engine.LogWarning($"Cannot merge item '{item}' continuing...");
+                if (!conflictD)
+                {
+                    Add(itemToMerge.Copy());
                     continue;
+                }
+
+                // Base has item with same id as itemToMerge
+
+                conflictD.Merge(itemToMerge);
             }
         }
     }
