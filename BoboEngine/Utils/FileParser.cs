@@ -2,118 +2,162 @@
 
 public static class FileParser
 {
-    public static DynamicData ParseJson(string name, string data, bool includeRedundantRawData = true)
+    public static DynamicData ParseJson(string data, string name = null)
     {
-        if(data == "{}")
+        DynamicData currentData = null;
+
+        string buffer = "";
+        string key = "";
+
+        int i = 0;
+
+        bool expectingKey = true;
+        bool expectingValue = false;
+        bool expectingValueArray = false;
+
+        foreach (var c in data.ToCharArray())
         {
-            Engine.LogWarning($"Tried to load {name} which is empty!");
+            if (c == '\r' || c == '\n' || c == ' ') continue; // Ignore whitespace
 
-            return new DynamicData(name, DataType.Array, data);
-        }
-
-        var result = new DynamicData(name, DataType.Array, includeRedundantRawData ? data : null);
-
-        while (data.Length > 0)
-        {
-            // Looking For Item
-
-            if (data.StartsWith("}") || data.StartsWith("]"))
+            if (c == '{' && i == 0)
             {
-                break;
+                currentData = new DynamicData(name, DataType.Array);
+                continue;
             }
-
-            string itemId;
-
-            if(result.GetDataType() != DataType.ValueArray && (data.StartsWith('{') || data.StartsWith('\"')))
+            else if (c == '[')
             {
-                var valueFound = data.Split("\"");
+                if (expectingKey) throw new Exception("Unexpected '[' encountered!");
+                if (expectingValueArray) throw new Exception("'[' encountered when already expecting a ValueArray!");
 
-                itemId = valueFound[1];
+                currentData = new DynamicData(key, DataType.ValueArray, null, currentData);
 
-                data = data.Remove(0, valueFound[0].Length + valueFound[1].Length + 2).TrimEnd().Remove(0, 1).TrimStart();
+                expectingValueArray = true;
+                expectingValue = true;
+            }
+            else if (c == '{')
+            {
+                if (expectingKey) throw new Exception("Unexpected '{' encountered!");
+
+
+                if (currentData && currentData.GetDataType() == DataType.ValueArray)
+                {
+                    currentData = new DynamicData(currentData.data.Count.ToString(), DataType.Array, null, currentData);
+                }
+                else
+                {
+                    currentData = new DynamicData(key, DataType.Array, null, currentData);
+                    key = "";
+                }
+
+                expectingValueArray = false;
+                expectingKey = true;
+                expectingValue = false;
+            }
+            else if (c == ']')
+            {
+                if (expectingKey) throw new Exception($"Unexpected '{c}' encountered!");
+
+                if (expectingValue)
+                {
+                    // Value found
+                    if (currentData.GetDataType() == DataType.ValueArray)
+                    {
+                        new DynamicData(currentData.data.Count.ToString(), DataType.Value, buffer, currentData);
+                    }
+                    else
+                    {
+                        new DynamicData(key, DataType.Value, buffer, currentData);
+                    }
+                    key = "";
+                    buffer = "";
+                }
+
+                if (currentData.parent == null)
+                {
+                    Engine.Log("Reached end of file");
+                    return currentData;
+                }
+                currentData = currentData.parent;
+
+                expectingValueArray = false;
+                expectingValue = false;
+            }
+            else if (c == '}')
+            {
+                if (expectingKey) throw new Exception($"Unexpected '{c}' encountered!");
+
+                if (expectingValue)
+                {
+                    // Value found
+                    if (currentData.GetDataType() == DataType.ValueArray)
+                    {
+                        new DynamicData(currentData.data.Count.ToString(), DataType.Value, buffer, currentData);
+                    }
+                    else
+                    {
+                        new DynamicData(key, DataType.Value, buffer, currentData);
+                    }
+                    key = "";
+                    buffer = "";
+                }
+
+                expectingValueArray = false;
+                expectingValue = false;
+
+                if (currentData.parent == null)
+                {
+                    Engine.Log("Reached end of file");
+                    return currentData;
+                }
+                currentData = currentData.parent;
+            }
+            else if (c == ',')
+            {
+                if (expectingKey) throw new Exception($"Unexpected '{c}' encountered!");
+
+                if (expectingValue)
+                {
+                    // Value found
+                    if (currentData.GetDataType() == DataType.ValueArray)
+                    {
+                        new DynamicData(currentData.data.Count.ToString(), DataType.Value, buffer, currentData);
+                        expectingValue = true;
+                        expectingKey = false;
+                    }
+                    else
+                    {
+                        new DynamicData(key, DataType.Value, buffer, currentData);
+                        expectingValue = false;
+                        expectingKey = true;
+                    }
+                    key = "";
+                    buffer = "";
+                }
+                else
+                {
+                    expectingKey = true;
+                }
+            }
+            else if (c == ':' && expectingKey)
+            {
+                if (buffer == "") throw new Exception("':' encountered before key was given!");
+
+                // Key found
+                key = buffer.Replace("\"", "");
+                buffer = "";
+
+                expectingKey = false;
+                expectingValue = true;
             }
             else
             {
-                result.SetDataType(DataType.ValueArray);
-                itemId = result.data.Count.ToString();
-
-                if(data.StartsWith('[')) data = data.Remove(0, 1).TrimStart();
+                buffer += c;
             }
 
-            // Looking For Value
-
-            DynamicData dataResult;
-            string rawData;
-
-            if (data.StartsWith("{"))
-            {
-                // Is List
-
-                rawData = "";
-
-                int openBrackets = 0;
-                int closedBrackets = 0;
-                foreach (var c in data)
-                {
-                    rawData += c;
-
-                    if (c == '{') openBrackets++;
-                    if (c == '}') closedBrackets++;
-
-                    if(openBrackets != 0 && openBrackets == closedBrackets) break;
-                }
-
-                data = data.Remove(0, rawData.Length).Trim();
-
-                if (data.StartsWith(',')) data = data.Remove(0, 1).TrimStart();
-
-                dataResult = ParseJson(itemId, rawData);
-            }
-            else if (data.StartsWith("["))
-            {
-                // Number Array
-
-                rawData = "";
-
-                int openBrackets = 0;
-                int closedBrackets = 0;
-                foreach (var c in data)
-                {
-                    rawData += c;
-
-                    if (c == '[') openBrackets++;
-                    if (c == ']') closedBrackets++;
-
-                    if (openBrackets != 0 && openBrackets == closedBrackets) break;
-                }
-
-                data = data.Remove(0, rawData.Length).Trim();
-
-                dataResult = ParseJson(itemId, rawData);
-            }
-            else
-            {
-                // Is Data
-
-                var value = data.Split(",")[0];
-
-                rawData = value;
-                if (rawData.EndsWith(']')) rawData = rawData.Split(']')[0];
-                if (rawData.EndsWith('}')) rawData = rawData.Split('}')[0];
-                rawData = rawData.TrimEnd();
-
-                data = data.Remove(0, value.Length).TrimStart();
-
-                dataResult = new DynamicData(itemId, DataType.Value, rawData);
-            }
-
-            if (data.StartsWith(","))
-                data = data.Remove(0, 1).TrimStart();
-
-            result.PopulateData(dataResult);
+            i++;
         }
-    
-        return result;
+
+        return currentData;
     }
 }
 
@@ -140,6 +184,7 @@ public class DynamicData
         _dataType = dataType;
 
         if (dataType == DataType.Value && rawData == null) Engine.LogWarning("DynamicData created as a value with no data!");
+        if (parent) if (!parent.HasItem(name)) parent.Add(this);
     }
 
     public DataType GetDataType() => _dataType;
@@ -317,6 +362,17 @@ public class DynamicData
 
         _rawData = value;
     }
+    public void SetValue(DynamicData values)
+    {
+        SetDataType(values._dataType);
+
+        _rawData = values._rawData;
+        data.Clear();
+        foreach (var value in values.Copy().data)
+        {
+            data.Add(value.Key, value.Value);
+        }
+    }
     public DynamicData GetItem(string id)
     {
         if(data.Count == 0)
@@ -352,6 +408,16 @@ public class DynamicData
 
         data.Remove(id);
     }
+    public void Remove()
+    {
+        if (!parent)
+        {
+            Engine.LogWarning($"'{name}' Cannot remove root data!");
+            return;
+        }
+
+        parent.RemoveItem(name);
+    }
     public bool HasItem(string id)
     {
         if (data.Count == 0)
@@ -361,7 +427,7 @@ public class DynamicData
 
         return data.ContainsKey(id);
     }
-    public void PopulateData(DynamicData d)
+    public void Add(DynamicData d)
     {
         data.Add(d.name, d);
         d.parent = this;
@@ -380,7 +446,7 @@ public class DynamicData
         {
             if (!HasItem(item.name))
             {
-                PopulateData(item);
+                Add(item);
                 continue;
             }
 
@@ -432,14 +498,14 @@ public class DynamicData
 
     public DynamicData Copy()
     {
-        return FileParser.ParseJson(name, ToJson(), false);
+        return FileParser.ParseJson(ToJson(true), name);
     }
 
-    public string ToJson()
+    public string ToJson(bool includeName = false)
     {
         string dataString = "";
 
-        if (parent && parent.GetDataType() != DataType.ValueArray) dataString += $"\"{name}\":";
+        if (parent && parent.GetDataType() != DataType.ValueArray || includeName) dataString += $"\"{name}\":";
 
         if (_dataType == DataType.Array)
         {
@@ -496,7 +562,7 @@ public class DynamicData
             {
                 allData.Add(item);
             }
-            else if(type == DataType.Array || type == DataType.ValueArray)
+            if(type == DataType.Array || type == DataType.ValueArray)
             {
                 GetAllItems(item, ref allData, includeArrays);
             }
