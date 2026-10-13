@@ -169,18 +169,10 @@ public abstract class Texture
             //glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, width, height, images.Count, GL_RGB, GL_UNSIGNED_BYTE, textureDataPointer);
             if (GL_TEXTURE_TYPE == GL_TEXTURE_2D)
             {
-                if (texData.Length > GL_MAX_TEXTURE_SIZE)
-                {
-                    throw new TextureSizeTooLargeException($"Texture2D '{name}' is too big! Max data: '{GL_MAX_TEXTURE_SIZE}', texture size: {texData.Length}");
-                }
                 glTexImage2D(GL_TEXTURE_TYPE, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, textureDataPointer);
             }
             else if(GL_TEXTURE_TYPE == GL_TEXTURE_2D_ARRAY)
             {
-                if (texData.Length > GL_MAX_3D_TEXTURE_SIZE)
-                {
-                    throw new TextureSizeTooLargeException($"Texture3D '{name}' is too big! Max data: '{GL_MAX_3D_TEXTURE_SIZE}', texture size: {texData.Length}");
-                }
                 glTexImage3D(GL_TEXTURE_TYPE, 0, GL_RGBA, width, height, texData.Length / (width*height*4), 0, GL_RGBA, GL_UNSIGNED_BYTE, textureDataPointer);
             }
             else
