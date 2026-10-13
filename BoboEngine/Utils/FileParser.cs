@@ -108,8 +108,9 @@ public static class FileParser
                     expectingKey = true;
                 }
             }
-            else if (c == ':' && expectingKey)
+            else if (c == ':' && buffer.Length > 1 && buffer.EndsWith('\"'))
             {
+                if (!expectingKey) throw new UnexpectedCharacterException(c, line);
                 if (buffer == "") throw new Exception("':' encountered before key was given!");
 
                 // Key found
