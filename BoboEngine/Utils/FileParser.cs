@@ -578,7 +578,7 @@ public class DynamicData
         switch (_dataType)
         {
             case DataType.Value:
-                return $"{name} = '{_rawData}')";
+                return $"{name} = '{_rawData}'";
             case DataType.ValueArray:
                 return $"{name}<{_dataType}>({data.Count})";
             case DataType.Array:
