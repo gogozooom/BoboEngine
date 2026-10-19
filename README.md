@@ -8,7 +8,7 @@ Download your prefered version of BoboEngine in the [releases tab](https://githu
 
 Extract the .zip file you downloaded, we will use the contents soon.
 
-Create a new C# Console app in a separate folder with ".NET 9.0" as the framework and keep everything else default.
+Create a new C# Console app in a separate folder with ".NET 8.0" (or higher) as the framework and keep everything else default.
 
 Right click "Dependencies" in the Solution Explorer and select "Add Project Reference", click "Browse", then navigate to the "BoboEngine.dll" you downloaded or built from source, and finally click "OK".
 
