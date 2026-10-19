@@ -24,6 +24,7 @@ public static class Engine
 
         Console.ForegroundColor = DEFAULT_FORGROUND_COLOR;
 
+        RunEngineInitMethods();
         ConsoleCmd.Initialize();
         StbImage.stbi_set_flip_vertically_on_load(1);
 
@@ -47,10 +48,10 @@ public static class Engine
             }
         });
 
-        InitializeProgram();
+        WindowManager.InitializeRenderLoop(854, 480);
     }
 
-    public static void InitializeProgram()
+    static void RunEngineInitMethods()
     {
         var methods = AppDomain.CurrentDomain.GetAssemblies()
             .SelectMany(x => x.GetTypes())
@@ -62,8 +63,6 @@ public static class Engine
         {
             method.Invoke(null, []);
         }
-
-        WindowManager.InitializeRenderLoop(854, 480);
     }
 
     public static string GetLocalModelPath(string model = null)
