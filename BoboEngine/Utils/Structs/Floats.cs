@@ -171,6 +171,8 @@ public struct Float2(float x = 0, float y = 0)
     public static Float2 operator /(float f, Float2 v) => new(f / v.x, f / v.y);
     public static Float2 operator -(Float2 a) => new(-a.x, -a.y); // Negative Vector
 
+    public static bool operator ==(Float2 a, Float2 b) => a.x == b.x && a.y == b.y;
+    public static bool operator !=(Float2 a, Float2 b) => a.x != b.x || a.y != b.y;
     public override string ToString() => $"({x},{y})";
     public static Float2 Parse(string s) => (Float2)s.Split(',').Select(float.Parse).ToArray();
 
