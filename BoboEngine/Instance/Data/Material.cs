@@ -20,6 +20,7 @@ public class Material
     {
         SetShaderID(shaderID);
         this.texture = texture;
+        this.texture ??= new Texture2D();
         this.cullBackFaces = cullBackFaces;
         this.useDepth = useDepth;
         this.blendMode = blendMode;
