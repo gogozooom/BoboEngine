@@ -39,6 +39,44 @@ public class TextRendererTests
 
             Assert.Equal(expectedResult, TextRenderer.ConnectByIndices(input, [], []));
         }
+        [Fact]
+        public void ConnectByIndices_LoopConnectsListsWithNullIndices()
+        {
+            int[][] input = [[00, 01, 02], [10, 11, 12]];
+
+            int[] expectedResult = [
+                00, 01, 02,
+                    10, 11, 12, 10,
+                02];
+
+            Assert.Equal(expectedResult, TextRenderer.ConnectByIndices(input, null, null));
+        }
+
+        [Fact]
+        public void ConnectByIndices_LoopConnectsListsAtIndex()
+        {
+            int[][] input = [[00, 01, 02], [10, 11, 12]];
+
+            int[] expectedResult = [
+                00, 01,
+                    10, 11, 12, 10,
+                01, 02];
+
+            Assert.Equal(expectedResult, TextRenderer.ConnectByIndices(input, [], [1]));
+        }
+
+        [Fact]
+        public void ConnectByIndices_LoopConnectsListsAtIndexWithStartingOffset()
+        {
+            int[][] input = [[00, 01, 02], [10, 11, 12]];
+
+            int[] expectedResult = [
+                02, 00, 01,
+                    10, 11, 12, 10,
+                01];
+
+            Assert.Equal(expectedResult, TextRenderer.ConnectByIndices(input, [2], [1]));
+        }
 
         [Fact]
         public void ConnectByIndices_IntigrationTest()
@@ -64,107 +102,6 @@ public class TextRendererTests
 
             Assert.Equal(expectedResult, TextRenderer.ConnectByIndices(input, [0, 1, 3], [2, 0]));
         }
-
-        //[Fact]
-        //public void ConnectByIndices_ExpectArrayInsertConnect()
-        //{
-        //    int[] expectedResult = [
-        //        00, 01, 02,
-        //            10,
-        //                20, 21, 22, 23, 24,
-        //                    30, 31,
-        //            11, 12, 13, 14,
-        //        03, 04];
-
-        //    Assert.Equal(expectedResult, TextRenderer.ConnectByIndices(arraysInput, [], [2, 0], loopConnect: false));
-        //}
-        //[Fact]
-        //public void ConnectByIndices_ConnectMultipleArraysLoopingBackToLastItem()
-        //{
-        //    int[] expectedResult = [
-        //        00, 01,
-        //            02,
-        //                10,
-        //                    20,
-        //                        21, 22, 23,
-        //                        24,
-        //                            30,
-        //                                31,
-        //                            30,
-        //                        24,
-        //                    20,
-        //                10,
-        //                    11, 12, 13, 14,
-        //                10,
-        //            02,
-        //        03, 04];
-
-        //    Assert.Equal(expectedResult, TextRenderer.ConnectByIndices(arraysInput, [], [2, 0]));
-        //}
-        //[Fact]
-        //public void ConnectByIndices_ShouldHandleNoConnectIndices()
-        //{
-        //    int[] expectedResult = [
-        //        00, 01, 02, 03, 04,
-        //        10, 11, 12, 13, 14,
-        //        20, 21, 22, 23, 24,
-        //        30, 31];
-
-        //    Assert.Equal(expectedResult, TextRenderer.ConnectByIndices(arraysInput, [], [], loopConnect: false));
-        //}
-        //[Fact]
-        //public void ConnectByIndices_ShouldHandleNullConnectIndices()
-        //{
-        //    int[] expectedResult = [
-        //        00, 01, 02, 03, 04,
-        //        10, 11, 12, 13, 14,
-        //        20, 21, 22, 23, 24,
-        //        30, 31];
-
-        //    Assert.Equal(expectedResult, TextRenderer.ConnectByIndices(arraysInput, null, null, loopConnect: false));
-        //}
-        //[Fact]
-        //public void ConnectByIndices_ShouldHandleNoConnectIndicesLoopConnected()
-        //{
-        //    int[] expectedResult = [
-        //        00, 01, 02, 03,
-        //            04,
-        //                10, 11, 12, 13,
-        //                    14,
-        //                        20, 21, 22, 23,
-        //                            24,
-        //                                30,
-        //                                    31,
-        //                                30,
-        //                            24,
-        //                        20,
-        //                    14,
-        //                10,
-        //            04];
-
-        //    Assert.Equal(expectedResult, TextRenderer.ConnectByIndices(arraysInput, [], []));
-        //}
-        //[Fact]
-        //public void ConnectByIndices_ShouldHandleNullConnectIndicesLoopConnected()
-        //{
-        //    int[] expectedResult = [
-        //        00, 01, 02, 03,
-        //            04,
-        //                10, 11, 12, 13,
-        //                    14,
-        //                        20, 21, 22, 23,
-        //                            24,
-        //                                30,
-        //                                    31,
-        //                                30,
-        //                            24,
-        //                        20,
-        //                    14,
-        //                10,
-        //            04];
-
-        //    Assert.Equal(expectedResult, TextRenderer.ConnectByIndices(arraysInput, null, null));
-        //}
     }
 
     public class DoLinesIntersectTests
