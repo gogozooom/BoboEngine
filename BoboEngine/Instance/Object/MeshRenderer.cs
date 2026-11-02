@@ -7,11 +7,6 @@ public class MeshRenderer : ObjectBehavior, IComparable<MeshRenderer>
 
     public Material material;
 
-    public MeshRenderer()
-    {
-        material = new();
-    }
-
     public override void Start()
     {
         base.Start();
