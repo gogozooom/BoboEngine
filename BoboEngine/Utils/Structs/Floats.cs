@@ -309,21 +309,21 @@ public struct BaseVectors(Float3 leftVector, Float3 upVector, Float3 forwardVect
     }
 }
 
-public struct BaseVectors2D(Float2 leftVector, Float2 upVector)
+public struct BaseVectors2D(Float2 rightVector, Float2 upVector)
 {
-    public Float2 leftVector { get; private set; } = leftVector;
+    public Float2 rightVector { get; private set; } = rightVector;
     public Float2 upVector { get; private set; } = upVector;
 
-    public Float2 TransformVector(Float2 point)
+    public readonly Float2 TransformVector(Float2 point)
     {
-        return leftVector * point.x + upVector * point.y;
+        return rightVector * point.x + upVector * point.y;
     }
 
     public static BaseVectors2D FromRotation(float a)
     {
         return new(
-            new(-Maths.Sin(a), Maths.Cos(a)),
-            new(Maths.Cos(a), Maths.Sin(a))
+            new(Maths.Cos(a), Maths.Sin(-a)),
+            new(Maths.Sin(a), Maths.Cos(a))
             );
     }
 }
