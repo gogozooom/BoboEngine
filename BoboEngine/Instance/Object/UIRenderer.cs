@@ -8,13 +8,13 @@ public class UIRenderer : MeshRenderer
     {
         base.Start();
         uiTransform = gameObject.RequireComponent<UITransform>();
-        meshFilter = gameObject.GetComponent<MeshFilter>();
 
         meshFilter.mesh ??= GetDefaultMesh();
+        material ??= new Material("defaultUI", renderOrder: 1000);
     }
 
     private static Mesh defaultMesh;
-    private Mesh GetDefaultMesh()
+    private static Mesh GetDefaultMesh()
     {
         if (!defaultMesh)
         {
