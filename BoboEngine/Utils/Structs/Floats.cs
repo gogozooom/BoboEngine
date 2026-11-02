@@ -158,6 +158,13 @@ public struct Float2(float x = 0, float y = 0)
     public float LengthSquared() => x * x + y * y;
     public Float2 Normalized() => this / Length;
     public Float2 Cross => new(y, -x);
+    public float Angle()
+    {
+        var n = Normalized();
+
+        return Maths.ToDeg((float)(Math.Atan(-n.y/n.x) + (n.x < 0 ? -Math.PI / 2 : Math.PI / 2)));
+    }
+    public float Slope => y / x;
     public static float Dot(Float2 a, Float2 b) => a.x * b.x + a.y * b.y;
     public static float Determinant(Float2 a, Float2 b) => a.x * b.y - a.y * b.x;
 
