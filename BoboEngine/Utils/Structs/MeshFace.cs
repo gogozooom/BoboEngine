@@ -38,7 +38,7 @@ public struct MeshFace
 
             vertices.Add(new MeshVertex(vertex_coord_index, texture_coord_index, normal_coord_index));
         }
-    } 
+    }
 
     public MeshFace(List<MeshVertex> vertices)
     {
