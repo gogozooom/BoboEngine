@@ -55,7 +55,7 @@ public class TextRenderer : UIRenderer
                     vertexIndicies.Add(new(vertI++, -1, -1));
                 }
 
-                faces.AddRange(EarClippingFormula(vertices[startIndex..], vertexIndicies[startIndex..].ToArray()));
+                faces.AddRange(EarClippingTriangulation(vertices[startIndex..], vertexIndicies[startIndex..].ToArray()));
 
                 xOffset += glyph.AdvanceWidth;
             }
@@ -226,7 +226,7 @@ public class TextRenderer : UIRenderer
         return (-1, -1);
     }
 
-    private MeshFace[] EarClippingFormula(IEnumerable<Float3> points, IEnumerable<MeshVertex> verts)
+    private MeshFace[] TriangulateEarClipping(IEnumerable<Float3> points, IEnumerable<MeshVertex> verts)
     {
         var remainingPoints = new LoopedArray<Float3>(points);
 
@@ -237,36 +237,22 @@ public class TextRenderer : UIRenderer
         if (remainingPoints.Size >= 3)
         {
             var currentPoint = remainingPoints.GetItem(0);
-            var nextPoint = currentPoint.Next;
             var previousPoint = currentPoint.Previous;
+            var nextPoint = currentPoint.Next;
 
             int tries = 0;
 
             while (remainingPoints.Size >= 3)
             {
-                Float2 currentVert = (Float2)currentPoint.value;
-                Float2 nextVert = (Float2)nextPoint.value;
-                Float2 previousVert = (Float2)previousPoint.value;
+                var currentVert = (Float2)currentPoint.value;
+                var previousVert = (Float2)previousPoint.value;
+                var nextVert = (Float2)nextPoint.value;
 
-                // Angle between points must be less than 180 degrees
-                if (Float2.Dot((previousVert - currentVert).Cross, nextVert - currentVert) > 0.0001)
+                var dotAngle = Float2.Dot((previousVert - currentVert).Cross, nextVert - currentVert);
+
+                if (dotAngle > 0.0001)
                 {
-                    bool triangleIntersectionPasses = true;
-
-                    for (int i = 0; i < points.Count(); i++)
-                    {
-                        Float2 otherPoint = (Float2)points.ElementAt(i);
-
-                        if ((Float2)currentPoint.value == otherPoint || (Float2)nextPoint.value == otherPoint || (Float2)previousPoint.value == otherPoint) continue;
-
-                        if (IsPointWithinTriangle(previousVert, currentVert, nextVert, otherPoint))
-                        {
-                            triangleIntersectionPasses = false;
-                            break;
-                        }
-                    }
-
-                    if (triangleIntersectionPasses)
+                    if (!IsAPointWithinTriangle(previousVert, currentVert, nextVert, points))
                     {
                         // Create Ear!
                         results.Add(new([verts.ElementAt(previousPoint.initalIndex), verts.ElementAt(currentPoint.initalIndex), verts.ElementAt(nextPoint.initalIndex)]));
@@ -290,16 +276,17 @@ public class TextRenderer : UIRenderer
                     "\\left(x_{1}\\left[" + (currentPoint.initalIndex + 1) + "\\right],y_{1}\\left[" + (currentPoint.initalIndex + 1) + "\\right]\\right)," +
                     "\\left(x_{1}\\left[" + (nextPoint.initalIndex + 1) + "\\right],y_{1}\\left[" + (nextPoint.initalIndex + 1) + "\\right]\\right)\\right)\n";
 
-                // Did not pass; shift points forward
-                previousPoint = currentPoint;
-                currentPoint = nextPoint;
-                nextPoint = nextPoint.Next;
                 tries++;
+
                 if (tries >= remainingPoints.Size)
                 {
                     Engine.LogError("Unable to fully mesh out text!");
                     break;
                 }
+
+                previousPoint = currentPoint;
+                currentPoint = nextPoint;
+                nextPoint = nextPoint.Next;
             }
         }
 
@@ -308,14 +295,34 @@ public class TextRenderer : UIRenderer
         return results.ToArray();
     }
 
+    public static bool IsAPointWithinTriangle(Float2 v0, Float2 v1, Float2 v2, IEnumerable<Float3> p)
+    {
+        foreach (var point3d in p)
+        {
+            var otherPoint = (Float2)point3d;
+            if (v0 == otherPoint ||
+                v1 == otherPoint ||
+                v2 == otherPoint) continue;
+
+            if (IsPointWithinTriangle(v0, v1, v2, otherPoint))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public static bool DoLinesIntersect(Float2 a1, Float2 a2, Float2 b1, Float2 b2, float margin = 0.0001f)
     {
         // Desmos: https://www.desmos.com/geometry/sc4kt0prnx
 
         var aDif = a2 - a1;
+        var bDif = b2 - b1;
         var aLength = aDif.Length;
+        var bLength = bDif.Length;
 
-        if (aLength == 0 || (b2 - b1).Length == 0) return false; // Points not allowed
+        if (aLength == 0 || bLength == 0) return false; // Points not allowed
 
         var rotator = BaseVectors2D.FromRotation(-aDif.Angle());
 
