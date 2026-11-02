@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using SebText.FontLoading;
+using System.Numerics;
 
 namespace BoboEngine;
 
@@ -183,14 +184,9 @@ public struct Float2(float x = 0, float y = 0)
     public override string ToString() => $"({x},{y})";
     public static Float2 Parse(string s) => (Float2)s.Split(',').Select(float.Parse).ToArray();
 
-    public static explicit operator Float2(float[] f)
-    {
-        return new(f[0], f[1]);
-    }
-    public static explicit operator Float2(Float3 v)
-    {
-        return new(v.x, v.y);
-    }
+    public static explicit operator Float2(float[] f) => new(f[0], f[1]);
+    public static explicit operator Float2(Float3 v) => new(v.x, v.y);
+    public static implicit operator Float2(FontData.Point p) => new(p.X, p.Y);
 }
 public struct UVRect(float uMin = 0, float vMin = 0, float uMax = 1, float vMax = 1)
 {
