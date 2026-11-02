@@ -154,48 +154,74 @@ public abstract class Texture
         // Set to higher value depending on how big the texture atlas is
         //glTexParameteri(GL_TEXTURE_TYPE, GL_TEXTURE_MAX_LEVEL, 0);
 
-        try
-        {
-            /*
-            if (isTextureArray)
-            {
-                glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, width, height, images.Count, GL_RGB, GL_UNSIGNED_BYTE, textureDataPointer);
-            }
-            else
-            {
-                glTexImage2D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, textureDataPointer);
-            }*/
+        //try TODO: Will add this back when there are other errors to catch
+        //{
+        //    /*
+        //    if (isTextureArray)
+        //    {
+        //        glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, width, height, images.Count, GL_RGB, GL_UNSIGNED_BYTE, textureDataPointer);
+        //    }
+        //    else
+        //    {
+        //        glTexImage2D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, textureDataPointer);
+        //    }*/
 
-            //glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, width, height, images.Count, GL_RGB, GL_UNSIGNED_BYTE, textureDataPointer);
-            if (GL_TEXTURE_TYPE == GL_TEXTURE_2D)
-            {
-                glTexImage2D(GL_TEXTURE_TYPE, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, textureDataPointer);
-            }
-            else if(GL_TEXTURE_TYPE == GL_TEXTURE_2D_ARRAY)
-            {
-                glTexImage3D(GL_TEXTURE_TYPE, 0, GL_RGBA, width, height, texData.Length / (width*height*4), 0, GL_RGBA, GL_UNSIGNED_BYTE, textureDataPointer);
-            }
-            else
-            {
-                throw new NotImplementedException($"Type of '{GetGL_TEXTURE_TYPE}' is not implemented!");
-            }
-            if (GetError() == GL_INVALID_VALUE)
-            {
-                throw new TextureSizeTooLargeException($"Texture '{name}' is too big! Texture size: {texData.Length}");
-            }
+        //    //glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, width, height, images.Count, GL_RGB, GL_UNSIGNED_BYTE, textureDataPointer);
+        //    if (GL_TEXTURE_TYPE == GL_TEXTURE_2D)
+        //    {
+        //        glTexImage2D(GL_TEXTURE_TYPE, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, textureDataPointer);
+        //    }
+        //    else if(GL_TEXTURE_TYPE == GL_TEXTURE_2D_ARRAY)
+        //    {
+        //        glTexImage3D(GL_TEXTURE_TYPE, 0, GL_RGBA, width, height, texData.Length / (width*height*4), 0, GL_RGBA, GL_UNSIGNED_BYTE, textureDataPointer);
+        //    }
+        //    else
+        //    {
+        //        throw new NotImplementedException($"Type of '{GetGL_TEXTURE_TYPE}' is not implemented!");
+        //    }
+        //    if (GetError() == GL_INVALID_VALUE)
+        //    {
+        //        throw new TextureSizeTooLargeException($"Texture '{name}'   is too big! Texture size: {texData.Length}");
+        //    }
 
-            glGenerateMipmap(GL_TEXTURE_TYPE);
-        }
-        catch (Exception e)
+        //    glGenerateMipmap(GL_TEXTURE_TYPE);
+        //}
+        //catch (Exception e)
+        //{
+        //    Engine.LogError("Failed to bind texture to OpenGL!");
+        //    Engine.LogError("--- Exception: \n" + e.Message);
+        //    Engine.LogError("--- Inner Exception: \n" + e.InnerException);
+        //}
+        //finally
+        //{
+        //    gCHandle.Free();
+        //}
+
+        if (GL_TEXTURE_TYPE == GL_TEXTURE_2D)
         {
-            Engine.LogError("Failed to bind texture to OpenGL!");
-            Engine.LogError("--- Exception: \n" + e.Message);
-            Engine.LogError("--- Inner Exception: \n" + e.InnerException);
+            glTexImage2D(GL_TEXTURE_TYPE, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, textureDataPointer);
         }
-        finally
+        else if (GL_TEXTURE_TYPE == GL_TEXTURE_2D_ARRAY)
         {
-            gCHandle.Free();
+            glTexImage3D(GL_TEXTURE_TYPE, 0, GL_RGBA, width, height, texData.Length / (width * height * 4), 0, GL_RGBA, GL_UNSIGNED_BYTE, textureDataPointer);
         }
+        else
+        {
+            throw new NotImplementedException($"Type of '{GetGL_TEXTURE_TYPE}' is not implemented!");
+        }
+
+        var error = GetError();
+        if (error == GL_INVALID_VALUE)
+        {
+            throw new TextureSizeTooLargeException($"Texture '{name}' is too big! Texture size: {texData.Length}");
+        }
+
+
+
+
+        glGenerateMipmap(GL_TEXTURE_TYPE);
+
+        gCHandle.Free();
 
         glUniform1i(glGetUniformLocation(textureRef, "mainTexture"), 0);
     }
