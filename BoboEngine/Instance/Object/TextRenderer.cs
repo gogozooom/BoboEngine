@@ -55,7 +55,7 @@ public class TextRenderer : UIRenderer
                     vertexIndicies.Add(new(vertI++, -1, -1));
                 }
 
-                faces.AddRange(EarClippingTriangulation(vertices[startIndex..], vertexIndicies[startIndex..].ToArray()));
+                faces.AddRange(TriangulateEarClipping(vertices[startIndex..], vertexIndicies[startIndex..].ToArray()));
 
                 xOffset += glyph.AdvanceWidth;
             }
@@ -295,23 +295,6 @@ public class TextRenderer : UIRenderer
         return results.ToArray();
     }
 
-    public static bool IsAPointWithinTriangle(Float2 v0, Float2 v1, Float2 v2, IEnumerable<Float3> p)
-    {
-        foreach (var point3d in p)
-        {
-            var otherPoint = (Float2)point3d;
-            if (v0 == otherPoint ||
-                v1 == otherPoint ||
-                v2 == otherPoint) continue;
-
-            if (IsPointWithinTriangle(v0, v1, v2, otherPoint))
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
 
     public static bool DoLinesIntersect(Float2 a1, Float2 a2, Float2 b1, Float2 b2, float margin = 0.0001f)
     {
@@ -341,6 +324,23 @@ public class TextRenderer : UIRenderer
         return xIntercept >= -margin && xIntercept <= aLength + margin;
     }
 
+    public static bool IsAPointWithinTriangle(Float2 v0, Float2 v1, Float2 v2, IEnumerable<Float3> p)
+    {
+        foreach (var point3d in p)
+        {
+            var otherPoint = (Float2)point3d;
+            if (v0 == otherPoint ||
+                v1 == otherPoint ||
+                v2 == otherPoint) continue;
+
+            if (IsPointWithinTriangle(v0, v1, v2, otherPoint))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
     private static bool IsPointWithinTriangle(Float2 v0, Float2 v1, Float2 v2, Float2 p)
     {
         // Desmos: https://www.desmos.com/calculator/wpz7qxubrx
