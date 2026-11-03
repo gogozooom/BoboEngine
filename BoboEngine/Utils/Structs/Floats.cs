@@ -131,6 +131,7 @@ public struct Float3(float x = 0, float y = 0, float z = 0)
     public static explicit operator Float3(Double3 d) => new((float)d.x, (float)d.y, (float)d.z);
 
     public static implicit operator Float3(Int3 i) => new(i.x, i.y, i.z);
+    public static implicit operator Float3(Float2 v) => new(v.x, v.y, 0);
 
     public static implicit operator Vector3(Float3 f) => new(f.x, f.y, f.z);
 }
@@ -175,6 +176,7 @@ public struct Float2(float x = 0, float y = 0)
     public static Float2 operator -(Float2 v, float f) => new(v.x - f, v.y - f); // Proportional Difference
     public static Float2 operator *(Float2 a, Float2 b) => new(a.x * b.x, a.y * b.y); // Vector Multiplication
     public static Float2 operator *(Float2 v, float f) => new(v.x * f, v.y * f); // Vector Length Multiplication
+    public static Float2 operator /(Float2 a, Float2 b) => new(a.x / b.x, a.y / b.y); // Vector Division
     public static Float2 operator /(Float2 v, float f) => new(v.x / f, v.y / f); // Vector Length Division
     public static Float2 operator /(float f, Float2 v) => new(f / v.x, f / v.y);
     public static Float2 operator -(Float2 a) => new(-a.x, -a.y); // Negative Vector
