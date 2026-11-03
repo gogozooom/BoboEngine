@@ -1,5 +1,4 @@
 ﻿using BoboEngine.UI;
-using System.ComponentModel;
 using Xunit;
 
 namespace BoboEngine.Tests;
@@ -10,7 +9,17 @@ public class TextRendererTests
     public class ConnectByIndicesTests
     {
         [Fact]
-        public void ConnectByIndices_HandleEmptyArraysInput()
+        public void BasicConnectsLists()
+        {
+            int[][] input = [[00, 01, 02], [10, 11, 12]];
+
+            int[] expectedResult = [00, 01, 02, 10, 11, 12];
+
+            Assert.Equal(expectedResult, TextRenderer.ConnectByIndices(input, loopConnect: false));
+        }
+
+        [Fact]
+        public void HandleEmptyArraysInput()
         {
             int[][] input = [];
 
@@ -18,17 +27,7 @@ public class TextRendererTests
         }
 
         [Fact]
-        public void ConnectByIndices_BasicConnectsLists()
-        {
-            int[][] input = [[00, 01, 02], [10, 11, 12]];
-
-            int[] expectedResult = [00, 01, 02, 10, 11, 12];
-
-            Assert.Equal(expectedResult, TextRenderer.ConnectByIndices(input, loopConnect:false));
-        }
-
-        [Fact]
-        public void ConnectByIndices_LoopConnectsLists()
+        public void LoopConnectsLists()
         {
             int[][] input = [[00, 01, 02], [10, 11, 12]];
 
@@ -39,21 +38,9 @@ public class TextRendererTests
 
             Assert.Equal(expectedResult, TextRenderer.ConnectByIndices(input, [], []));
         }
-        [Fact]
-        public void ConnectByIndices_LoopConnectsListsWithNullIndices()
-        {
-            int[][] input = [[00, 01, 02], [10, 11, 12]];
-
-            int[] expectedResult = [
-                00, 01, 02,
-                    10, 11, 12, 10,
-                02];
-
-            Assert.Equal(expectedResult, TextRenderer.ConnectByIndices(input, null, null));
-        }
 
         [Fact]
-        public void ConnectByIndices_LoopConnectsListsAtIndex()
+        public void LoopConnectsListsAtIndex()
         {
             int[][] input = [[00, 01, 02], [10, 11, 12]];
 
@@ -66,7 +53,7 @@ public class TextRendererTests
         }
 
         [Fact]
-        public void ConnectByIndices_LoopConnectsListsAtIndexWithStartingOffset()
+        public void LoopConnectsListsAtIndexWithStartingOffset()
         {
             int[][] input = [[00, 01, 02], [10, 11, 12]];
 
@@ -79,7 +66,20 @@ public class TextRendererTests
         }
 
         [Fact]
-        public void ConnectByIndices_IntigrationTest()
+        public void LoopConnectsListsWithNullIndices()
+        {
+            int[][] input = [[00, 01, 02], [10, 11, 12]];
+
+            int[] expectedResult = [
+                00, 01, 02,
+                    10, 11, 12, 10,
+                02];
+
+            Assert.Equal(expectedResult, TextRenderer.ConnectByIndices(input, null, null));
+        }
+
+        [Fact]
+        public void IntegrationTest()
         {
             int[][] input = [[00, 01, 02, 03, 04], [10, 11, 12, 13, 14], [20, 21, 22, 23, 24], [30, 31]];
 
@@ -107,17 +107,7 @@ public class TextRendererTests
     public class DoLinesIntersectTests
     {
         [Fact]
-        [Category("DoLinesIntersect()")]
-        public void DoLinesIntersect_ShouldBeTrue()
-        {
-            Assert.True(TextRenderer.DoLinesIntersect(
-                new(-5.57f, -0.06f), new(-2.54f, 2.23f),
-                new(-4.3f, 1.79f), new(-2.96f, -2.3f)));
-        }
-
-        [Fact]
-        [Category("DoLinesIntersect()")]
-        public void DoLinesIntersect_ShouldBeFalse()
+        public void ShouldBeFalse()
         {
             Assert.False(TextRenderer.DoLinesIntersect(
                 new(-5.57f, -0.06f), new(-2.54f, 2.23f),
@@ -125,8 +115,7 @@ public class TextRendererTests
         }
 
         [Fact]
-        [Category("DoLinesIntersect()")]
-        public void DoLinesIntersect_ShouldBeFalseALength0()
+        public void ShouldBeFalseALength0()
         {
             Assert.False(TextRenderer.DoLinesIntersect(
                 new(-5.57f, -0.06f), new(-5.57f, -0.06f),
@@ -134,8 +123,7 @@ public class TextRendererTests
         }
 
         [Fact]
-        [Category("DoLinesIntersect()")]
-        public void DoLinesIntersect_ShouldBeFalseBLength0()
+        public void ShouldBeFalseBLength0()
         {
             Assert.False(TextRenderer.DoLinesIntersect(
                 new(-5.57f, -0.06f), new(-2.54f, 2.23f),
@@ -143,8 +131,15 @@ public class TextRendererTests
         }
 
         [Fact]
-        [Category("DoLinesIntersect()")]
-        public void DoLinesIntersect_ShouldBeTrueA1B1Meet()
+        public void ShouldBeTrue()
+        {
+            Assert.True(TextRenderer.DoLinesIntersect(
+                new(-5.57f, -0.06f), new(-2.54f, 2.23f),
+                new(-4.3f, 1.79f), new(-2.96f, -2.3f)));
+        }
+
+        [Fact]
+        public void ShouldBeTrueA1B1Meet()
         {
             Assert.True(TextRenderer.DoLinesIntersect(
                 new(-5.57f, -0.06f), new(-2.54f, 2.23f),
@@ -152,8 +147,7 @@ public class TextRendererTests
         }
 
         [Fact]
-        [Category("DoLinesIntersect()")]
-        public void DoLinesIntersect_ShouldBeTrueA1B2Meet()
+        public void ShouldBeTrueA1B2Meet()
         {
             Assert.True(TextRenderer.DoLinesIntersect(
                 new(-5.57f, -0.06f), new(-2.54f, 2.23f),
@@ -161,26 +155,7 @@ public class TextRendererTests
         }
 
         [Fact]
-        [Category("DoLinesIntersect()")]
-        public void DoLinesIntersect_ShouldBeTrueA2B1Meet()
-        {
-            Assert.True(TextRenderer.DoLinesIntersect(
-                new(-5.57f, -0.06f), new(-2.54f, 2.23f),
-                new(-2.54f, 2.23f), new(-10.62f, -0.04f)));
-        }
-
-        [Fact]
-        [Category("DoLinesIntersect()")]
-        public void DoLinesIntersect_ShouldBeTrueA2B2Meet()
-        {
-            Assert.True(TextRenderer.DoLinesIntersect(
-                new(-5.57f, -0.06f), new(-2.54f, 2.23f),
-                new(-1.45f, -1.58f), new(-2.54f, 2.23f)));
-        }
-
-        [Fact]
-        [Category("DoLinesIntersect()")]
-        public void DoLinesIntersect_ShouldBeTrueA1BMeet()
+        public void ShouldBeTrueA1BMeet()
         {
             Assert.True(TextRenderer.DoLinesIntersect(
                 new(-3, -1), new(-1, 2.23f),
@@ -188,8 +163,23 @@ public class TextRendererTests
         }
 
         [Fact]
-        [Category("DoLinesIntersect()")]
-        public void DoLinesIntersect_ShouldBeTrueB1AMeet()
+        public void ShouldBeTrueA2B1Meet()
+        {
+            Assert.True(TextRenderer.DoLinesIntersect(
+                new(-5.57f, -0.06f), new(-2.54f, 2.23f),
+                new(-2.54f, 2.23f), new(-10.62f, -0.04f)));
+        }
+
+        [Fact]
+        public void ShouldBeTrueA2B2Meet()
+        {
+            Assert.True(TextRenderer.DoLinesIntersect(
+                new(-5.57f, -0.06f), new(-2.54f, 2.23f),
+                new(-1.45f, -1.58f), new(-2.54f, 2.23f)));
+        }
+
+        [Fact]
+        public void ShouldBeTrueB1AMeet()
         {
             Assert.True(TextRenderer.DoLinesIntersect(
                 new(-5, 1), new(-1, 1),
