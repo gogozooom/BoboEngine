@@ -8,6 +8,7 @@ out vec2 v_TexCoord;
 
 uniform mat4 projection;
 uniform mat4 model;
+uniform float u_time;
 
 void main()
 {

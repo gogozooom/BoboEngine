@@ -38,6 +38,7 @@ public class MeshRenderer : ObjectBehavior, IComparable<MeshRenderer>
         }
 
         material.shader.glSetMatrix4x4("model", transform.Matrix);
+        material.shader.glSetFloat("u_time", Time.time);
     }
 
     public void glDraw()

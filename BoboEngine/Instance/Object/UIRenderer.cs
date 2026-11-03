@@ -41,5 +41,6 @@ public class UIRenderer : MeshRenderer
                 break;
         */
         material.shader.glSetMatrix4x4("model", transform.Matrix * uiTransform.Matrix);
+        material.shader.glSetFloat("u_time", Time.time);
     }
 }

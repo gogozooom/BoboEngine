@@ -245,4 +245,34 @@ public class TextRendererTests
             Assert.True(TextRenderer.IsPointWithinTriangle(v0, vCenter, v1, v1));
         }
     }
+
+    public class NormalizedUVChoordinateText
+    {
+        static readonly Float2 min = new(-0.5f, -0.5f);
+        static readonly Float2 max = new(0.5f, 0.5f);
+
+        [Fact]
+        public void ExpectZeroWithPointAtMin()
+        {
+            Assert.Equal(Float2.zero, TextRenderer.NormalizedUVChoordinate(min, max, min));
+        }
+        [Fact]
+        public void ExpectOneWithPointAtMax()
+        {
+            Assert.Equal(Float2.one, TextRenderer.NormalizedUVChoordinate(min, max, max));
+        }
+        [Fact]
+        public void ExpectGradientInbetween()
+        {
+            var margin = 0.0001f;
+            var expect1 = new Float2(0.4f, 0.1f);
+            var expect2 = new Float2(0.5f, 0.5f);
+            var expect3 = new Float2(0.7f, 0.9f);
+
+            // Account for floating point precision
+            Assert.InRange((expect1 - TextRenderer.NormalizedUVChoordinate(min, max, new(-0.1f, -0.4f))).Length, 0, margin);
+            Assert.InRange((expect2 - TextRenderer.NormalizedUVChoordinate(min, max, Float2.zero)).Length, 0, margin);
+            Assert.InRange((expect3 - TextRenderer.NormalizedUVChoordinate(min, max, new(0.2f, 0.4f))).Length, 0, margin);
+        }
+    }
 }

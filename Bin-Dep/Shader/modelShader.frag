@@ -5,6 +5,7 @@ in vec3 v_Normal;
 in vec2 v_TexCoord;
 
 uniform sampler2D mainTexture;
+uniform float u_time;
 
 void main()
 {

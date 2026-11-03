@@ -3,28 +3,33 @@ namespace BoboEngine.UI;
 
 public class TextRenderer : UIRenderer
 {
+    #region Instance Variables
     public FontData font { get => displayedFont; set => UpdateDisplayFont(value); }
     private FontData displayedFont;
+    public string text { get => diplayedText; set => UpdateDisplayText(value); }
+
+    private string diplayedText = "";
+    #endregion
+
+    #region Variable Update Functions
     private void UpdateDisplayFont(FontData font)
     {
         displayedFont = font;
         UpdateMesh();
     }
-    public string text { get => diplayedText; set => UpdateDisplayText(value); }
-
-    private string diplayedText = "";
-
     private void UpdateDisplayText(string text)
     {
         diplayedText = text;
         UpdateMesh();
     }
+    #endregion
 
     private void UpdateMesh()
     {
         List<Float3> vertices = [];
         List<MeshVertex> vertexIndicies = [];
         List<MeshFace> faces = [];
+        List<Float3> normalPositions = [];
 
         if (font != null && !string.IsNullOrEmpty(text))
         {
@@ -32,18 +37,22 @@ public class TextRenderer : UIRenderer
             int vertI = 0;
             int startIndex;
 
-            foreach (char letter in text.ToCharArray())
+            char[] characters = text.ToCharArray();
+            for (int charI = 0; charI < characters.Length; charI++)
             {
+                char letter = characters[charI];
                 font.TryGetGlyph(letter, out var glyph);
+
+                xOffset += glyph.LeftSideBearing;
+
                 if (letter == ' ')
                 {
                     xOffset += glyph.AdvanceWidth;
                     continue;
                 }
 
-                xOffset += glyph.LeftSideBearing;
-
-                var points = LoopConnectShapes(SplitByIndices(glyph.Points, glyph.ContourEndIndices)).Reverse(); // Reverse order for counter clock wise
+                var splitShapes = SplitByIndices(glyph.Points, glyph.ContourEndIndices);
+                var points = LoopConnectShapes(splitShapes).Reverse(); // Reverse order for counter clock wise
 
                 startIndex = vertexIndicies.Count;
 
@@ -52,7 +61,11 @@ public class TextRenderer : UIRenderer
                 foreach (FontData.Point point in points) 
                 {
                     vertices.Add(new((point.X + xOffset) / (float)font.UnitsPerEm, point.Y / (float)font.UnitsPerEm));
-                    vertexIndicies.Add(new(vertI++, -1, -1));
+
+                    var normalizedPoint = NormalizedUVChoordinate(new(glyph.MinX, glyph.MinY), new(glyph.MaxX, glyph.MaxY), point);
+
+                    normalPositions.Add(new(normalizedPoint.x, normalizedPoint.y, charI));
+                    vertexIndicies.Add(new(vertI, -1, vertI++));
                 }
 
                 faces.AddRange(TriangulateEarClipping(vertices[startIndex..], vertexIndicies[startIndex..].ToArray()));
@@ -63,19 +76,11 @@ public class TextRenderer : UIRenderer
 
 
         Mesh newMesh = new();
-        newMesh.LoadRawData(vertices.ToArray(), faces.ToArray());
+        newMesh.LoadRawData(vertices.ToArray(), faces.ToArray(), normalPositions.ToArray());
         meshFilter.mesh = newMesh;
     }
 
-    private static void _DebugLogPoints(IEnumerable<FontData.Point> points, float scaler)
-    {
-        string deb = "";
-        foreach (var point in points)
-        {
-            deb += $"{point.X / scaler},{point.Y / scaler}\n";
-        }
-        Engine.LogMessage(deb);
-    }
+    #region Helper Functions
 
     private static T[][] SplitByIndices<T>(T[] array, int[] splitIndices)
     {
@@ -85,7 +90,7 @@ public class TextRenderer : UIRenderer
         foreach (var i in splitIndices)
         {
             int endSplitIndex = i + 1;
-                
+
             result.Add(array[startSplitIndex..endSplitIndex]);
             startSplitIndex = endSplitIndex;
         }
@@ -93,28 +98,11 @@ public class TextRenderer : UIRenderer
         return result.ToArray();
     }
 
-    private static FontData.Point[] LoopConnectShapes(FontData.Point[][] pointCollections)
-    {
-        int[] startConnectIndices = [];
-        int[] endConnectIndices = [];
-
-        var builtShape = pointCollections[0];
-
-        foreach (var insidePoints in pointCollections[1..])
-        {
-            (int outsideIndex, int insideIndex) = CalculateShapeCleanConnetionIndices(builtShape, insidePoints);
-
-            builtShape = ConnectByIndices([builtShape, insidePoints], [outsideIndex], [insideIndex], true);
-        }
-
-        return builtShape;
-    }
-
     public static T[] ConnectByIndices<T>(T[][] arrays, int[] startConnectIndices = null, int[] connectIndices = null, bool loopConnect = true, bool loopFirst = false)
     {
         List<T> result = [];
 
-        if(arrays.Length == 0) return [];
+        if (arrays.Length == 0) return [];
 
         LoopedArray<T> array = new(arrays[0]);
 
@@ -141,7 +129,7 @@ public class TextRenderer : UIRenderer
                 var remainingConnectionIndices = connectionIndicesExist ? connectIndices[1..] : [];
 
                 result.AddRange(ConnectByIndices(remainingArrays, remainingStartConnectionIndices, remainingConnectionIndices, loopConnect, true));
-                if(loopConnect) result.Add(item.value);
+                if (loopConnect) result.Add(item.value);
             }
 
             item = item.Next;
@@ -152,6 +140,22 @@ public class TextRenderer : UIRenderer
         return result.ToArray();
     }
 
+    private static FontData.Point[] LoopConnectShapes(FontData.Point[][] pointCollections)
+    {
+        int[] startConnectIndices = [];
+        int[] endConnectIndices = [];
+
+        var builtShape = pointCollections[0];
+
+        foreach (var insidePoints in pointCollections[1..])
+        {
+            (int outsideIndex, int insideIndex) = CalculateShapeCleanConnetionIndices(builtShape, insidePoints);
+
+            builtShape = ConnectByIndices([builtShape, insidePoints], [outsideIndex], [insideIndex], true);
+        }
+
+        return builtShape;
+    }
 
     /// <summary>
     /// Returns connection indices of two point arrays that cleanly connects a line without intersecting either shape
@@ -323,7 +327,6 @@ public class TextRenderer : UIRenderer
         // t's xIntercept falls in correct range?
         return xIntercept >= -margin && xIntercept <= aLength + margin;
     }
-
     public static bool IsAVertexWithin2DTriangle(Float2 v0, Float2 v1, Float2 v2, IEnumerable<Float3> p)
     {
         foreach (var point3d in p)
@@ -354,4 +357,21 @@ public class TextRenderer : UIRenderer
 
         return v0CheckPasses && v1CheckPasses && v2CheckPasses;
     }
+    public static Float2 NormalizedUVChoordinate(Float2 min, Float2 max, Float2 p)
+    {
+        return (p - min) / (max - min);
+    }
+
+    #endregion
+
+    private static void _DebugLogPoints(IEnumerable<FontData.Point> points, float scaler)
+    {
+        string deb = "";
+        foreach (var point in points)
+        {
+            deb += $"{point.X / scaler},{point.Y / scaler}\n";
+        }
+        Engine.LogMessage(deb);
+    }
+
 }
