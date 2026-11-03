@@ -252,7 +252,7 @@ public class TextRenderer : UIRenderer
 
                 if (dotAngle > 0.0001)
                 {
-                    if (!IsAPointWithinTriangle(previousVert, currentVert, nextVert, points))
+                    if (!IsAVertexWithin2DTriangle(previousVert, currentVert, nextVert, points))
                     {
                         // Create Ear!
                         results.Add(new([verts.ElementAt(previousPoint.initalIndex), verts.ElementAt(currentPoint.initalIndex), verts.ElementAt(nextPoint.initalIndex)]));
@@ -324,7 +324,7 @@ public class TextRenderer : UIRenderer
         return xIntercept >= -margin && xIntercept <= aLength + margin;
     }
 
-    public static bool IsAPointWithinTriangle(Float2 v0, Float2 v1, Float2 v2, IEnumerable<Float3> p)
+    public static bool IsAVertexWithin2DTriangle(Float2 v0, Float2 v1, Float2 v2, IEnumerable<Float3> p)
     {
         foreach (var point3d in p)
         {
