@@ -341,7 +341,7 @@ public class TextRenderer : UIRenderer
 
         return false;
     }
-    private static bool IsPointWithinTriangle(Float2 v0, Float2 v1, Float2 v2, Float2 p)
+    public static bool IsPointWithinTriangle(Float2 v0, Float2 v1, Float2 v2, Float2 p)
     {
         // Desmos: https://www.desmos.com/calculator/wpz7qxubrx
         var v0CrossVector = (v2 - v0).Cross;

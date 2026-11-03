@@ -186,4 +186,63 @@ public class TextRendererTests
                 new(-2, -1), new(-3, 1)));
         }
     }
+    
+    public class IsPointWithinTriangleTests
+    {
+        static readonly Float2 v0 = new(0, 0);
+        static readonly Float2 v1 = new(1, 0);
+        static readonly Float2 v2 = new(0.5f, 1);
+
+        [Fact]
+        public void ShouldBeTrue()
+        {
+            Assert.True(TextRenderer.IsPointWithinTriangle(v0, v1, v2, new(0.5f, 0.5f)));
+            Assert.True(TextRenderer.IsPointWithinTriangle(v0, v1, v2, new(0.25f, 0.25f)));
+            Assert.True(TextRenderer.IsPointWithinTriangle(v0, v1, v2, new(0.95f, 0.01f)));
+        }
+        [Fact]
+        public void ShouldBeFalse()
+        {
+            Assert.False(TextRenderer.IsPointWithinTriangle(v0, v1, v2, new(1, 1)));
+            Assert.False(TextRenderer.IsPointWithinTriangle(v0, v1, v2, new(0, -1)));
+            Assert.False(TextRenderer.IsPointWithinTriangle(v0, v1, v2, new(0.5f, 2)));
+        }
+
+        [Fact]
+        public void ShouldBeFalseClockWise()
+        {
+            Assert.False(TextRenderer.IsPointWithinTriangle(v0, v2, v1, new(0.5f, 0.5f)));
+            Assert.False(TextRenderer.IsPointWithinTriangle(v0, v2, v1, new(1f, 1f)));
+            Assert.False(TextRenderer.IsPointWithinTriangle(v0, v2, v1, new(-1f, -1f)));
+        }
+
+        [Fact]
+        public void ShouldBeTruePEqualsV0()
+        {
+            Assert.True(TextRenderer.IsPointWithinTriangle(v0, v1, v2, v0));
+        }
+        [Fact]
+        public void ShouldBeTruePEqualsV1()
+        {
+            Assert.True(TextRenderer.IsPointWithinTriangle(v0, v1, v2, v1));
+        }
+        [Fact]
+        public void ShouldBeTruePEqualsV2()
+        {
+            Assert.True(TextRenderer.IsPointWithinTriangle(v0, v1, v2, v2));
+        }
+
+
+        [Fact]
+        public void ShouldBeTrueSquashedLine()
+        {
+            Float2 vCenter = new(0.5f, 0);
+
+            Assert.True(TextRenderer.IsPointWithinTriangle(v0, vCenter, v1, v0));
+            Assert.True(TextRenderer.IsPointWithinTriangle(v0, vCenter, v1, new(0.25f, 0)));
+            Assert.True(TextRenderer.IsPointWithinTriangle(v0, vCenter, v1, vCenter));
+            Assert.True(TextRenderer.IsPointWithinTriangle(v0, vCenter, v1, new(0.75f, 0)));
+            Assert.True(TextRenderer.IsPointWithinTriangle(v0, vCenter, v1, v1));
+        }
+    }
 }
