@@ -187,8 +187,11 @@ public struct Float2(float x = 0, float y = 0)
     public static Float2 Parse(string s) => (Float2)s.Split(',').Select(float.Parse).ToArray();
 
     public static explicit operator Float2(float[] f) => new(f[0], f[1]);
+    public static explicit operator Float2(Double2 v) => new((float)v.x, (float)v.y);
+    public static explicit operator Float2(Double3 v) => new((float)v.x, (float)v.y);
     public static explicit operator Float2(Float3 v) => new(v.x, v.y);
-    public static implicit operator Float2(FontData.Point p) => new(p.X, p.Y);
+    public static explicit operator Float2(Int3 v) => new(v.x, v.y);
+    public static implicit operator Float2(Int2 v) => new(v.x, v.y);
 }
 public struct UVRect(float uMin = 0, float vMin = 0, float uMax = 1, float vMax = 1)
 {
