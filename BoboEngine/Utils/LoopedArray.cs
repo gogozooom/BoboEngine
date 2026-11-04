@@ -1,6 +1,7 @@
 ﻿using BoboEngine;
+using System.Collections;
 
-public class LoopedArray<T>
+public class LoopedArray<T> : IEnumerable
 {
     private readonly List<Item> items;
 
@@ -30,6 +31,18 @@ public class LoopedArray<T>
         items.RemoveAt(i);
     }
 
+    public IEnumerator<Item> GetEnumerator()
+    {
+        foreach (var item in items)
+        {
+            yield return item;
+        }
+    }
+
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
+    }
 
     public class Item
     {
@@ -48,5 +61,4 @@ public class LoopedArray<T>
         public Item Next => parent.GetItem(Maths.Mod(index + 1, parent.Size));
         public Item Previous => parent.GetItem(Maths.Mod(index - 1, parent.Size));
     }
-
 }
