@@ -59,6 +59,6 @@ public class LoopedArray<T> : IEnumerable
         }
 
         public Item Next => parent.GetItem(Maths.Mod(index + 1, parent.Size));
-        public Item Previous => parent.GetItem(Math.Max(Maths.Mod(index - 1, parent.Size), 0));
+        public Item Previous => parent.GetItem(Math.Min(Maths.Mod(index - 1, parent.Size), parent.Size - 1));
     }
 }
