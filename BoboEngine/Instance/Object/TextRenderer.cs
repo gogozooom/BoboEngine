@@ -35,8 +35,8 @@ public class TextRenderer : UIRenderer
         {
             int xOffset = 0;
             int vertI = 0;
-            int startIndex;
             int charI = 0;
+            int indexOffset;
 
             foreach (var letter in text.ToCharArray())
             {
@@ -54,7 +54,7 @@ public class TextRenderer : UIRenderer
 
                 foreach (var points in glyphs.Select((item) => item.Reverse())) // Reverse order for counter clockwise triangle rendering
                 {
-                    startIndex = vertexIndicies.Count;
+                    indexOffset = vertexIndicies.Count;
 
                     //_OutputDesmosPointArray(points, font.UnitsPerEm);
 
@@ -68,7 +68,7 @@ public class TextRenderer : UIRenderer
                         vertexIndicies.Add(new(vertI, -1, vertI++));
                     }
 
-                    faces.AddRange(TriangulateEarClipping(vertices[startIndex..], vertexIndicies[startIndex..].ToArray()));
+                    faces.AddRange(TriangulateEarClipping(vertices[indexOffset..], vertexIndicies[indexOffset..].ToArray()));
                 }
 
                 xOffset += glyph.AdvanceWidth;
