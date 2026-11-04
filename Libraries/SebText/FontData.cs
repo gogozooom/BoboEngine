@@ -1,6 +1,8 @@
 // Credit to Sebastian Lague for exploring fonts
 // https://www.youtube.com/@SebastianLague
 
+using BoboEngine;
+
 namespace SebText.FontLoading;
 
 // Contains the raw data loaded from a TrueType font file.
@@ -43,38 +45,31 @@ public class FontData
     {
         public uint UnicodeValue;
         public uint GlyphIndex;
+        public GlyphPoints[] Glyphs;
         public Point[] Points;
         public int[] ContourEndIndices;
         public int AdvanceWidth;
         public int LeftSideBearing;
 
-        public int MinX;
-        public int MaxX;
-        public int MinY;
-        public int MaxY;
+        public Int2 Min;
+        public Int2 Max;
 
-        public int Width => MaxX - MinX;
-        public int Height => MaxY - MinY;
-
+        public int Width => Max.x - Min.x;
+        public int Height => Max.x - Min.x;
     }
 
-    public struct Point
+    public class GlyphPoints(Point[] points, Int2 min, Int2 max, bool isContour)
     {
-        public int X;
-        public int Y;
-        public bool OnCurve;
+        public Point[] Points = points;
+        public bool IsContour = isContour;
 
-        public Point(int x, int y) : this()
-        {
-            X = x;
-            Y = y;
-        }
+        public Int2 Min = min;
+        public Int2 Max = max;
+    }
 
-        public Point(int x, int y, bool onCurve)
-        {
-            X = x;
-            Y = y;
-            OnCurve = onCurve;
-        }
+    public struct Point(Int2 position, bool onCurve = true)
+    {
+        public Int2 Position = position;
+        public bool OnCurve = onCurve;
     }
 }

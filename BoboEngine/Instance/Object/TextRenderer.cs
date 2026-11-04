@@ -36,11 +36,10 @@ public class TextRenderer : UIRenderer
             int xOffset = 0;
             int vertI = 0;
             int startIndex;
+            int charI = 0;
 
-            char[] characters = text.ToCharArray();
-            for (int charI = 0; charI < characters.Length; charI++)
+            foreach (var letter in text.ToCharArray())
             {
-                char letter = characters[charI];
                 font.TryGetGlyph(letter, out var glyph);
 
                 xOffset += glyph.LeftSideBearing;
@@ -51,24 +50,26 @@ public class TextRenderer : UIRenderer
                     continue;
                 }
 
-                var splitShapes = SplitByIndices(glyph.Points, glyph.ContourEndIndices);
-                var points = LoopConnectShapes(splitShapes).Reverse(); // Reverse order for counter clock wise
+                var glyphs = ConnectContours(glyph.Glyphs); // Reverse order for counter clock wise
 
-                startIndex = vertexIndicies.Count;
-
-                _DebugLogPoints(points, font.UnitsPerEm);
-
-                foreach (FontData.Point point in points) 
+                foreach (var points in glyphs)
                 {
-                    vertices.Add(new((point.X + xOffset) / (float)font.UnitsPerEm, point.Y / (float)font.UnitsPerEm));
+                    startIndex = vertexIndicies.Count;
 
-                    var normalizedPoint = NormalizedUVChoordinate(new(glyph.MinX, glyph.MinY), new(glyph.MaxX, glyph.MaxY), point);
+                    //_OutputDesmosPointArray(points, font.UnitsPerEm);
 
-                    normalPositions.Add(new(normalizedPoint.x, normalizedPoint.y, charI));
-                    vertexIndicies.Add(new(vertI, -1, vertI++));
+                    foreach (FontData.Point point in points.Reverse())
+                    {
+                        vertices.Add(new Float2(point.Position.x + xOffset, point.Position.y) / font.UnitsPerEm);
+
+                        var normalizedPoint = NormalizedUVChoordinate(glyph.Min, glyph.Max, point.Position);
+
+                        normalPositions.Add(new(normalizedPoint.x, normalizedPoint.y, charI++));
+                        vertexIndicies.Add(new(vertI, -1, vertI++));
+                    }
+
+                    faces.AddRange(TriangulateEarClipping(vertices[startIndex..], vertexIndicies[startIndex..].ToArray()));
                 }
-
-                faces.AddRange(TriangulateEarClipping(vertices[startIndex..], vertexIndicies[startIndex..].ToArray()));
 
                 xOffset += glyph.AdvanceWidth;
             }
@@ -81,22 +82,6 @@ public class TextRenderer : UIRenderer
     }
 
     #region Helper Functions
-
-    private static T[][] SplitByIndices<T>(T[] array, int[] splitIndices)
-    {
-        List<T[]> result = [];
-
-        int startSplitIndex = 0;
-        foreach (var i in splitIndices)
-        {
-            int endSplitIndex = i + 1;
-
-            result.Add(array[startSplitIndex..endSplitIndex]);
-            startSplitIndex = endSplitIndex;
-        }
-
-        return result.ToArray();
-    }
 
     public static T[] ConnectByIndices<T>(T[][] arrays, int[] startConnectIndices = null, int[] connectIndices = null, bool loopConnect = true, bool loopFirst = false)
     {
@@ -140,54 +125,76 @@ public class TextRenderer : UIRenderer
         return result.ToArray();
     }
 
-    private static FontData.Point[] LoopConnectShapes(FontData.Point[][] pointCollections)
+    private static FontData.Point[][] ConnectContours(FontData.GlyphPoints[] pointCollections)
     {
-        int[] startConnectIndices = [];
-        int[] endConnectIndices = [];
+        List<FontData.Point[]> result = [];
 
-        var builtShape = pointCollections[0];
+        List<FontData.GlyphPoints> baseGlyphs = [];
+        List<FontData.GlyphPoints> contourGlyphs = [];
 
-        foreach (var insidePoints in pointCollections[1..])
+        foreach (var glyph in pointCollections)
         {
-            (int outsideIndex, int insideIndex) = CalculateShapeCleanConnetionIndices(builtShape, insidePoints);
-
-            builtShape = ConnectByIndices([builtShape, insidePoints], [outsideIndex], [insideIndex], true);
+            (glyph.IsContour ? contourGlyphs : baseGlyphs).Add(glyph);
         }
 
-        return builtShape;
+        foreach (var baseGlyph in baseGlyphs)
+        {
+            FontData.Point[] combinedGlyph = baseGlyph.Points;
+
+            foreach (var contourGlyph in contourGlyphs.ToArray())
+            {
+                // Is contourGlyph within baseGlyph?
+                if (contourGlyph.Max.x > baseGlyph.Max.x ||
+                    contourGlyph.Max.y > baseGlyph.Max.y ||
+                    contourGlyph.Min.x < baseGlyph.Min.x ||
+                    contourGlyph.Min.y < baseGlyph.Min.y) continue;
+
+                (int outsideIndex, int insideIndex) = CalculateShapeCleanConnetionIndices(combinedGlyph, contourGlyph.Points);
+
+                if (outsideIndex == -1 || insideIndex == -1) throw new NoValidBridgeException("No valid contour bridge could be found for this character! This should be immpossible!");
+
+                combinedGlyph = ConnectByIndices([combinedGlyph, contourGlyph.Points], [outsideIndex], [insideIndex], true);
+                contourGlyphs.Remove(contourGlyph);
+            }
+
+            result.Add(combinedGlyph);
+        }
+
+        if(contourGlyphs.Count > 0)
+        {
+            Engine.LogWarning("Contour glyphs still remain when building shape! Must be invalid font!");
+        }
+
+        return result.ToArray();
     }
 
     /// <summary>
     /// Returns connection indices of two point arrays that cleanly connects a line without intersecting either shape
     /// </summary>
-    /// <param name="insidePoints">The inside point shape array</param>
-    /// <param name="outsidePoints">the outside point shape array</param>
+    /// <param name="basePoints">the outside point shape array</param>
+    /// <param name="contourPoints">The inside point shape array</param>
     /// <returns></returns>
-    private static (int outsideIndex, int insideIndex) CalculateShapeCleanConnetionIndices(FontData.Point[] outsidePoints, FontData.Point[] insidePoints)
+    private static (int outsideIndex, int insideIndex) CalculateShapeCleanConnetionIndices(FontData.Point[] basePoints, FontData.Point[] contourPoints)
     {
-        LoopedArray<FontData.Point> insidePointsArray = new(insidePoints);
-        LoopedArray<FontData.Point> outsidePointsArray = new(outsidePoints);
+        LoopedArray<FontData.Point> contourPointsArray = new(contourPoints);
+        LoopedArray<FontData.Point> basePointsArray = new(basePoints);
 
-        var insideConnectionPoint = insidePointsArray.GetItem(0);
-        var outsideConnectionPoint = outsidePointsArray.GetItem(0);
 
-        // Loop through all possible inside connection points
-        for (int x = 0; x < insidePoints.Length; x++)
+        foreach (var contourConnectionPoint in contourPointsArray)
         {
-            // Loop through all possible outside connection points
-            for (int y = 0; y < outsidePointsArray.Size; y++)
+            foreach (var baseConnectionPoint in basePointsArray)
             {
-                var possibleOutsideIntersectionPoint = outsideConnectionPoint.Next;
+                var possibleOutsideIntersectionPoint = baseConnectionPoint.Next;
 
                 bool isCollistion = false;
 
                 // Check for line intersections with outside shape
-                for (int z = 0; z < outsidePointsArray.Size - 1; z++)
+                for (int z = 0; z < basePointsArray.Size - 1; z++)
                 {
                     var nextPossibleOutsideIntersectionPoint = possibleOutsideIntersectionPoint.Next;
-                    if (possibleOutsideIntersectionPoint == outsideConnectionPoint || nextPossibleOutsideIntersectionPoint == outsideConnectionPoint) continue;
+                    if (possibleOutsideIntersectionPoint == baseConnectionPoint || nextPossibleOutsideIntersectionPoint == baseConnectionPoint) continue;
 
-                    if (DoLinesIntersect(insideConnectionPoint.value, outsideConnectionPoint.value, possibleOutsideIntersectionPoint.value, nextPossibleOutsideIntersectionPoint.value))
+                    if (DoLinesIntersect(contourConnectionPoint.value.Position, baseConnectionPoint.value.Position, possibleOutsideIntersectionPoint.value.Position, nextPossibleOutsideIntersectionPoint.value.Position))
                     {
                         isCollistion = true;
                         break;
@@ -199,15 +206,15 @@ public class TextRenderer : UIRenderer
                 // Check for line intersections with inside shape
                 if (!isCollistion)
                 {
-                    var possibleInsideIntersectionPoint = insideConnectionPoint.Next;
+                    var possibleInsideIntersectionPoint = contourConnectionPoint.Next;
 
-                    for (int z = 0; z < insidePointsArray.Size - 1; z++)
+                    for (int z = 0; z < contourPointsArray.Size - 1; z++)
                     {
                         var nextPossibleInsideIntersectionPoint = possibleInsideIntersectionPoint.Next;
 
-                        if (possibleInsideIntersectionPoint == insideConnectionPoint || nextPossibleInsideIntersectionPoint == insideConnectionPoint) continue;
+                        if (possibleInsideIntersectionPoint == contourConnectionPoint || nextPossibleInsideIntersectionPoint == contourConnectionPoint) continue;
 
-                        if (DoLinesIntersect(insideConnectionPoint.value, outsideConnectionPoint.value, possibleInsideIntersectionPoint.value, nextPossibleInsideIntersectionPoint.value))
+                        if (DoLinesIntersect(contourConnectionPoint.value.Position, baseConnectionPoint.value.Position, possibleInsideIntersectionPoint.value.Position, nextPossibleInsideIntersectionPoint.value.Position))
                         {
                             isCollistion = true;
                             break;
@@ -218,12 +225,8 @@ public class TextRenderer : UIRenderer
                 }
 
                 if (!isCollistion)
-                    return (insideConnectionPoint.index, outsideConnectionPoint.index);
-
-                outsideConnectionPoint = outsideConnectionPoint.Next;
+                    return (contourConnectionPoint.index, baseConnectionPoint.index);
             }
-
-            insideConnectionPoint = insideConnectionPoint.Next;
         }
 
         // Nothing found
@@ -232,69 +235,55 @@ public class TextRenderer : UIRenderer
 
     private MeshFace[] TriangulateEarClipping(IEnumerable<Float3> points, IEnumerable<MeshVertex> verts)
     {
+        if (!points.Any()) return [];
+
         var remainingPoints = new LoopedArray<Float3>(points);
 
         List<MeshFace> results = [];
 
-        string debugCreatedTriangles = "";
+        var currentPoint = remainingPoints.GetItem(0);
+        var previousPoint = currentPoint.Previous;
+        var nextPoint = currentPoint.Next;
 
-        if (remainingPoints.Size >= 3)
+        int tries = 0;
+
+        while (remainingPoints.Size >= 3)
         {
-            var currentPoint = remainingPoints.GetItem(0);
-            var previousPoint = currentPoint.Previous;
-            var nextPoint = currentPoint.Next;
+            var currentVert = (Float2)currentPoint.value;
+            var previousVert = (Float2)previousPoint.value;
+            var nextVert = (Float2)nextPoint.value;
 
-            int tries = 0;
+            var dotAngle = Float2.Dot((previousVert - currentVert).Cross, nextVert - currentVert);
 
-            while (remainingPoints.Size >= 3)
+            if (dotAngle > 0.0001)
             {
-                var currentVert = (Float2)currentPoint.value;
-                var previousVert = (Float2)previousPoint.value;
-                var nextVert = (Float2)nextPoint.value;
-
-                var dotAngle = Float2.Dot((previousVert - currentVert).Cross, nextVert - currentVert);
-
-                if (dotAngle > 0.0001)
+                if (!IsAVertexWithin2DTriangle(previousVert, currentVert, nextVert, points))
                 {
-                    if (!IsAVertexWithin2DTriangle(previousVert, currentVert, nextVert, points))
-                    {
-                        // Create Ear!
-                        results.Add(new([verts.ElementAt(previousPoint.initalIndex), verts.ElementAt(currentPoint.initalIndex), verts.ElementAt(nextPoint.initalIndex)]));
-                        // Remove current point
-                        remainingPoints.RemoveItem(currentPoint);
+                    // Create Ear!
+                    results.Add(new([verts.ElementAt(previousPoint.initalIndex), verts.ElementAt(currentPoint.initalIndex), verts.ElementAt(nextPoint.initalIndex)]));
+                    // Remove current point
+                    remainingPoints.RemoveItem(currentPoint);
 
-                        debugCreatedTriangles += "P_{" + results.Count + "}=\\operatorname{polygon}\\left(\\left(x_{1}\\left[" + (previousPoint.initalIndex + 1) + "\\right],y_{1}\\left[" + (previousPoint.initalIndex + 1) + "\\right]\\right)," +
-                            "\\left(x_{1}\\left[" + (currentPoint.initalIndex + 1) + "\\right],y_{1}\\left[" + (currentPoint.initalIndex + 1) + "\\right]\\right)," +
-                            "\\left(x_{1}\\left[" + (nextPoint.initalIndex + 1) + "\\right],y_{1}\\left[" + (nextPoint.initalIndex + 1) + "\\right]\\right)\\right)\n";
-
-                        // Shift points
-                        currentPoint = nextPoint;
-                        nextPoint = nextPoint.Next;
-                        tries = 0;
-                        continue;
-                    }
+                    // Shift points
+                    currentPoint = nextPoint;
+                    nextPoint = nextPoint.Next;
+                    tries = 0;
+                    continue;
                 }
-
-
-                debugCreatedTriangles += "F_{" + results.Count + "}=\\operatorname{polygon}\\left(\\left(x_{1}\\left[" + (previousPoint.initalIndex + 1) + "\\right],y_{1}\\left[" + (previousPoint.initalIndex + 1) + "\\right]\\right)," +
-                    "\\left(x_{1}\\left[" + (currentPoint.initalIndex + 1) + "\\right],y_{1}\\left[" + (currentPoint.initalIndex + 1) + "\\right]\\right)," +
-                    "\\left(x_{1}\\left[" + (nextPoint.initalIndex + 1) + "\\right],y_{1}\\left[" + (nextPoint.initalIndex + 1) + "\\right]\\right)\\right)\n";
-
-                tries++;
-
-                if (tries >= remainingPoints.Size)
-                {
-                    Engine.LogError("Unable to fully mesh out text!");
-                    break;
-                }
-
-                previousPoint = currentPoint;
-                currentPoint = nextPoint;
-                nextPoint = nextPoint.Next;
             }
-        }
 
-        //Engine.LogMessage("Debug Results: \n" + debugCreatedTriangles);
+            tries++;
+
+            if (tries >= remainingPoints.Size)
+            {
+                Engine.LogError("Unable to fully mesh out text!");
+                break;
+            }
+
+            previousPoint = currentPoint;
+            currentPoint = nextPoint;
+            nextPoint = nextPoint.Next;
+        }
 
         return results.ToArray();
     }
@@ -364,14 +353,15 @@ public class TextRenderer : UIRenderer
 
     #endregion
 
-    private static void _DebugLogPoints(IEnumerable<FontData.Point> points, float scaler)
+    private static void _OutputDesmosPointArray(IEnumerable<FontData.Point> points, float scaler)
     {
         string deb = "";
         foreach (var point in points)
         {
-            deb += $"{point.X / scaler},{point.Y / scaler}\n";
+            deb += $"{point.Position.x / scaler},{point.Position.y / scaler}\n";
         }
         Engine.LogMessage(deb);
     }
 
+    public class NoValidBridgeException(string message) : Exception(message) { }
 }

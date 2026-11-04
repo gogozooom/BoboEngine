@@ -2,6 +2,8 @@
 // https://www.youtube.com/@SebastianLague
 
 
+using BoboEngine;
+
 namespace SebText.FontLoading;
 
 // An (incomplete) Parser for TrueType font files
@@ -124,11 +126,84 @@ public static class FontParser
 
             FontData.GlyphData glyphData = ReadGlyph(reader, glyphLocations, mapping.GlyphIndex);
             glyphData.UnicodeValue = mapping.Unicode;
+            glyphData.Glyphs = SplitGlyph(glyphData.Points, glyphData.ContourEndIndices);
             glyphs[i] = glyphData;
         }
 
         return glyphs;
     }
+
+    static FontData.GlyphPoints[] SplitGlyph(FontData.Point[] points, int[] splitIndices)
+    {
+        var splitGlyphs = SplitByIndices(points, splitIndices);
+
+        var result = new FontData.GlyphPoints[splitGlyphs.Length];
+
+        for (int i = 0; i < splitGlyphs.Length; i++)
+        {
+            var splitGlyph = splitGlyphs[i];
+
+            (var min, var max) = CalculateGlyphMinMax(splitGlyph);
+            result[i] = new(splitGlyph, min, max, IsContourGlyph(splitGlyph));
+        }
+
+        return result;
+    }
+
+    static bool IsContourGlyph(FontData.Point[] points)
+    {
+        var loopedPoints = new LoopedArray<FontData.Point>(points);
+
+        foreach (var currentPoint in loopedPoints)
+        {
+            Float2 currentVert = currentPoint.value.Position;
+            Float2 previousVert = currentPoint.Previous.value.Position;
+            Float2 nextVert = currentPoint.Next.value.Position;
+
+            var dotAngle = Float2.Dot((nextVert - currentVert).Cross, previousVert - currentVert);
+
+            if(dotAngle > 0.0001)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    static (Int2 min, Int2 max) CalculateGlyphMinMax(FontData.Point[] points)
+    {
+        var min = Int2.zero;
+        var max = Int2.zero;
+
+        foreach (var point in points)
+        {
+            if (point.Position.x < min.x) min.x = point.Position.x;
+            else if (point.Position.x > max.x) max.x = point.Position.x;
+
+            if (point.Position.y < min.y) min.y = point.Position.y;
+            else if (point.Position.y > max.y) max.y = point.Position.y;
+        }
+
+        return (min, max);
+    }
+
+    static T[][] SplitByIndices<T>(T[] array, int[] splitIndices)
+    {
+        List<T[]> result = [];
+
+        int startSplitIndex = 0;
+        foreach (var i in splitIndices)
+        {
+            int endSplitIndex = i + 1;
+
+            result.Add(array[startSplitIndex..endSplitIndex]);
+            startSplitIndex = endSplitIndex;
+        }
+
+        return result.ToArray();
+    }
+
 
     static FontData.GlyphData ReadGlyph(FontReader reader, uint[] glyphLocations, uint glyphIndex)
     {
@@ -165,10 +240,10 @@ public static class FontParser
         int contourCount = reader.ReadInt16();
         if (contourCount < 0) throw new Exception("Expected simple glyph, but found compound glyph instead");
 
-        glyphData.MinX = reader.ReadInt16();
-        glyphData.MinY = reader.ReadInt16();
-        glyphData.MaxX = reader.ReadInt16();
-        glyphData.MaxY = reader.ReadInt16();
+        glyphData.Min.x = reader.ReadInt16();
+        glyphData.Min.y = reader.ReadInt16();
+        glyphData.Max.x = reader.ReadInt16();
+        glyphData.Max.y = reader.ReadInt16();
 
         // Read contour ends
         int numPoints = 0;
@@ -239,8 +314,8 @@ public static class FontParser
                     coordVal += reader.ReadInt16();
                 }
 
-                if (readingX) points[i].X = coordVal;
-                else points[i].Y = coordVal;
+                if (readingX) points[i].Position.x = coordVal;
+                else points[i].Position.y = coordVal;
                 points[i].OnCurve = FlagBitIsSet(currFlag, OnCurve);
 
                 min = Math.Min(min, coordVal);
@@ -258,10 +333,10 @@ public static class FontParser
         reader.GoTo(glyphLocation);
         reader.SkipBytes(2);
 
-        compoundGlyph.MinX = reader.ReadInt16();
-        compoundGlyph.MinY = reader.ReadInt16();
-        compoundGlyph.MaxX = reader.ReadInt16();
-        compoundGlyph.MaxY = reader.ReadInt16();
+        compoundGlyph.Min.x = reader.ReadInt16();
+        compoundGlyph.Min.y = reader.ReadInt16();
+        compoundGlyph.Max.x = reader.ReadInt16();
+        compoundGlyph.Max.y = reader.ReadInt16();
 
         List<FontData.Point> allPoints = new();
         List<int> allContourEndIndices = new();
@@ -351,18 +426,17 @@ public static class FontParser
 
         for (int i = 0; i < simpleGlyph.Points.Length; i++)
         {
-            (double xPrime, double yPrime) = TransformPoint(simpleGlyph.Points[i].X, simpleGlyph.Points[i].Y);
-            simpleGlyph.Points[i].X = (int)xPrime;
-            simpleGlyph.Points[i].Y = (int)yPrime;
+            Double2 prime = TransformPoint((Double2)simpleGlyph.Points[i].Position);
+            simpleGlyph.Points[i].Position = (Int2)prime;
         }
 
         return (simpleGlyph, isMoreComponentsAfterThis);
 
-        (double xPrime, double yPrime) TransformPoint(double x, double y)
+        Double2 TransformPoint(Double2 p)
         {
-            double xPrime = iHat_x * x + jHat_x * y + offsetX;
-            double yPrime = iHat_y * x + jHat_y * y + offsetY;
-            return (xPrime, yPrime);
+            double xPrime = iHat_x * p.x + jHat_x * p.y + offsetX;
+            double yPrime = iHat_y * p.x + jHat_y * p.y + offsetY;
+            return new(xPrime, yPrime);
         }
     }
 
@@ -550,28 +624,16 @@ public static class FontParser
     static bool FlagBitIsSet(byte flag, int bitIndex) => ((flag >> bitIndex) & 1) == 1;
     static bool FlagBitIsSet(uint flag, int bitIndex) => ((flag >> bitIndex) & 1) == 1;
 
-    public readonly struct GlyphMap
+    public readonly struct GlyphMap(uint index, uint unicode)
     {
-        public readonly uint GlyphIndex;
-        public readonly uint Unicode;
-
-        public GlyphMap(uint index, uint unicode)
-        {
-            GlyphIndex = index;
-            Unicode = unicode;
-        }
+        public readonly uint GlyphIndex = index;
+        public readonly uint Unicode = unicode;
     }
 
-    public struct HeadTableData
+    public struct HeadTableData(uint unitsPerEM, uint numBytesPerGlyphIndexToLocationEntry)
     {
-        public uint UnitsPerEM;
-        public uint NumBytesPerGlyphIndexToLocationEntry;
-
-        public HeadTableData(uint unitsPerEM, uint numBytesPerGlyphIndexToLocationEntry)
-        {
-            UnitsPerEM = unitsPerEM;
-            NumBytesPerGlyphIndexToLocationEntry = numBytesPerGlyphIndexToLocationEntry;
-        }
+        public uint UnitsPerEM = unitsPerEM;
+        public uint NumBytesPerGlyphIndexToLocationEntry = numBytesPerGlyphIndexToLocationEntry;
     }
 
 }
