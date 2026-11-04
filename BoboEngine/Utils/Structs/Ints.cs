@@ -77,8 +77,10 @@ public struct Int2(int x = 0, int y = 0)
     public static Int2 zero = new(0, 0);
     public static Int2 one = new(1, 1);
 
-    public static Int2 operator +(Int2 a, Int2 b) => new(a.x + b.x, a.y + b.y); // Adding
-    public static Int2 operator -(Int2 a, Int2 b) => new(a.x - b.x, a.y - b.y); // Subtracting
+    public static Int2 operator +(Int2 a, Int2 b) => new(a.x + b.x, a.y + b.y);
+    public static Int2 operator -(Int2 a, Int2 b) => new(a.x - b.x, a.y - b.y);
+    public static Int2 operator *(Int2 v, int i) => new(v.x * i, v.y * i);
+    public static Int2 operator /(Int2 v, int i) => new(v.x / i, v.y / i);
     public static bool operator ==(Int2 a, Int2 b) => a.x == b.x && a.y == b.y;
     public static bool operator !=(Int2 a, Int2 b) => a.x != b.x || a.y != b.y;
 
