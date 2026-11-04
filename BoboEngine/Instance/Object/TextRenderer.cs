@@ -50,15 +50,15 @@ public class TextRenderer : UIRenderer
                     continue;
                 }
 
-                var glyphs = ConnectContours(glyph.Glyphs); // Reverse order for counter clock wise
+                var glyphs = ConnectContours(glyph.Glyphs); 
 
-                foreach (var points in glyphs)
+                foreach (var points in glyphs.Select((item) => item.Reverse())) // Reverse order for counter clockwise triangle rendering
                 {
                     startIndex = vertexIndicies.Count;
 
                     //_OutputDesmosPointArray(points, font.UnitsPerEm);
 
-                    foreach (FontData.Point point in points.Reverse())
+                    foreach (FontData.Point point in points)
                     {
                         vertices.Add(new Float2(point.Position.x + xOffset, point.Position.y) / font.UnitsPerEm);
 
