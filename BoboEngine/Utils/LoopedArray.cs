@@ -1,5 +1,6 @@
-﻿using BoboEngine;
-using System.Collections;
+﻿using System.Collections;
+
+namespace BoboEngine;
 
 public class LoopedArray<T> : IEnumerable
 {
