@@ -5,11 +5,12 @@ in vec3 v_Normal;
 in vec2 v_TexCoord;
 
 uniform sampler2D mainTexture;
+uniform vec4 u_color;
 uniform float u_time;
 
 void main()
 {
-    vec4 color = texture(mainTexture, v_TexCoord); // Texture Sample
+    vec4 color = texture(mainTexture, v_TexCoord) * u_color; // Texture Sample
 
     if (color.a == 0.0)
     {

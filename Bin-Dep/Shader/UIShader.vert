@@ -7,6 +7,7 @@ out vec3 v_Normal;
 out vec2 v_TexCoord;
 
 uniform mat4 model;
+uniform vec4 u_color;
 uniform float u_time;
 
 void main()

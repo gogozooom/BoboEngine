@@ -12,6 +12,7 @@ public class Material
 
     public RenderTranformMode transformMode;
     public BlendMode blendMode;
+    public Float4 color = Float4.one;
     public bool useDepth = true;
     public bool cullBackFaces = true;
     public int renderOrder;

@@ -2,7 +2,7 @@
 
 public static class ShaderManager
 {
-    private static Dictionary<string, Shader> _shaders = new Dictionary<string, Shader>{ { "default", new Shader()}, { "defaultUI", new Shader("Shader/UIShader.vert", "Shader/UIShader.frag") } };
+    private static Dictionary<string, Shader> _shaders = new Dictionary<string, Shader>{ { "default", new Shader()}, { "defaultUI", new Shader("Shader/UIShader.vert", "Shader/UIShader.frag") }, { "defaultText", new Shader("Shader/TextShader.vert", "Shader/TextShader.frag")} };
 
     public static Shader GetShader(string name)
     {

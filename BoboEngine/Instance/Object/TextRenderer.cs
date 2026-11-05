@@ -24,6 +24,14 @@ public class TextRenderer : UIRenderer
     }
     #endregion
 
+    public override void Start()
+    {
+        base.Start();
+
+        material.cullBackFaces = false;
+        if (material.shaderID == "defaultUI") material.SetShaderID("defaultText");
+    }
+
     private void UpdateMesh()
     {
         List<Float3> vertices = [];
