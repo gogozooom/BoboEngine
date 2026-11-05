@@ -1,6 +1,6 @@
 ﻿using SebText.FontLoading;
-namespace BoboEngine.UI;
 
+namespace BoboEngine.UI;
 public class TextRenderer : UIRenderer
 {
     #region Instance Variables
@@ -38,13 +38,13 @@ public class TextRenderer : UIRenderer
         List<MeshVertex> vertexIndicies = [];
         List<MeshFace> faces = [];
         List<Float3> normalPositions = [];
+        List<Float2> curveUVPositions = [new(0, 0), new(0.5f, 0), new(1f, 1f)];
 
         if (font != null && !string.IsNullOrEmpty(text))
         {
             int xOffset = 0;
             int vertI = 0;
             int charI = 0;
-            int indexOffset;
 
             foreach (var letter in text.ToCharArray())
             {
@@ -58,25 +58,45 @@ public class TextRenderer : UIRenderer
                     continue;
                 }
 
-                var glyphs = ConnectContours(glyph.Glyphs); 
+                var glyphs = ConnectContours(glyph.Glyphs);
 
                 foreach (var points in glyphs.Select((item) => item.Reverse())) // Reverse order for counter clockwise triangle rendering
                 {
-                    indexOffset = vertexIndicies.Count;
+                    int indexOffset = vertexIndicies.Count;
 
-                    //_OutputDesmosPointArray(points, font.UnitsPerEm);
+                    var curveClippedPoints = ClipOutsideCurves(points);
 
-                    foreach (FontData.Point point in points)
+                    Engine.Log("Normal:");
+                    _OutputDesmosPointArray(points, font.UnitsPerEm);
+                    Engine.Log("On the curve:");
+                    _OutputDesmosPointArray(curveClippedPoints, font.UnitsPerEm);
+
+                    // On the curve mesh
+                    foreach (var point in curveClippedPoints)
                     {
-                        vertices.Add(new Float2(point.Position.x + xOffset, point.Position.y) / font.UnitsPerEm);
-
-                        var normalizedPoint = NormalizedUVChoordinate(glyph.Min, glyph.Max, point.Position);
-
-                        normalPositions.Add(new(normalizedPoint.x, normalizedPoint.y, charI++));
-                        vertexIndicies.Add(new(vertI, -1, vertI++));
+                        AddGlyphVert(TransformPoint(point.Position, xOffset, font.UnitsPerEm), glyph, charI++, vertI++, -1, ref vertices, ref normalPositions, ref vertexIndicies);
                     }
 
                     faces.AddRange(TriangulateEarClipping(vertices[indexOffset..], vertexIndicies[indexOffset..].ToArray()));
+
+                    LoopedArray<FontData.Point> loopedPointsArray = new(points);
+
+                    // Off the curve mesh
+                    foreach (var centerItem in loopedPointsArray)
+                    {
+                        if (centerItem.value.OnCurve) continue;
+                            
+                        indexOffset = vertexIndicies.Count;
+
+                        var previousItem = centerItem.Previous;
+                        var nextItem = centerItem.Next;
+
+                        AddGlyphVert(TransformPoint(previousItem.value.Position, xOffset, font.UnitsPerEm), glyph, charI++, vertI++, 0, ref vertices, ref normalPositions, ref vertexIndicies);
+                        AddGlyphVert(TransformPoint(centerItem.value.Position, xOffset, font.UnitsPerEm), glyph, charI++, vertI++, 1, ref vertices, ref normalPositions, ref vertexIndicies);
+                        AddGlyphVert(TransformPoint(nextItem.value.Position, xOffset, font.UnitsPerEm), glyph, charI++, vertI++, 2, ref vertices, ref normalPositions, ref vertexIndicies);
+
+                        faces.Add(new MeshFace(vertexIndicies[indexOffset..]));
+                    }
                 }
 
                 xOffset += glyph.AdvanceWidth;
@@ -85,11 +105,42 @@ public class TextRenderer : UIRenderer
 
 
         Mesh newMesh = new();
-        newMesh.LoadRawData(vertices.ToArray(), faces.ToArray(), normalPositions.ToArray());
+        newMesh.LoadRawData(vertices.ToArray(), faces.ToArray(), normalPositions.ToArray(), curveUVPositions.ToArray());
         meshFilter.mesh = newMesh;
     }
 
     #region Helper Functions
+
+    private static FontData.Point[] ClipOutsideCurves(IEnumerable<FontData.Point> points)
+    {
+        List<FontData.Point> result = [];
+
+        foreach (var point in new LoopedArray<FontData.Point>(points))
+        {
+            var PreviousPoint = point.Previous;
+            var NextPoint = point.Next;
+
+            if (!point.value.OnCurve && IsTriangleCounterClockwise(PreviousPoint.value.Position, point.value.Position, NextPoint.value.Position)) continue;
+
+            result.Add(point.value);
+        }
+
+        return result.ToArray();
+    }
+
+    private static Float2 TransformPoint(Float2 point, float xOffset, int unitsPerEm)
+    {
+        return (point + Float2.xAxis * xOffset) / unitsPerEm;
+    }
+    private static void AddGlyphVert(Float2 vert, FontData.GlyphData glyph, int charI, int vertI, int uvI, ref List<Float3> vertices, ref List<Float3> normalPositions, ref List<MeshVertex> vertexIndicies)
+    {
+        vertices.Add(vert);
+
+        var normalizedPoint = NormalizedUVChoordinate(glyph.Min, glyph.Max, vert);
+
+        normalPositions.Add(new(normalizedPoint.x, normalizedPoint.y, charI));
+        vertexIndicies.Add(new(vertI, uvI, vertI));
+    }
 
     public static T[] ConnectByIndices<T>(T[][] arrays, int[] startConnectIndices = null, int[] connectIndices = null, bool loopConnect = true, bool loopFirst = false)
     {
@@ -192,6 +243,7 @@ public class TextRenderer : UIRenderer
         {
             foreach (var baseConnectionPoint in basePointsArray)
             {
+                if (!baseConnectionPoint.value.OnCurve) continue;
                 var possibleOutsideIntersectionPoint = baseConnectionPoint.Next;
 
                 bool isCollistion = false;
@@ -214,6 +266,7 @@ public class TextRenderer : UIRenderer
                 // Check for line intersections with inside shape
                 if (!isCollistion)
                 {
+                    if (!contourConnectionPoint.value.OnCurve) continue;
                     var possibleInsideIntersectionPoint = contourConnectionPoint.Next;
 
                     for (int z = 0; z < contourPointsArray.Size - 1; z++)
@@ -241,7 +294,7 @@ public class TextRenderer : UIRenderer
         return (-1, -1);
     }
 
-    private MeshFace[] TriangulateEarClipping(IEnumerable<Float3> points, IEnumerable<MeshVertex> verts)
+    private static MeshFace[] TriangulateEarClipping(IEnumerable<Float3> points, IEnumerable<MeshVertex> verts)
     {
         if (!points.Any()) return [];
 
@@ -261,9 +314,7 @@ public class TextRenderer : UIRenderer
             var previousVert = (Float2)previousPoint.value;
             var nextVert = (Float2)nextPoint.value;
 
-            var dotAngle = Float2.Dot((previousVert - currentVert).Cross, nextVert - currentVert);
-
-            if (dotAngle > 0.0001)
+            if (IsTriangleCounterClockwise(previousVert, currentVert, nextVert))
             {
                 if (!IsAVertexWithin2DTriangle(previousVert, currentVert, nextVert, points))
                 {
@@ -357,6 +408,10 @@ public class TextRenderer : UIRenderer
     public static Float2 NormalizedUVChoordinate(Float2 min, Float2 max, Float2 p)
     {
         return (p - min) / (max - min);
+    }
+    public static bool IsTriangleCounterClockwise(Float2 v0, Float2 v1, Float2 v2)
+    {
+        return Float2.Dot((v0 - v1).Cross, v2 - v1) > 0.0001;
     }
 
     #endregion

@@ -67,9 +67,10 @@ public class FontData
         public Int2 Max = max;
     }
 
-    public struct Point(Int2 position, bool onCurve = true)
+    public struct Point(Int2 position, bool onCurve, bool isContour)
     {
         public Int2 Position = position;
         public bool OnCurve = onCurve;
+        public bool IsContour = isContour;
     }
 }

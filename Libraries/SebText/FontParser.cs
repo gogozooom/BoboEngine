@@ -127,12 +127,58 @@ public static class FontParser
             FontData.GlyphData glyphData = ReadGlyph(reader, glyphLocations, mapping.GlyphIndex);
             glyphData.UnicodeValue = mapping.Unicode;
             glyphData.Glyphs = SplitGlyph(glyphData.Points, glyphData.ContourEndIndices);
+            glyphData.Glyphs = MarkContourPoints(glyphData.Glyphs);
+            glyphData.Glyphs = FillConsecutiveOffCurves(glyphData.Glyphs);
             glyphs[i] = glyphData;
         }
 
         return glyphs;
     }
 
+    // TODO: Find a way to integrate this earlier in the font parsing stuff
+    private static FontData.GlyphPoints[] MarkContourPoints(FontData.GlyphPoints[] pointCollections)
+    {
+        List<FontData.GlyphPoints> result = [];
+
+        foreach (var glyph in pointCollections)
+        {
+            List<FontData.Point> points = [];
+
+            foreach (var point in glyph.Points)
+            {
+                points.Add(new(point.Position, point.OnCurve, glyph.IsContour));
+            }
+
+            result.Add(new(points.ToArray(), glyph.Min, glyph.Max, glyph.IsContour));
+        }
+
+        return result.ToArray();
+    }
+    private static FontData.GlyphPoints[] FillConsecutiveOffCurves(FontData.GlyphPoints[] pointCollections)
+    {
+        List<FontData.GlyphPoints> result = [];
+
+        foreach (var glyph in pointCollections)
+        {
+            List<FontData.Point> points = [];
+
+            foreach (var point in new LoopedArray<FontData.Point>(glyph.Points))
+            {
+                points.Add(point.value);
+
+                var nextPoint = point.Next;
+
+                if (!point.value.OnCurve && !nextPoint.value.OnCurve)
+                {
+                    // Create mid way point
+                    points.Add(new((point.value.Position + nextPoint.value.Position) / 2, true, glyph.IsContour));
+                }
+            }
+            result.Add(new(points.ToArray(), glyph.Min, glyph.Max, glyph.IsContour));
+        }
+
+        return result.ToArray();
+    }
     static FontData.GlyphPoints[] SplitGlyph(FontData.Point[] points, int[] splitIndices)
     {
         var splitGlyphs = SplitByIndices(points, splitIndices);
@@ -154,21 +200,17 @@ public static class FontParser
     {
         var loopedPoints = new LoopedArray<FontData.Point>(points);
 
+        float sum = 0f;
+
         foreach (var currentPoint in loopedPoints)
         {
             Float2 currentVert = currentPoint.value.Position;
-            Float2 previousVert = currentPoint.Previous.value.Position;
             Float2 nextVert = currentPoint.Next.value.Position;
 
-            var dotAngle = Float2.Dot((nextVert - currentVert).Cross, previousVert - currentVert);
-
-            if(dotAngle > 0.0001)
-            {
-                return false;
-            }
+            sum += (nextVert.x - currentVert.x) * (nextVert.y + currentVert.y); // Not sure why this works, but idk
         }
 
-        return true;
+        return sum < 0;
     }
 
     static (Int2 min, Int2 max) CalculateGlyphMinMax(FontData.Point[] points)
