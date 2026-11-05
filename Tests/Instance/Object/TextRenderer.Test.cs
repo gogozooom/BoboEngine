@@ -246,7 +246,7 @@ public class TextRendererTests
         }
     }
 
-    public class NormalizedUVChoordinateText
+    public class NormalizedUVChoordinateTests
     {
         static readonly Float2 min = new(-0.5f, -0.5f);
         static readonly Float2 max = new(0.5f, 0.5f);
