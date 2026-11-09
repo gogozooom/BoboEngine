@@ -7,43 +7,11 @@ Known Issues:
 		* Solution: Create input buffer handled 
 	
 TODO:
-	- Implement indicies into glLoadMesh r smth to reduce the amount of verticies being sent to the gpu
+	- Add support for ALGER.TTF font (Intersecting lines with OnCurve only mesh)
+		* Maybe when creating OnCurve base mesh, look for triangle intersecting verticies, then use that as a mid point instead?
 
 	- Scene Editor!!
 		* UI
-			_______________________________________ Text Renderer _______________________________________
-
-				_______ Texture2D.cs: ascii.png _______
-				   |
-				   + Material holds texture
-				   |
-				_____________ Material.cs _____________
-				   |
-				   + Text UI render holds material
-				   |
-				   |   __ *FontAssetMap.cs __
-				   |           |
-				   |           + *Creates and stores char to texture choord maps
-				   |           |
-				   |   _____________ *TextUI.cs _____________
-				   |     |              |
-				   |     |              + *Generates and stores mesh
-				   |     |              | 
-				   |     |    __ Mesh -> *TextMesh.cs __
-				   |     |              |
-				   |     |              _
-				   |     + *Transfers padding, and anchoring
-				   |     |              -
-				   |     |              |
-				   |     |              + Reads mesh data
-				   |     |              |
-				 _____________ *TextUIRenderer.cs _____________
-									|
-									+ Renders the final result
-									|
-				 _____________ WindowManager.cs _____________
-			_____________________________________________________________________________________________
-			* [DefaultUI.shader] add color multiplier and make texture optional
 			* UI Input Manager
 			* Parent Relative Positioning (UI inside of other UI actually makes a difference)
 			* Make UI Button
