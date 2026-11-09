@@ -1,4 +1,6 @@
-﻿namespace BoboEngine;
+﻿using System.ComponentModel;
+
+namespace BoboEngine;
 
 public struct Int4(int x = 0, int y = 0, int z = 0, int w = 0)
 {
@@ -13,6 +15,17 @@ public struct Int4(int x = 0, int y = 0, int z = 0, int w = 0)
     public static bool operator ==(Int4 a, Int4 b) => a.x == b.x && a.y == b.y && a.z == b.z && a.w == b.w;
     public static bool operator !=(Int4 a, Int4 b) => a.x != b.x || a.y != b.y || a.z != b.z || a.w != b.w;
 
+    public byte[] glConvertToData()
+    {
+        List<byte> results = [];
+
+        results.AddRange(BitConverter.GetBytes(x));
+        results.AddRange(BitConverter.GetBytes(y));
+        results.AddRange(BitConverter.GetBytes(z));
+        results.AddRange(BitConverter.GetBytes(w));
+
+        return results.ToArray();
+    }
     public override readonly string ToString() => $"({x},{y},{z},{w})";
 }
 public struct Int3(int x = 0, int y = 0, int z = 0)
@@ -39,6 +52,10 @@ public struct Int3(int x = 0, int y = 0, int z = 0)
     public static bool operator ==(Int3 a, Int3 b) => a.x == b.x && a.y == b.y && a.z == b.z;
     public static bool operator !=(Int3 a, Int3 b) => a.x != b.x || a.y != b.y || a.z != b.z;
 
+    public static explicit operator Int3(int[] n) => new(n[0], n[1], n[2]);
+    public static explicit operator Int3(Float3 f) => new((int)f.x, (int)f.y, (int)f.z);
+    public static explicit operator Int3(Double3 f) => new((int)f.x, (int)f.y, (int)f.z);
+
     public readonly int GetAxis(Axis axis)
     {
         return axis switch
@@ -64,10 +81,18 @@ public struct Int3(int x = 0, int y = 0, int z = 0)
         if (z != other.z) return z - other.z;
         return x - other.x;
     }
+
+    public byte[] glConvertToData()
+    {
+        List<byte> results = [];
+
+        results.AddRange(BitConverter.GetBytes(x));
+        results.AddRange(BitConverter.GetBytes(y));
+        results.AddRange(BitConverter.GetBytes(z));
+
+        return results.ToArray();
+    }
     public override readonly string ToString() => $"({x},{y},{z})";
-    public static explicit operator Int3(int[] n) => new(n[0], n[1], n[2]);
-    public static explicit operator Int3(Float3 f) => new((int)f.x, (int)f.y, (int)f.z);
-    public static explicit operator Int3(Double3 f) => new((int)f.x, (int)f.y, (int)f.z);
 }
 public struct Int2(int x = 0, int y = 0)
 {
@@ -89,5 +114,15 @@ public struct Int2(int x = 0, int y = 0)
     public static explicit operator Int2(Float3 f) => new((int)f.x, (int)f.y);
     public static explicit operator Int2(Double2 d) => new((int)d.x, (int)d.y);
     public static explicit operator Int2(Double3 d) => new((int)d.x, (int)d.y);
+
+    public byte[] glConvertToData()
+    {
+        List<byte> results = [];
+
+        results.AddRange(BitConverter.GetBytes(x));
+        results.AddRange(BitConverter.GetBytes(y));
+
+        return results.ToArray();
+    }
     public override readonly string ToString() => $"({x},{y})";
 }

@@ -4,10 +4,12 @@ namespace BoboEngine;
 
 public class Mesh
 {
-    public Float3[] vertices;
-    public MeshFace[] faces;
-    public Float3[] normals;
-    public Float2[] textureCoords;
+    public VertexData vertexData;
+    public VertexMapper vertexMap;
+
+    public VertexAttribute<Float3> Vertices => vertexData.GetAttribute<Float3>("vertices");
+    public VertexAttribute<Float2> TextureCoords => vertexData.GetAttribute<Float2>("textureCoords");
+    public VertexAttribute<Float3> Normals => vertexData.GetAttribute<Float3>("normals");
 
     public bool LoadObjFile(string filePath)
     {
@@ -33,10 +35,12 @@ public class Mesh
             return false;
         }
 
-        List<Float3> vertices = new();
-        List<MeshFace> faces = new();
-        List<Float3> normals = new();
-        List<Float2> textureCoords = new();
+        vertexData = new();
+        vertexMap = new();
+
+        var vertices = vertexData.AddAttribute<Float3>("vertices");
+        var textureCoords = vertexData.AddAttribute<Float2>("textureCoords");
+        var normals = vertexData.AddAttribute<Float3>("normals");
 
         string[] data = File.ReadAllLines(filePath);
 
@@ -59,18 +63,13 @@ public class Mesh
             }
             else if (line.StartsWith("f ")) // Face Info
             {
-                faces.Add(new MeshFace(line));
+                vertexMap.Add(line);
             }
         }
 
-        this.vertices = vertices.ToArray();
-        this.faces = faces.ToArray();
-        this.normals = normals.ToArray();
-        this.textureCoords = textureCoords.ToArray();
-
         return true;
     }
-    public void LoadRawData(Float3[] vertices, MeshFace[] faces = null, Float3[] normals = null, Float2[] textureCoords = null)
+    public void LoadRawData(VertexData data, VertexMapper mapper)
     {
         if (!IsEmpty())
         {
@@ -78,32 +77,12 @@ public class Mesh
             return;
         }
 
-        this.vertices = vertices;
-        this.faces = faces ?? ([]);
-        this.normals = normals ?? ([]);
-        this.textureCoords = textureCoords ?? ([]);
+        vertexData = data;
+        vertexMap = mapper;
     }
     public virtual bool IsEmpty()
     {
-        if (vertices == null) return true;
-        else if (vertices.Length == 0) return true;
-
-        if (faces == null) return true;
-        else if (faces.Length == 0) return true;
-
-        return false;
-    }
-
-    public MeshFace[] GetTriangulatedFaces()
-    {
-        List<MeshFace> triangulatedFaces = new();
-
-        foreach (var face in faces)
-        {
-            triangulatedFaces.AddRange(face.GetFaceTriangulated());
-        }
-
-        return triangulatedFaces.ToArray();
+        return vertexData == null || vertexData.IsEmpty() || vertexMap.IsEmpty();
     }
 
     #region OpenGL
@@ -131,9 +110,9 @@ public class Mesh
         glBindVertexArray(vao);
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
-        fixed (float* ptrVertices = &vertexData[0])
+        fixed (byte* ptrVertices = &vertexData[0])
         {
-            glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertexData.Length, ptrVertices, GL_STATIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, vertexData.Length, ptrVertices, GL_STATIC_DRAW);
         }
 
         glBindPointers();
@@ -141,56 +120,15 @@ public class Mesh
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
     }
-    protected virtual (float[] data, uint vertexBufferSize) glConvertToData()
+    protected virtual (byte[] data, uint vertexBufferSize) glConvertToData()
     {
-        var triangulatedFaces = GetTriangulatedFaces();
-
-        var vertexData = new float[triangulatedFaces.Length * 24];
-
-        for (int i = 0; i < triangulatedFaces.Length; i++)
-        {
-            var face = triangulatedFaces[i];
-
-            var faceIndex = i * 24; // 8 * 3
-
-            for (int vertexI = 0; vertexI < 3; vertexI++)
-            {
-                var vertex = face.vertices[vertexI];
-
-                Float3 position = vertices[vertex.vertex_coord_index];
-                Float3 normal = vertex.normal_coord_index >= 0 ? normals[vertex.normal_coord_index] : new();
-                Float2 uv = vertex.texture_coord_index >= 0 ? textureCoords[vertex.texture_coord_index] : new(0, 0);
-
-                vertexData[faceIndex + 0] = position.x;
-                vertexData[faceIndex + 1] = position.y;
-                vertexData[faceIndex + 2] = position.z;
-
-                vertexData[faceIndex + 3] = normal.x;
-                vertexData[faceIndex + 4] = normal.y;
-                vertexData[faceIndex + 5] = normal.z;
-
-                vertexData[faceIndex + 6] = uv.x;
-                vertexData[faceIndex + 7] = uv.y;
-
-                faceIndex += 8;
-            }
-        }
-
-        return (vertexData, (uint)triangulatedFaces.Length * 3);
+        var triangulatedMap = vertexMap.Triangulated();
+        
+        return (triangulatedMap.glConvertToData(vertexData), (uint)triangulatedMap.Count());
     }
-    protected virtual unsafe void glBindPointers()
+    protected virtual void glBindPointers()
     {
-        // Position (x,y,z)
-        glVertexAttribPointer(0, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)0);
-        glEnableVertexAttribArray(0);
-
-        // Normals (x,y,z)
-        glVertexAttribPointer(1, 3, GL_FLOAT, false, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-        glEnableVertexAttribArray(1);
-
-        // Vertex Texture Coords (u,v)
-        glVertexAttribPointer(2, 2, GL_FLOAT, false, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-        glEnableVertexAttribArray(2);
+        vertexData.glBindPointers();
     }
     public virtual void glDraw()
     {
@@ -231,10 +169,8 @@ public class Mesh
             glDeleteVertexArray(vao);
         }
 
-        vertices = null;
-        faces = null;
-        normals = null;
-        textureCoords = null;
+        vertexData = null;
+        vertexMap = new();
 
         vao = 0;
         vbo = 0;

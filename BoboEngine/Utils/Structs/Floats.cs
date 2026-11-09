@@ -41,6 +41,17 @@ public struct Float4(float x = 0, float y = 0, float z = 0, float w = 0)
     public static Float4 operator +(Float4 a, Float4 b) => new Float4(a.x + b.x, a.y + b.y, a.z + b.z, a.w + b.w);
 
     public static explicit operator Float3(Float4 v) => new Float3(v.x, v.y, v.z);
+    public byte[] glConvertToData()
+    {
+        List<byte> results = [];
+
+        results.AddRange(BitConverter.GetBytes(x));
+        results.AddRange(BitConverter.GetBytes(y));
+        results.AddRange(BitConverter.GetBytes(z));
+        results.AddRange(BitConverter.GetBytes(w));
+
+        return results.ToArray();
+    }
     public override string ToString() => $"({x.ToString()},{y.ToString()},{z.ToString()},{w.ToString()})";
 }
 public struct Float3(float x = 0, float y = 0, float z = 0)
@@ -134,6 +145,16 @@ public struct Float3(float x = 0, float y = 0, float z = 0)
     public static implicit operator Float3(Float2 v) => new(v.x, v.y, 0);
 
     public static implicit operator Vector3(Float3 f) => new(f.x, f.y, f.z);
+    public byte[] glConvertToData()
+    {
+        List<byte> results = [];
+
+        results.AddRange(BitConverter.GetBytes(x));
+        results.AddRange(BitConverter.GetBytes(y));
+        results.AddRange(BitConverter.GetBytes(z));
+
+        return results.ToArray();
+    }
 }
 public struct Float2(float x = 0, float y = 0)
 {
@@ -192,6 +213,16 @@ public struct Float2(float x = 0, float y = 0)
     public static explicit operator Float2(Float3 v) => new(v.x, v.y);
     public static explicit operator Float2(Int3 v) => new(v.x, v.y);
     public static implicit operator Float2(Int2 v) => new(v.x, v.y);
+
+    public byte[] glConvertToData()
+    {
+        List<byte> results = [];
+
+        results.AddRange(BitConverter.GetBytes(x));
+        results.AddRange(BitConverter.GetBytes(y));
+
+        return results.ToArray();
+    }
 }
 public struct UVRect(float uMin = 0, float vMin = 0, float uMax = 1, float vMax = 1)
 {

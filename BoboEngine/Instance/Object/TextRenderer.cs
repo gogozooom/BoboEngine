@@ -34,11 +34,15 @@ public class TextRenderer : UIRenderer
 
     private void UpdateMesh()
     {
-        List<Float3> vertices = [];
-        List<MeshVertex> vertexIndicies = [];
-        List<MeshFace> faces = [];
-        List<Float3> normalPositions = [];
-        List<Float2> curveUVPositions = [new(0, 0), new(0.5f, 0), new(1f, 1f)];
+        VertexData data = new();
+        VertexMapper mapper = new();
+
+        var vertices = data.AddAttribute<Float3>("vertices");
+        var curveUVPositions = data.AddAttribute<Float2>("textureCoords");
+        var normalPositions = data.AddAttribute<Float3>("normals");
+        curveUVPositions.Populate([new(0, 0), new(0.5f, 0), new(1f, 1f)]);
+        var isClockwise = data.AddAttribute<bool>("isClockwise");
+        isClockwise.Populate([true]);
 
         if (font != null && !string.IsNullOrEmpty(text))
         {
@@ -62,7 +66,7 @@ public class TextRenderer : UIRenderer
 
                 foreach (var points in glyphs.Select((item) => item.Reverse())) // Reverse order for counter clockwise triangle rendering
                 {
-                    int indexOffset = vertexIndicies.Count;
+                    int indexOffset = vertices.values.Count;
 
                     var curveClippedPoints = ClipOutsideCurves(points);
 
@@ -71,13 +75,15 @@ public class TextRenderer : UIRenderer
                     Engine.Log("On the curve:");
                     _OutputDesmosPointArray(curveClippedPoints, font.UnitsPerEm);
 
+                    List<VertexMapper.VertexMap> glyphVertMaps = [];
+
                     // On the curve mesh
                     foreach (var point in curveClippedPoints)
                     {
-                        AddGlyphVert(TransformPoint(point.Position, xOffset, font.UnitsPerEm), glyph, charI++, vertI++, -1, ref vertices, ref normalPositions, ref vertexIndicies);
+                        AddGlyphVert(TransformPoint(point.Position, xOffset, font.UnitsPerEm), glyph, charI++, vertI++, -1, false, ref vertices, ref normalPositions, ref glyphVertMaps);
                     }
 
-                    faces.AddRange(TriangulateEarClipping(vertices[indexOffset..], vertexIndicies[indexOffset..].ToArray()));
+                    mapper.AddRange(TriangulateEarClipping(vertices.values[indexOffset..], glyphVertMaps));
 
                     LoopedArray<FontData.Point> loopedPointsArray = new(points);
 
@@ -86,16 +92,20 @@ public class TextRenderer : UIRenderer
                     {
                         if (centerItem.value.OnCurve) continue;
                             
-                        indexOffset = vertexIndicies.Count;
+                        indexOffset = vertices.values.Count;
 
                         var previousItem = centerItem.Previous;
                         var nextItem = centerItem.Next;
 
-                        AddGlyphVert(TransformPoint(previousItem.value.Position, xOffset, font.UnitsPerEm), glyph, charI++, vertI++, 0, ref vertices, ref normalPositions, ref vertexIndicies);
-                        AddGlyphVert(TransformPoint(centerItem.value.Position, xOffset, font.UnitsPerEm), glyph, charI++, vertI++, 1, ref vertices, ref normalPositions, ref vertexIndicies);
-                        AddGlyphVert(TransformPoint(nextItem.value.Position, xOffset, font.UnitsPerEm), glyph, charI++, vertI++, 2, ref vertices, ref normalPositions, ref vertexIndicies);
+                        bool clockwise = !IsTriangleCounterClockwise(previousItem.value.Position, centerItem.value.Position, nextItem.value.Position);
 
-                        faces.Add(new MeshFace(vertexIndicies[indexOffset..]));
+                        List<VertexMapper.VertexMap> vertMaps = [];
+
+                        AddGlyphVert(TransformPoint(previousItem.value.Position, xOffset, font.UnitsPerEm), glyph, charI++, vertI++, 0, clockwise, ref vertices, ref normalPositions, ref vertMaps);
+                        AddGlyphVert(TransformPoint(centerItem.value.Position, xOffset, font.UnitsPerEm), glyph, charI++, vertI++, 1, clockwise, ref vertices, ref normalPositions, ref vertMaps);
+                        AddGlyphVert(TransformPoint(nextItem.value.Position, xOffset, font.UnitsPerEm), glyph, charI++, vertI++, 2, clockwise, ref vertices, ref normalPositions, ref vertMaps);
+
+                        mapper.Add(new VertexMapper.FaceMap(vertMaps));
                     }
                 }
 
@@ -105,7 +115,7 @@ public class TextRenderer : UIRenderer
 
 
         Mesh newMesh = new();
-        newMesh.LoadRawData(vertices.ToArray(), faces.ToArray(), normalPositions.ToArray(), curveUVPositions.ToArray());
+        newMesh.LoadRawData(data, mapper);
         meshFilter.mesh = newMesh;
     }
 
@@ -132,14 +142,14 @@ public class TextRenderer : UIRenderer
     {
         return (point + Float2.xAxis * xOffset) / unitsPerEm;
     }
-    private static void AddGlyphVert(Float2 vert, FontData.GlyphData glyph, int charI, int vertI, int uvI, ref List<Float3> vertices, ref List<Float3> normalPositions, ref List<MeshVertex> vertexIndicies)
+    private static void AddGlyphVert(Float2 vert, FontData.GlyphData glyph, int charI, int vertI, int uvI, bool isClockwise, ref VertexAttribute<Float3> vertices, ref VertexAttribute<Float3> normalPositions, ref List<VertexMapper.VertexMap> vertexIndicies)
     {
         vertices.Add(vert);
 
         var normalizedPoint = NormalizedUVChoordinate(glyph.Min, glyph.Max, vert);
 
         normalPositions.Add(new(normalizedPoint.x, normalizedPoint.y, charI));
-        vertexIndicies.Add(new(vertI, uvI, vertI));
+        vertexIndicies.Add([vertI, uvI, vertI, isClockwise ? 0 : -1]);
     }
 
     public static T[] ConnectByIndices<T>(T[][] arrays, int[] startConnectIndices = null, int[] connectIndices = null, bool loopConnect = true, bool loopFirst = false)
@@ -294,13 +304,13 @@ public class TextRenderer : UIRenderer
         return (-1, -1);
     }
 
-    private static MeshFace[] TriangulateEarClipping(IEnumerable<Float3> points, IEnumerable<MeshVertex> verts)
+    private static IEnumerable<VertexMapper.FaceMap> TriangulateEarClipping(IEnumerable<Float3> points, IEnumerable<VertexMapper.VertexMap> verts)
     {
         if (!points.Any()) return [];
 
         var remainingPoints = new LoopedArray<Float3>(points);
 
-        List<MeshFace> results = [];
+        List<VertexMapper.FaceMap> results = [];
 
         var currentPoint = remainingPoints.GetItem(0);
         var previousPoint = currentPoint.Previous;
@@ -319,7 +329,7 @@ public class TextRenderer : UIRenderer
                 if (!IsAVertexWithin2DTriangle(previousVert, currentVert, nextVert, points))
                 {
                     // Create Ear!
-                    results.Add(new([verts.ElementAt(previousPoint.initalIndex), verts.ElementAt(currentPoint.initalIndex), verts.ElementAt(nextPoint.initalIndex)]));
+                    results.Add([verts.ElementAt(previousPoint.initalIndex), verts.ElementAt(currentPoint.initalIndex), verts.ElementAt(nextPoint.initalIndex)]);
                     // Remove current point
                     remainingPoints.RemoveItem(currentPoint);
 
@@ -344,7 +354,7 @@ public class TextRenderer : UIRenderer
             nextPoint = nextPoint.Next;
         }
 
-        return results.ToArray();
+        return results;
     }
 
 

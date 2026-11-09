@@ -52,6 +52,16 @@ public struct Double3(double x = 0, double y = 0, double z = 0)
 
     public static implicit operator Double3(Int3 v) => new(v.x, v.y, v.z);
     public static implicit operator Double3(Float3 v) => new(v.x, v.y, v.z);
+    public byte[] glConvertToData()
+    {
+        List<byte> results = [];
+
+        results.AddRange(BitConverter.GetBytes(x));
+        results.AddRange(BitConverter.GetBytes(y));
+        results.AddRange(BitConverter.GetBytes(z));
+
+        return results.ToArray();
+    }
     public override readonly string ToString() => $"({x.ToString()},{y.ToString()},{z.ToString()})";
 }
 public struct Double2(double x = 0, double y = 0)
@@ -85,5 +95,14 @@ public struct Double2(double x = 0, double y = 0)
 
     public static implicit operator Double2(Int2 v) => new(v.x, v.y);
     public static implicit operator Double2(Float2 v) => new(v.x, v.y);
+    public byte[] glConvertToData()
+    {
+        List<byte> results = [];
+
+        results.AddRange(BitConverter.GetBytes(x));
+        results.AddRange(BitConverter.GetBytes(y));
+
+        return results.ToArray();
+    }
     public override string ToString() => $"({x.ToString()},{y.ToString()})";
 }
