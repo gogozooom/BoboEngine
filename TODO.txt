@@ -7,6 +7,7 @@ Known Issues:
 		* Solution: Create input buffer handled 
 	
 TODO:
+	- Fix mesh holes like in AGENCYB.TTF's "q"
 	- Add support for ALGER.TTF font (Intersecting lines with OnCurve only mesh)
 		* Maybe when creating OnCurve base mesh, look for triangle intersecting verticies, then use that as a mid point instead?
 
