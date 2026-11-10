@@ -71,9 +71,9 @@ public class TextRenderer : UIRenderer
                     var curveClippedPoints = ClipOutsideCurves(points);
 
                     Engine.Log("Normal:");
-                    _OutputDesmosPointArray(points, font.UnitsPerEm);
+                    DEBUG_OutputDesmosPointArray(points, font.UnitsPerEm);
                     Engine.Log("On the curve:");
-                    _OutputDesmosPointArray(curveClippedPoints, font.UnitsPerEm);
+                    DEBUG_OutputDesmosPointArray(curveClippedPoints, font.UnitsPerEm);
 
                     List<VertexMapper.VertexMap> glyphVertMaps = [];
 
@@ -426,7 +426,7 @@ public class TextRenderer : UIRenderer
 
     #endregion
 
-    private static void _OutputDesmosPointArray(IEnumerable<FontData.Point> points, float scaler)
+    private static void DEBUG_OutputDesmosPointArray(IEnumerable<FontData.Point> points, float scaler)
     {
         string deb = "";
         foreach (var point in points)
