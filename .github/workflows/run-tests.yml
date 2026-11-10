@@ -28,4 +28,4 @@ jobs:
         run: dotnet build --no-restore --configuration Release
 
       - name: Run unit tests
-        run: dotnet test ./src/BoboEngine/BoboEngine.Tests/BoboEngine.Tests.csproj --no-build --configuration Release
+        run: dotnet test ./src/BoboEngine.Tests/BoboEngine.Tests.csproj --no-build --configuration Release
