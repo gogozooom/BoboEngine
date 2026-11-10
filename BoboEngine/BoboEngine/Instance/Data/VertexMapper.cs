@@ -1,5 +1,5 @@
 ﻿using System.Collections;
-using Xunit.Internal;
+using System.Xml.XPath;
 using static BoboEngine.VertexMapper;
 
 namespace BoboEngine;
@@ -7,11 +7,25 @@ namespace BoboEngine;
 public readonly struct VertexMapper : IEnumerable<VertexMap>
 {
     public readonly List<FaceMap> faceMaps;
-    public readonly int[][][] Data => faceMaps.SelectArray((faceMap) => faceMap.Data);
+    public readonly int[][][] Data()
+    {
+        List<int[][]> results = [];
 
+        foreach (var item in faceMaps)
+        {
+            results.Add(item.Data());
+        }
+
+        return results.ToArray();
+    }
     public VertexMapper(IEnumerable<IEnumerable<IEnumerable<int>>> data)
     {
-        faceMaps = data.SelectArray((faceData) => new FaceMap(faceData)).ToList();
+        faceMaps = [];
+
+        foreach (var item in data)
+        {
+            faceMaps.Add(new(item));
+        }
     }
     public VertexMapper(IEnumerable<FaceMap> faceMaps) => this.faceMaps = faceMaps.ToList();
     public VertexMapper() => faceMaps = [];
@@ -121,11 +135,26 @@ public readonly struct VertexMapper : IEnumerable<VertexMap>
     public readonly struct FaceMap : IEnumerable<VertexMap>
     {
         public readonly List<VertexMap> vertexMaps;
-        public readonly int[][] Data => vertexMaps.SelectArray((vertexMap) => vertexMap.Data);
+        public readonly int[][] Data()
+        {
+            List<int[]> results = [];
+
+            foreach (var item in vertexMaps)
+            {
+                results.Add(item.Data());
+            }
+
+            return results.ToArray();
+        }
 
         public FaceMap(IEnumerable<IEnumerable<int>> data)
         {
-            vertexMaps = data.SelectArray((vertexData) => new VertexMap(vertexData)).ToList();
+            vertexMaps = [];
+
+            foreach (var item in data)
+            {
+                vertexMaps.Add(new(item));
+            }
         }
         public FaceMap(IEnumerable<VertexMap> vertexMaps) => this.vertexMaps = vertexMaps.ToList();
         public FaceMap() => vertexMaps = [];
@@ -144,7 +173,7 @@ public readonly struct VertexMapper : IEnumerable<VertexMap>
     public readonly struct VertexMap : IEnumerable<int>
     {
         public readonly List<int> indexMaps;
-        public readonly int[] Data => indexMaps.ToArray();
+        public readonly int[] Data() => indexMaps.ToArray();
 
         public VertexMap(IEnumerable<int> data) => indexMaps = data.ToList();
         public VertexMap() => indexMaps = [];

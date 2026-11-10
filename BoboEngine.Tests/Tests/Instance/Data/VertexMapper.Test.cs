@@ -11,7 +11,7 @@ public class VertexMapperTest
     {
         int[][][] input = [[[1, 2, 3], [4, 5, 6]]];
 
-        Assert.Equal(input, new VertexMapper(input).Data);
+        Assert.Equal(input, new VertexMapper(input).Data());
     }
 
     [Fact]
@@ -35,8 +35,8 @@ public class VertexMapperTest
                 [[0,0], [4,4], [5,5]],
             ];
 
-        Assert.Equal(expectedSquareOutput, new VertexMapper(squareInput).Triangulated().Data);
-        Assert.Equal(expectedHexagonOutput, new VertexMapper(hexagonInput).Triangulated().Data);
+        Assert.Equal(expectedSquareOutput, new VertexMapper(squareInput).Triangulated().Data());
+        Assert.Equal(expectedHexagonOutput, new VertexMapper(hexagonInput).Triangulated().Data());
     }
 
     [Fact]
