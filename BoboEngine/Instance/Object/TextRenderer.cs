@@ -304,7 +304,7 @@ public class TextRenderer : UIRenderer
         return (-1, -1);
     }
 
-    private static IEnumerable<VertexMapper.FaceMap> TriangulateEarClipping(IEnumerable<Float3> points, IEnumerable<VertexMapper.VertexMap> verts)
+    private static List<VertexMapper.FaceMap> TriangulateEarClipping(IEnumerable<Float3> points, IEnumerable<VertexMapper.VertexMap> verts)
     {
         if (!points.Any()) return [];
 
