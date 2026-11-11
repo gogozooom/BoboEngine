@@ -13,7 +13,7 @@ public static class FileParser
 
         bool expectingKey = true;
         bool expectingValue = false;
-        bool expectingValueArray = false;
+        //bool expectingValueArray = false;
 
         int line = 1;
 
@@ -32,7 +32,7 @@ public static class FileParser
 
                 currentData = new JsonData(key, JsonData.Type.ValueArray, null, currentData);
 
-                expectingValueArray = true;
+                //expectingValueArray = true;
                 expectingValue = true;
             }
             else if (c == '{')
@@ -49,7 +49,7 @@ public static class FileParser
                     key = "";
                 }
 
-                expectingValueArray = false;
+                //expectingValueArray = false;
                 expectingKey = true;
                 expectingValue = false;
             }
@@ -77,7 +77,7 @@ public static class FileParser
                 }
                 currentData = currentData.parent;
 
-                expectingValueArray = false;
+                //expectingValueArray = false;
                 expectingValue = false;
                 expectingKey = false;
             }
