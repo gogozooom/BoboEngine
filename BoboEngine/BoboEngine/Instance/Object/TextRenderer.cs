@@ -330,6 +330,8 @@ public class TextRenderer : UIRenderer
                 {
                     // Create Ear!
                     results.Add([verts.ElementAt(previousPoint.initalIndex), verts.ElementAt(currentPoint.initalIndex), verts.ElementAt(nextPoint.initalIndex)]);
+                    DEBUG_OutputDesmosPolygon(previousPoint.initalIndex+1, currentPoint.initalIndex+1, nextPoint.initalIndex+1);
+
                     // Remove current point
                     remainingPoints.RemoveItem(currentPoint);
 
@@ -421,7 +423,7 @@ public class TextRenderer : UIRenderer
     }
     public static bool IsTriangleCounterClockwise(Float2 v0, Float2 v1, Float2 v2)
     {
-        return Float2.Dot((v0 - v1).Cross, v2 - v1) > 0.0001;
+        return Float2.Dot((v0 - v1).Cross, v2 - v1) > 0.00001;
     }
 
     #endregion
@@ -434,6 +436,10 @@ public class TextRenderer : UIRenderer
             deb += $"{point.Position.x / scaler},{point.Position.y / scaler}\n";
         }
         Engine.LogMessage(deb);
+    }
+    private static void DEBUG_OutputDesmosPolygon(int lastPoint, int currentPoint, int nextPoint)
+    {
+        Console.WriteLine($"P=\\operatorname{{polygon}}\\left(\\left(x_{{2}}\\left[{lastPoint}\\right],y_{{2}}\\left[{lastPoint}\\right]\\right),\\left(x_{{2}}\\left[{currentPoint}\\right],y_{{2}}\\left[{currentPoint}\\right]\\right),\\left(x_{{2}}\\left[{nextPoint}\\right],y_{{2}}\\left[{nextPoint}\\right]\\right)\\right)");
     }
 
     public class NoValidBridgeException(string message) : Exception(message) { }
