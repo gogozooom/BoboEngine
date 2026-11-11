@@ -16,10 +16,4 @@
     <ProjectReference Include="..\BoboEngine\BoboEngine.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Reference Include="BoboEngine">
-      <HintPath>..\BoboEngine\bin\Debug\net8.0\BoboEngine.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-
 </Project>
