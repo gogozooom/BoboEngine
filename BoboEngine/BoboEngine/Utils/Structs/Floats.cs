@@ -1,4 +1,4 @@
-﻿using SebText.FontLoading;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 
 namespace BoboEngine;
@@ -31,17 +31,24 @@ public struct Float4(float x = 0, float y = 0, float z = 0, float w = 0)
     public static Float4 one => new(1, 1, 1, 1);
     #endregion
 
+    #region math
     public static Float4 Lerp(Float4 s, Float4 e, float t)
     {
         return (e - s) * t + s;
     }
+    #endregion
 
+    #region operators
     public static Float4 operator *(Float4 f, float v) => new Float4(f.x * v, f.y * v, f.z * v, f.w * v);
     public static Float4 operator -(Float4 a, Float4 b) => new Float4(a.x - b.x, a.y - b.y, a.z - b.z, a.w - b.w);
     public static Float4 operator +(Float4 a, Float4 b) => new Float4(a.x + b.x, a.y + b.y, a.z + b.z, a.w + b.w);
+    public static bool operator ==(Float4 a, Float4 b) => a.x == b.x && a.y == b.y && a.z == b.z && a.w == b.w;
+    public static bool operator !=(Float4 a, Float4 b) => a.x != b.x || a.y != b.y || a.z != b.z || a.w != b.w;
 
     public static explicit operator Float3(Float4 v) => new Float3(v.x, v.y, v.z);
-    public byte[] glConvertToData()
+    #endregion
+
+    public readonly byte[] glConvertToData()
     {
         List<byte> results = [];
 
@@ -52,7 +59,13 @@ public struct Float4(float x = 0, float y = 0, float z = 0, float w = 0)
 
         return results.ToArray();
     }
-    public override string ToString() => $"({x.ToString()},{y.ToString()},{z.ToString()},{w.ToString()})";
+    public readonly override bool Equals([NotNullWhen(true)] object? obj)
+    {
+        if (obj.GetType() != typeof(Float4)) return false;
+        return this == (Float4)obj;
+    }
+    public readonly override int GetHashCode() => HashCode.Combine(x, y, z, w);
+    public override readonly string ToString() => $"({x},{y},{z},{w})";
 }
 public struct Float3(float x = 0, float y = 0, float z = 0)
 {
@@ -84,6 +97,7 @@ public struct Float3(float x = 0, float y = 0, float z = 0)
     public static Float3 random => new(Maths.Random(75), Maths.Random(75), Maths.Random(75));
     #endregion
 
+    #region math
     public float Length => MathF.Sqrt(Dot(this, this));
     public float LengthSquared() => Dot(this, this);
     public Float3 Normalized()
@@ -97,7 +111,38 @@ public struct Float3(float x = 0, float y = 0, float z = 0)
 
         return this / Length;
     }
-    
+    public static float Dot(Float3 a, Float3 b) => a.x * b.x + a.y * b.y + a.z * b.z;
+    public static Float3 CrossProduct(Float3 a, Float3 b) => new(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
+    public static Float3 Lerp(Float3 s, Float3 e, float t) => (e - s) * t + s;
+    public Int3 RoundToInt3()
+    {
+        return new((int)float.Round(x), (int)float.Round(y), (int)float.Round(z));
+    }
+    #endregion
+
+    #region operators
+    public static Float3 operator +(Float3 a, Float3 b) => new(a.x + b.x, a.y + b.y, a.z + b.z); // Vector Adding
+    public static Float3 operator -(Float3 a, Float3 b) => new(a.x - b.x, a.y - b.y, a.z - b.z); // Vector Subracting
+    public static Float3 operator -(float a, Float3 b) => new(a - b.x, a - b.y, a - b.z); // Subracting
+
+    public static Float3 operator *(Float3 a, Float3 b) => new(a.x * b.x, a.y * b.y, a.z * b.z); // Vector Multiplication
+    public static Float3 operator /(Float3 a, Float3 b) => new(a.x / b.x, a.y / b.y, a.z / b.z); // Vector Division
+    public static Float3 operator *(Float3 v, float f) => new(v.x * f, v.y * f, v.z * f); // Vector Length Multiplication
+    public static Float3 operator /(Float3 v, float f) => new(v.x / f, v.y / f, v.z / f); // Vector Length Division
+    public static Float3 operator /(float f, Float3 v) => new(f / v.x, f / v.y, f / v.z); // Vector Division
+    public static Float3 operator -(Float3 a) => new(-a.x, -a.y, -a.z); // Negative Vector
+    public static bool operator ==(Float3 a, Float3 b) => a.x == b.x && a.y == b.y && a.z == b.z;
+    public static bool operator !=(Float3 a, Float3 b) => a.x != b.x || a.y != b.y || a.z != b.z;
+
+    public static explicit operator Float3(float[] f) => new(f[0], f[1], f[2]);
+    public static explicit operator Float3(Double3 d) => new((float)d.x, (float)d.y, (float)d.z);
+
+    public static implicit operator Float3(Int3 i) => new(i.x, i.y, i.z);
+    public static implicit operator Float3(Float2 v) => new(v.x, v.y, 0);
+
+    public static implicit operator Vector3(Float3 f) => new(f.x, f.y, f.z);
+    #endregion
+
     public readonly float GetAxis(Axis axis)
     {
         return axis switch
@@ -116,36 +161,13 @@ public struct Float3(float x = 0, float y = 0, float z = 0)
         return new Float3(x, y, z);
     }
 
-    public static float Dot(Float3 a, Float3 b) => a.x * b.x + a.y * b.y + a.z * b.z;
-    public static Float3 CrossProduct(Float3 a, Float3 b) => new(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
-    public static Float3 Lerp(Float3 s, Float3 e, float t) => (e - s) * t + s;
-    public static Float3 operator +(Float3 a, Float3 b) => new(a.x + b.x, a.y + b.y, a.z + b.z); // Vector Adding
-    public static Float3 operator -(Float3 a, Float3 b) => new(a.x - b.x, a.y - b.y, a.z - b.z); // Vector Subracting
-    public static Float3 operator -(float a, Float3 b) => new(a - b.x, a - b.y, a - b.z); // Subracting
-
-    public static Float3 operator *(Float3 a, Float3 b) => new(a.x * b.x, a.y * b.y, a.z * b.z); // Vector Multiplication
-    public static Float3 operator /(Float3 a, Float3 b) => new(a.x / b.x, a.y / b.y, a.z / b.z); // Vector Division
-    public static Float3 operator *(Float3 v, float f) => new(v.x * f, v.y * f, v.z * f); // Vector Length Multiplication
-    public static Float3 operator /(Float3 v, float f) => new(v.x / f, v.y / f, v.z / f); // Vector Length Division
-    public static Float3 operator /(float f, Float3 v) => new(f / v.x, f / v.y, f / v.z); // Vector Division
-    public static Float3 operator -(Float3 a) => new(-a.x, -a.y, -a.z); // Negative Vector
-    public static bool operator ==(Float3 a, Float3 b) => a.x == b.x && a.y == b.y && a.z == b.z;
-    public static bool operator !=(Float3 a, Float3 b) => a.x != b.x || a.y != b.y || a.z != b.z;
-
-    public override string ToString() => $"({x.ToString()},{y.ToString()},{z.ToString()})";
-    public Int3 RoundToInt3()
+    public readonly override bool Equals([NotNullWhen(true)] object? obj)
     {
-        return new((int)float.Round(x), (int)float.Round(y), (int)float.Round(z));
+        if (obj.GetType() != typeof(Float3)) return false;
+        return this == (Float3)obj;
     }
-
-    public static explicit operator Float3(float[] f) => new(f[0], f[1], f[2]);
-    public static explicit operator Float3(Double3 d) => new((float)d.x, (float)d.y, (float)d.z);
-
-    public static implicit operator Float3(Int3 i) => new(i.x, i.y, i.z);
-    public static implicit operator Float3(Float2 v) => new(v.x, v.y, 0);
-
-    public static implicit operator Vector3(Float3 f) => new(f.x, f.y, f.z);
-    public byte[] glConvertToData()
+    public readonly override int GetHashCode() => HashCode.Combine(x, y, z);
+    public readonly byte[] glConvertToData()
     {
         List<byte> results = [];
 
@@ -155,6 +177,9 @@ public struct Float3(float x = 0, float y = 0, float z = 0)
 
         return results.ToArray();
     }
+    public override readonly string ToString() => $"({x},{y},{z})";
+
+
 }
 public struct Float2(float x = 0, float y = 0)
 {
@@ -176,6 +201,7 @@ public struct Float2(float x = 0, float y = 0)
 
     #endregion
 
+    #region math
     public static Float2 Lerp(Float2 s, Float2 e, float t) => (e - s) * t + s;
     public float Length => MathF.Sqrt(x * x + y * y);
     public float LengthSquared() => x * x + y * y;
@@ -185,12 +211,14 @@ public struct Float2(float x = 0, float y = 0)
     {
         var n = Normalized();
 
-        return Maths.ToDeg((float)(Math.Atan(-n.y/n.x) + (n.x < 0 ? -Math.PI / 2 : Math.PI / 2)));
+        return Maths.ToDeg((float)(Math.Atan(-n.y / n.x) + (n.x < 0 ? -Math.PI / 2 : Math.PI / 2)));
     }
     public float Slope => y / x;
     public static float Dot(Float2 a, Float2 b) => a.x * b.x + a.y * b.y;
     public static float Determinant(Float2 a, Float2 b) => a.x * b.y - a.y * b.x;
+    #endregion
 
+    #region operators
     public static Float2 operator +(Float2 a, Float2 b) => new(a.x + b.x, a.y + b.y); // Vector Adding
     public static Float2 operator +(Float2 v, float f) => new(v.x + f, v.y + f); // Proportional Addition
     public static Float2 operator -(Float2 a, Float2 b) => new(a.x - b.x, a.y - b.y); // Vector Subracting
@@ -204,8 +232,6 @@ public struct Float2(float x = 0, float y = 0)
 
     public static bool operator ==(Float2 a, Float2 b) => a.x == b.x && a.y == b.y;
     public static bool operator !=(Float2 a, Float2 b) => a.x != b.x || a.y != b.y;
-    public override string ToString() => $"({x},{y})";
-    public static Float2 Parse(string s) => (Float2)s.Split(',').Select(float.Parse).ToArray();
 
     public static explicit operator Float2(float[] f) => new(f[0], f[1]);
     public static explicit operator Float2(Double2 v) => new((float)v.x, (float)v.y);
@@ -213,8 +239,9 @@ public struct Float2(float x = 0, float y = 0)
     public static explicit operator Float2(Float3 v) => new(v.x, v.y);
     public static explicit operator Float2(Int3 v) => new(v.x, v.y);
     public static implicit operator Float2(Int2 v) => new(v.x, v.y);
+    #endregion
 
-    public byte[] glConvertToData()
+    public readonly byte[] glConvertToData()
     {
         List<byte> results = [];
 
@@ -223,6 +250,16 @@ public struct Float2(float x = 0, float y = 0)
 
         return results.ToArray();
     }
+    public static Float2 Parse(string s) => (Float2)s.Split(',').Select(float.Parse).ToArray();
+
+
+    public readonly override bool Equals([NotNullWhen(true)] object? obj)
+    {
+        if (obj.GetType() != typeof(Float2)) return false;
+        return this == (Float2)obj;
+    }
+    public readonly override int GetHashCode() => HashCode.Combine(x, y);
+    public override readonly string ToString() => $"({x},{y})";
 }
 public struct UVRect(float uMin = 0, float vMin = 0, float uMax = 1, float vMax = 1)
 {
@@ -231,22 +268,34 @@ public struct UVRect(float uMin = 0, float vMin = 0, float uMax = 1, float vMax 
     public float uMax = uMax;
     public float vMax = vMax;
 
+    #region variants
     public static UVRect Unit => new(0, 0, 1, 1);
+    #endregion
 
+    #region math
+    public readonly float width => uMax - uMin;
+    public readonly float height => vMax - vMin;
     public Float2 GetMin() => new(uMin, vMin);
     public Float2 GetMax() => new(uMax, vMax);
+    public UVRect FlipV() => new UVRect(uMin, 1 - vMax, uMax, 1 - vMin);
+    #endregion
 
-    public float width => uMax - uMin;
-    public float height => vMax - vMin;
-
+    #region operators
     public static UVRect operator /(UVRect v, float f) => new(v.uMin / f, v.vMin / f, v.uMax / f, v.vMax / f);
 
     public static bool operator ==(UVRect v1, UVRect v2) => v1.uMin == v2.uMin && v1.vMin == v2.vMin && v1.uMax == v2.uMax && v1.vMax == v2.vMax;
     public static bool operator !=(UVRect v1, UVRect v2) => v1.uMin != v2.uMin || v1.vMin != v2.vMin || v1.uMax != v2.uMax || v1.vMax != v2.vMax;
+    #endregion
 
-    public UVRect FlipV() => new UVRect(uMin, 1 - vMax, uMax, 1 - vMin);
 
-    public override string ToString()
+    public readonly override bool Equals([NotNullWhen(true)] object? obj)
+    {
+        if (obj.GetType() != typeof(UVRect)) return false;
+        return this == (UVRect)obj;
+    }
+    public readonly override int GetHashCode() => HashCode.Combine(uMin, vMin, uMax, vMax);
+
+    public override readonly string ToString()
     {
         return $"[{uMin}, {vMin}, {uMax}, {vMax}]";
     }
@@ -258,15 +307,15 @@ public struct BaseVectors(Float3 leftVector, Float3 upVector, Float3 forwardVect
     public Float3 upVector { get; private set; } = upVector;
     public Float3 forwardVector { get; private set; } = forwardVector;
 
-    public Float3 TransformVector(Float3 point)
+    public readonly Float3 TransformVector(Float3 point)
     {
         return leftVector * point.x + upVector * point.y + forwardVector * point.z;
     }
-    public Double3 TransformVector(Double3 point)
+    public readonly Double3 TransformVector(Double3 point)
     {
         return (Double3)leftVector * point.x + (Double3)upVector * point.y + (Double3)forwardVector * point.z;
     }
-    public BaseVectors TransformByBaseVectors(BaseVectors baseVectors)
+    public readonly BaseVectors TransformByBaseVectors(BaseVectors baseVectors)
     {
         return new(
             baseVectors.TransformVector(leftVector),
@@ -274,15 +323,15 @@ public struct BaseVectors(Float3 leftVector, Float3 upVector, Float3 forwardVect
             baseVectors.TransformVector(forwardVector));
     }
 
-    public BaseVectors RotateXBy(float angle)
+    public readonly BaseVectors RotateXBy(float angle)
     {
         return TransformByBaseVectors(FromXRotation(angle));
     }
-    public BaseVectors RotateYBy(float angle)
+    public readonly BaseVectors RotateYBy(float angle)
     {
         return TransformByBaseVectors(FromYRotation(angle));
     }
-    public BaseVectors RotateZBy(float angle)
+    public readonly BaseVectors RotateZBy(float angle)
     {
         return TransformByBaseVectors(FromZRotation(angle));
     }
