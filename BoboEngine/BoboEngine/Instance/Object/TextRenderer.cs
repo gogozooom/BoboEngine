@@ -49,6 +49,7 @@ public class TextRenderer : UIRenderer
             int xOffset = 0;
             int vertI = 0;
             int charI = 0;
+            int curveI = 3;
 
             foreach (var letter in text.ToCharArray())
             {
@@ -71,9 +72,9 @@ public class TextRenderer : UIRenderer
                     var curveClippedPoints = ClipOutsideCurves(points);
 
                     Engine.Log("Normal:");
-                    DEBUG_OutputDesmosPointArray(points, font.UnitsPerEm);
+                    DEBUG_OutputDesmosPointArray(points);
                     Engine.Log("On the curve:");
-                    DEBUG_OutputDesmosPointArray(curveClippedPoints, font.UnitsPerEm);
+                    DEBUG_OutputDesmosPointArray(curveClippedPoints);
 
                     List<VertexMapper.VertexMap> glyphVertMaps = [];
 
@@ -101,10 +102,31 @@ public class TextRenderer : UIRenderer
 
                         List<VertexMapper.VertexMap> vertMaps = [];
 
-                        AddGlyphVert(TransformPoint(previousItem.value.Position, xOffset, font.UnitsPerEm), glyph, charI++, vertI++, 0, clockwise, ref vertices, ref normalPositions, ref vertMaps);
                         AddGlyphVert(TransformPoint(centerItem.value.Position, xOffset, font.UnitsPerEm), glyph, charI++, vertI++, 1, clockwise, ref vertices, ref normalPositions, ref vertMaps);
                         AddGlyphVert(TransformPoint(nextItem.value.Position, xOffset, font.UnitsPerEm), glyph, charI++, vertI++, 2, clockwise, ref vertices, ref normalPositions, ref vertMaps);
 
+                        // Insert any intersecting points
+                        //foreach (var point in curveClippedPoints)
+                        //{
+                        //    if (point.Position == centerItem.value.Position || point.Position == nextItem.value.Position || point.Position == previousItem.value.Position) continue;
+
+                        //    if((point.Position - new Float2(275, 1195)).Length < 0.0001)
+                        //    {
+                        //        Engine.Log("Should be bad point!");
+                        //    }
+
+                        //    if (IsPointWithinTriangle(centerItem.value.Position, nextItem.value.Position, previousItem.value.Position, point.Position))
+                        //    {
+                        //        Engine.LogError("IntersectingPoint!");
+                        //        DEBUG_OutputDesmosPointArray([point]);
+                        //        (var previousInf, var centerInf, var nextInf) = GetPointsOfTriangleInfluence(previousItem.value.Position, centerItem.value.Position, nextItem.value.Position, point.Position, false);
+                        //        curveUVPositions.Add(curveUVPositions.values[0] * previousInf + curveUVPositions.values[1] * centerInf + curveUVPositions.values[2] * nextInf);
+                        //        AddGlyphVert(TransformPoint(point.Position, xOffset, font.UnitsPerEm), glyph, charI++, vertI++, curveI++, clockwise, ref vertices, ref normalPositions, ref vertMaps);
+                        //    }
+                        //}
+
+                        AddGlyphVert(TransformPoint(previousItem.value.Position, xOffset, font.UnitsPerEm), glyph, charI++, vertI++, 0, clockwise, ref vertices, ref normalPositions, ref vertMaps);
+                        
                         mapper.Add(new VertexMapper.FaceMap(vertMaps));
                     }
                 }
@@ -142,14 +164,14 @@ public class TextRenderer : UIRenderer
     {
         return (point + Float2.xAxis * xOffset) / unitsPerEm;
     }
-    private static void AddGlyphVert(Float2 vert, FontData.GlyphData glyph, int charI, int vertI, int uvI, bool isClockwise, ref VertexAttribute<Float3> vertices, ref VertexAttribute<Float3> normalPositions, ref List<VertexMapper.VertexMap> vertexIndicies)
+    private static void AddGlyphVert(Float2 vert, FontData.GlyphData glyph, int charI, int vertI, int uvI, bool isClockwise, ref VertexAttribute<Float3> vertices, ref VertexAttribute<Float3> normalPositions, ref List<VertexMapper.VertexMap> vertMaps)
     {
         vertices.Add(vert);
 
         var normalizedPoint = NormalizedUVChoordinate(glyph.Min, glyph.Max, vert);
 
         normalPositions.Add(new(normalizedPoint.x, normalizedPoint.y, charI));
-        vertexIndicies.Add([vertI, uvI, vertI, isClockwise ? 0 : -1]);
+        vertMaps.Add([vertI, uvI, vertI, isClockwise ? 0 : -1]);
     }
 
     public static T[] ConnectByIndices<T>(T[][] arrays, int[] startConnectIndices = null, int[] connectIndices = null, bool loopConnect = true, bool loopFirst = false)
@@ -359,7 +381,7 @@ public class TextRenderer : UIRenderer
         return results;
     }
 
-
+    #region math
     public static bool DoLinesIntersect(Float2 a1, Float2 a2, Float2 b1, Float2 b2, float margin = 0.0001f)
     {
         // Desmos: https://www.desmos.com/geometry/sc4kt0prnx
@@ -425,15 +447,43 @@ public class TextRenderer : UIRenderer
     {
         return Float2.Dot((v0 - v1).Cross, v2 - v1) > 0.00001;
     }
+    public static (float v0Inf, float v1Inf, float v2Inf) GetPointsOfTriangleInfluence(Float2 v0, Float2 v1, Float2 v2, Float2 p, bool clamped = true)
+    {
+        var v0MeasureVector = (v2 - v1).Cross;
+        var v1MeasureVector = (v0 - v2).Cross;
+        var v2MeasureVector = (v1 - v0).Cross;
+
+        var pV0MeasureDot = Float2.Dot(v0MeasureVector, p - v1);
+        var pV1MeasureDot = Float2.Dot(v1MeasureVector, p - v2);
+        var pV2MeasureDot = Float2.Dot(v2MeasureVector, p - v0);
+
+        var v0ReferenceDot = Float2.Dot(v0MeasureVector, v0 - v1);
+        var v1ReferenceDot = Float2.Dot(v1MeasureVector, v1 - v2);
+        var v2ReferenceDot = Float2.Dot(v2MeasureVector, v2 - v0);
+
+        var aInf = pV0MeasureDot / v0ReferenceDot;
+        var bInf = pV1MeasureDot / v1ReferenceDot;
+        var cInf = pV2MeasureDot / v2ReferenceDot;
+
+        if (clamped)
+        {
+            aInf = Maths.Clamp(aInf, 0, 1);
+            bInf = Maths.Clamp(bInf, 0, 1);
+            cInf = Maths.Clamp(cInf, 0, 1);
+        }
+
+        return (aInf,bInf,cInf);
+    }
+    #endregion
 
     #endregion
 
-    private static void DEBUG_OutputDesmosPointArray(IEnumerable<FontData.Point> points, float scaler)
+    private static void DEBUG_OutputDesmosPointArray(IEnumerable<FontData.Point> points)
     {
         string deb = "";
         foreach (var point in points)
         {
-            deb += $"{point.Position.x / scaler},{point.Position.y / scaler}\n";
+            deb += $"{point.Position.x},{point.Position.y}\n";
         }
         Engine.LogMessage(deb);
     }

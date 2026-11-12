@@ -275,4 +275,64 @@ public class TextRendererTests
             Assert.InRange((expect3 - TextRenderer.NormalizedUVChoordinate(min, max, new(0.2f, 0.4f))).Length, 0, margin);
         }
     }
+
+    public class GetPointsOfTriangleInfluenceTests
+    {
+        static readonly Float2 v0 = new(0, 0);
+        static readonly Float2 v1 = new(0.5f, 1);
+        static readonly Float2 v2 = new(1, 0);
+        static readonly Float2[] testPoints = [v0, v1, v2, new(0.5f, 0.5f)];
+
+        [Fact]
+        public void ExpectInfluenceToAlwaysAddTo1InTriangle()
+        {
+            float r1;
+            float r2;
+            float r3;
+
+            foreach (var testPoint in testPoints)
+            {
+                (r1, r2, r3) = TextRenderer.GetPointsOfTriangleInfluence(v0, v1, v2, testPoint);
+
+                Assert.Equal(1, r1 + r2 + r3, 0.0001);
+            }
+
+        }
+        [Fact]
+        public void ExpectInfluenceToAlwaysAddTo1InTriangleFlipped()
+        {
+            float r1;
+            float r2;
+            float r3;
+
+            foreach (var testPoint in testPoints)
+            {
+                (r1, r2, r3) = TextRenderer.GetPointsOfTriangleInfluence(v0, v2, v1, testPoint);
+
+                Assert.Equal(1, r1 + r2 + r3, 0.0001);
+            }
+        }
+
+        [Fact]
+        public void ExpectInfluenceToEqual1WhenPointEqualsVertex()
+        {
+            (var v0Inf, var v1Inf, var v2Inf) = TextRenderer.GetPointsOfTriangleInfluence(v0, v1, v2, v0);
+
+            Assert.Equal(1, v0Inf);
+            Assert.Equal(0, v1Inf);
+            Assert.Equal(0, v2Inf);
+
+            (v0Inf, v1Inf, v2Inf) = TextRenderer.GetPointsOfTriangleInfluence(v0, v1, v2, v1);
+
+            Assert.Equal(0, v0Inf);
+            Assert.Equal(1, v1Inf);
+            Assert.Equal(0, v2Inf);
+
+            (v0Inf, v1Inf, v2Inf) = TextRenderer.GetPointsOfTriangleInfluence(v0, v1, v2, v2);
+
+            Assert.Equal(0, v0Inf);
+            Assert.Equal(0, v1Inf);
+            Assert.Equal(1, v2Inf);
+        }
+    }
 }
