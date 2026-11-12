@@ -71,8 +71,8 @@ namespace BoboEngine
 
                 validRenderObjects.Sort();
 
-                cameraMatrixThisFrame = Camera.main.GetProjectionMatrix();
-                localCameraMatrixThisFrame = Camera.main.GetProjectionMatrix(false);
+                cameraMatrixThisFrame = Camera.main.GetProjectionMatrix(); // TODO: Move to camera object
+                localCameraMatrixThisFrame = Camera.main.GetProjectionMatrix(false); // TODO: Move to camera object
 
                 foreach (MeshRenderer targetRenderObject in validRenderObjects)
                 {
