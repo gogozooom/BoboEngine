@@ -38,6 +38,10 @@ public class MeshRenderer : ObjectBehavior, IComparable<MeshRenderer>
         }
 
         material.shader.glSetMatrix4x4("model", transform.Matrix);
+    }
+
+    protected virtual void glSetUniforms()
+    {
         material.shader.glSetVec4("u_color", material.color);
         material.shader.glSetFloat("u_time", Time.time);
     }
@@ -45,6 +49,7 @@ public class MeshRenderer : ObjectBehavior, IComparable<MeshRenderer>
     public void glDraw()
     {
         glSetMatrixes();
+        glSetUniforms();
 
         material.GlBindShaderProperties();
 
