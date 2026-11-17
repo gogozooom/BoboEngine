@@ -49,7 +49,6 @@ public class TextRenderer : UIRenderer
             int xOffset = 0;
             int vertI = 0;
             int charI = 0;
-            int curveI = 3;
 
             foreach (var letter in text.ToCharArray())
             {
@@ -104,27 +103,6 @@ public class TextRenderer : UIRenderer
 
                         AddGlyphVert(TransformPoint(centerItem.value.Position, xOffset, font.UnitsPerEm), glyph, charI++, vertI++, 1, clockwise, ref vertices, ref normalPositions, ref vertMaps);
                         AddGlyphVert(TransformPoint(nextItem.value.Position, xOffset, font.UnitsPerEm), glyph, charI++, vertI++, 2, clockwise, ref vertices, ref normalPositions, ref vertMaps);
-
-                        // Insert any intersecting points
-                        //foreach (var point in curveClippedPoints)
-                        //{
-                        //    if (point.Position == centerItem.value.Position || point.Position == nextItem.value.Position || point.Position == previousItem.value.Position) continue;
-
-                        //    if((point.Position - new Float2(275, 1195)).Length < 0.0001)
-                        //    {
-                        //        Engine.Log("Should be bad point!");
-                        //    }
-
-                        //    if (IsPointWithinTriangle(centerItem.value.Position, nextItem.value.Position, previousItem.value.Position, point.Position))
-                        //    {
-                        //        Engine.LogError("IntersectingPoint!");
-                        //        DEBUG_OutputDesmosPointArray([point]);
-                        //        (var previousInf, var centerInf, var nextInf) = GetPointsOfTriangleInfluence(previousItem.value.Position, centerItem.value.Position, nextItem.value.Position, point.Position, false);
-                        //        curveUVPositions.Add(curveUVPositions.values[0] * previousInf + curveUVPositions.values[1] * centerInf + curveUVPositions.values[2] * nextInf);
-                        //        AddGlyphVert(TransformPoint(point.Position, xOffset, font.UnitsPerEm), glyph, charI++, vertI++, curveI++, clockwise, ref vertices, ref normalPositions, ref vertMaps);
-                        //    }
-                        //}
-
                         AddGlyphVert(TransformPoint(previousItem.value.Position, xOffset, font.UnitsPerEm), glyph, charI++, vertI++, 0, clockwise, ref vertices, ref normalPositions, ref vertMaps);
                         
                         mapper.Add(new VertexMapper.FaceMap(vertMaps));
