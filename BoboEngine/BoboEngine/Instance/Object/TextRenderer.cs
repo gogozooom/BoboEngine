@@ -478,6 +478,18 @@ public class TextRenderer : UIRenderer
     {
         Console.WriteLine($"P=\\operatorname{{polygon}}\\left(\\left(x_{{2}}\\left[{lastPoint}\\right],y_{{2}}\\left[{lastPoint}\\right]\\right),\\left(x_{{2}}\\left[{currentPoint}\\right],y_{{2}}\\left[{currentPoint}\\right]\\right),\\left(x_{{2}}\\left[{nextPoint}\\right],y_{{2}}\\left[{nextPoint}\\right]\\right)\\right)");
     }
+    private static void DEBUG_CreateSquare(ref VertexData data, ref VertexMapper mapper)
+    {
+        var vertices = data.AddAttribute<Float3>("vertices", 0);
+        var normalPositions = data.AddAttribute<Float3>("normals", 2);
+
+        int index = vertices.Count;
+
+        vertices.AddRange([new(0, 0, 0.01f), new(0.5f, 0, 0.01f), new(0.5f, 0.5f, 0.01f), new(0, 0.5f, 0.01f)]);
+        normalPositions.AddRange([new(0, 0, 0), new(1, 0, 0), new(1, 1, 0), new(0, 1, 0)]);
+        int[][] d = [[index, -1, index++], [index, -1, index++], [index, -1, index++], [index, -1, index]];
+        mapper.Add(new VertexMapper.FaceMap(d));
+    }
 
     public class NoValidBridgeException(string message) : Exception(message) { }
 }
