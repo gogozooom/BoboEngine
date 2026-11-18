@@ -1,6 +1,4 @@
 ﻿using System.Collections;
-using System.Collections.Generic;
-using System.ComponentModel;
 using static BoboEngine.VertexData;
 using static OpenGL.GL;
 
@@ -102,6 +100,7 @@ public class VertexAttribute<T>(uint shaderIndex)
 {
     public readonly uint shaderIndex = shaderIndex;
     public readonly List<T> values = [];
+    public int Count => values.Count;
 
     public int glType()
     {
@@ -316,6 +315,7 @@ public class VertexAttribute<T>(uint shaderIndex)
 
     public void Add(T value) => values.Add(value);
 
+    public void AddRange(IEnumerable<T> values) => this.values.AddRange(values);
 
     public T[] GetValues() => values.ToArray();
 
