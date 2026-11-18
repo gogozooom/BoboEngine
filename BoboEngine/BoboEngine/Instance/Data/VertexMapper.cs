@@ -78,10 +78,11 @@ public readonly struct VertexMapper : IEnumerable<VertexMap>
 
         foreach (var vertexMap in this)
         {
-            for (int i = 0; i < data.attributes.Count; i++)
+            foreach (var attribute in data.attributes)
             {
+                int i = (int)(uint)attribute.GetType().GetField("shaderIndex").GetValue(attribute);
+
                 var paramIndex = i < vertexMap.indexMaps.Count ? vertexMap.indexMaps[i] : -1; // Missing data gets set to -1
-                var attribute = data.attributes[i];
                 var glConvertItemToData = attribute.GetType().GetMethod("glConvertItemToData");
                 object[] param = [paramIndex];
 
