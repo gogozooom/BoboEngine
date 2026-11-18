@@ -34,20 +34,35 @@ public class TextRenderer : UIRenderer
 
     private void UpdateMesh()
     {
+        if (font == null || string.IsNullOrEmpty(text))
+        {
+            meshFilter.mesh = null;
+            return;
+        }
+
         VertexData data = new();
         VertexMapper mapper = new();
 
-        var vertices = data.AddAttribute<Float3>("vertices");
-        var curveUVPositions = data.AddAttribute<Float2>("textureCoords");
-        var normalPositions = data.AddAttribute<Float3>("normals");
+        CreateMesh(ref data, ref mapper);
+
+        Mesh newMesh = new();
+        newMesh.LoadRawData(data, mapper);
+        meshFilter.mesh = newMesh;
+    }
+
+    private void CreateMesh(ref VertexData data, ref VertexMapper mapper)
+    {
+        data ??= new();
+
+        var vertices = data.AddAttribute<Float3>("vertices", 0);
+        var curveUVPositions = data.AddAttribute<Float2>("textureCoords", 1);
+        var normalPositions = data.AddAttribute<Float3>("normals", 2);
         curveUVPositions.Populate([new(0, 0), new(0.5f, 0), new(1f, 1f)]);
-        var isClockwise = data.AddAttribute<bool>("isClockwise");
+        var isClockwise = data.AddAttribute<bool>("isClockwise", 3);
         isClockwise.Populate([true]);
 
-        if (font != null && !string.IsNullOrEmpty(text))
-        {
             int xOffset = 0;
-            int vertI = 0;
+        int vertI = vertices.Count;
             int charI = 0;
 
             foreach (var letter in text.ToCharArray())
@@ -66,7 +81,7 @@ public class TextRenderer : UIRenderer
 
                 foreach (var points in glyphs.Select((item) => item.Reverse())) // Reverse order for counter clockwise triangle rendering
                 {
-                    int indexOffset = vertices.values.Count;
+                int indexOffset = vertices.Count;
 
                     var curveClippedPoints = ClipOutsideCurves(points);
 
@@ -80,7 +95,7 @@ public class TextRenderer : UIRenderer
                     // On the curve mesh
                     foreach (var point in curveClippedPoints)
                     {
-                        AddGlyphVert(TransformPoint(point.Position, xOffset, font.UnitsPerEm), glyph, charI++, vertI++, -1, false, ref vertices, ref normalPositions, ref glyphVertMaps);
+                    AddGlyphVert(point.Position, xOffset, font.UnitsPerEm, glyph, charI, vertI++, -1, false, ref vertices, ref normalPositions, ref glyphVertMaps);
                     }
 
                     mapper.AddRange(TriangulateEarClipping(vertices.values[indexOffset..], glyphVertMaps));
@@ -101,22 +116,17 @@ public class TextRenderer : UIRenderer
 
                         List<VertexMapper.VertexMap> vertMaps = [];
 
-                        AddGlyphVert(TransformPoint(centerItem.value.Position, xOffset, font.UnitsPerEm), glyph, charI++, vertI++, 1, clockwise, ref vertices, ref normalPositions, ref vertMaps);
-                        AddGlyphVert(TransformPoint(nextItem.value.Position, xOffset, font.UnitsPerEm), glyph, charI++, vertI++, 2, clockwise, ref vertices, ref normalPositions, ref vertMaps);
-                        AddGlyphVert(TransformPoint(previousItem.value.Position, xOffset, font.UnitsPerEm), glyph, charI++, vertI++, 0, clockwise, ref vertices, ref normalPositions, ref vertMaps);
+                    AddGlyphVert(centerItem.value.Position, xOffset, font.UnitsPerEm, glyph, charI, vertI++, 1, clockwise, ref vertices, ref normalPositions, ref vertMaps);
+                    AddGlyphVert(nextItem.value.Position, xOffset, font.UnitsPerEm, glyph, charI, vertI++, 2, clockwise, ref vertices, ref normalPositions, ref vertMaps);
+                    AddGlyphVert(previousItem.value.Position, xOffset, font.UnitsPerEm, glyph, charI, vertI++, 0, clockwise, ref vertices, ref normalPositions, ref vertMaps);
                         
                         mapper.Add(new VertexMapper.FaceMap(vertMaps));
                     }
                 }
 
+            charI++;
                 xOffset += glyph.AdvanceWidth;
             }
-        }
-
-
-        Mesh newMesh = new();
-        newMesh.LoadRawData(data, mapper);
-        meshFilter.mesh = newMesh;
     }
 
     #region Helper Functions
@@ -142,13 +152,12 @@ public class TextRenderer : UIRenderer
     {
         return (point + Float2.xAxis * xOffset) / unitsPerEm;
     }
-    private static void AddGlyphVert(Float2 vert, FontData.GlyphData glyph, int charI, int vertI, int uvI, bool isClockwise, ref VertexAttribute<Float3> vertices, ref VertexAttribute<Float3> normalPositions, ref List<VertexMapper.VertexMap> vertMaps)
+    private static void AddGlyphVert(Float2 glyphPos, int xOffset, int UnitsPerEm, FontData.GlyphData glyph, int charI, int vertI, int uvI, bool isClockwise, ref VertexAttribute<Float3> vertices, ref VertexAttribute<Float3> normalPositions, ref List<VertexMapper.VertexMap> vertMaps)
     {
-        vertices.Add(vert);
-
-        var normalizedPoint = NormalizedUVChoordinate(glyph.Min, glyph.Max, vert);
-
+        var normalizedPoint = NormalizedUVChoordinate(glyph.Min, glyph.Max, glyphPos);
+        vertices.Add(TransformPoint(glyphPos, xOffset, UnitsPerEm));
         normalPositions.Add(new(normalizedPoint.x, normalizedPoint.y, charI));
+
         vertMaps.Add([vertI, uvI, vertI, isClockwise ? 0 : -1]);
     }
 
