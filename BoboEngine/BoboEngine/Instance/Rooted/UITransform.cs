@@ -34,7 +34,7 @@ public class UITransform : ObjectBehavior
         anchor = new UVRect(0.5f, 0.5f, 0.5f, 0.5f);
     }
 
-    public Matrix4x4 GetMatrixTrans()
+    public static Matrix4x4 CreateMatrixTrans(Float2 position, Float2 scale, Float2 pivot, UVRect anchor)
     {
         var screenPosition = new Double2(position.x - scale.x * pivot.x, position.y - scale.y * pivot.y); // Pixel Position (With pivot offset applied)
 
@@ -45,9 +45,9 @@ public class UITransform : ObjectBehavior
         return Matrix4x4.CreateTranslation(new Vector3((float)screenPosition.x, (float)screenPosition.y, 0));
     }
 
-    public Matrix4x4 MatrixTrans => GetMatrixTrans();
+    public Matrix4x4 MatrixTrans => CreateMatrixTrans(position, scale, pivot, anchor);
 
-    public Matrix4x4 GetMatrixScale()
+    public static Matrix4x4 CreateMatrixScale(Float2 scale, UVRect anchor)
     {
         var screenSize = new Double2(scale.x, scale.y); // Pixel Scale
 
@@ -60,7 +60,7 @@ public class UITransform : ObjectBehavior
         return Matrix4x4.CreateScale(new Vector3((float)screenSize.x, (float)screenSize.y, 1));
     }
 
-    public Matrix4x4 MatrixScale => GetMatrixScale();
+    public Matrix4x4 MatrixScale => CreateMatrixScale(scale, anchor);
 
     public Matrix4x4 Matrix => MatrixScale * MatrixTrans;
 }
