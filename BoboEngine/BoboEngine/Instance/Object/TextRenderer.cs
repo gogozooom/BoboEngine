@@ -248,7 +248,7 @@ public class TextRenderer : UIRenderer
 
     protected override void glSetMatrixes()
     {
-        material.shader.glSetMatrix4x4("model", transform.Matrix * UITransform.CreateMatrixScale(new Float2(fontSize, fontSize), uiTransform.anchor) * uiTransform.MatrixTrans);
+        material.shader.glSetMatrix4x4("model", transform.Matrix * UITransform.CreateMatrixScale(new Float2(fontSize, fontSize), new(0,0,0,0)) * uiTransform.MatrixTrans);
     }
 
     #region Helper Functions
