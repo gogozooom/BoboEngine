@@ -21,6 +21,7 @@ namespace BoboEngine
 
         public static Action update;
         public static Action afterUpdate;
+        public static Action onWindowSizeChange;
 
         public static Matrix4x4 cameraMatrixThisFrame { get; private set; }
         public static Matrix4x4 localCameraMatrixThisFrame { get; private set; }
@@ -164,6 +165,7 @@ namespace BoboEngine
         {
             WindowSize = new Float2(width, height);
             glViewport(0, 0, width, height);
+            onWindowSizeChange?.Invoke();
         }
 
         /// <summary>
