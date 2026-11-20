@@ -29,7 +29,7 @@
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="xcopy &quot;$(ProjectDir)\Bin-Dep&quot; &quot;$(TargetDir)\&quot; /E /I /Y" />
+    <Exec Command="xcopy &quot;$(ProjectDir)Bin-Dep&quot; &quot;$(TargetDir)&quot; /E /I /Y" />
   </Target>
 
 </Project>
