@@ -1,0 +1,43 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
+    <OutputType>Library</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>BoboEngine</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <Title>BoboEngine</Title>
+    <Description>A fully custom 3D engine made by Bobo!</Description>
+    <Version>0.1.3</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Tests\**" />
+    <EmbeddedResource Remove="Tests\**" />
+    <None Remove="Tests\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="StbImageSharp" Version="2.30.15" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Libraries\SebText\" />
+  </ItemGroup>
+
+  <Target Name="CopyBinDependencies" AfterTargets="Build">
+    <ItemGroup>
+      <BinDepFiles Include="$(ProjectDir)Bin-Dep\**\*"/>
+    </ItemGroup>
+	  
+	<Message Text="Copying @(BinDepFiles->Count()) files from Bin-Dep to $(TargetDir)" Importance="high" />
+
+	<Copy SourceFiles="@(BinDepFiles)"
+      DestinationFiles="@(BinDepFiles->'$(TargetDir)%(RecursiveDir)%(Filename)%(Extension)')"
+      SkipUnchangedFiles="true"/>
+  </Target>
+
+</Project>
