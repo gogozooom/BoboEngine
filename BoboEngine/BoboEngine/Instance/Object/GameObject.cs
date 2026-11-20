@@ -16,7 +16,7 @@ public class GameObject
         }
         else
         {
-            Engine.LogWarning($"Adding Object '{name}'!");
+            Engine.LogWarning($"Unable to add '{name}' to scene because there is no scene!");
         }
 
         this.name = name;
