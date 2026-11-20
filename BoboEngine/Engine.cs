@@ -11,17 +11,10 @@ public static class Engine
     /// </summary>
     public const string TITLE = "BoboEngine";
 
-    public static string ExecutablePath { get; private set; }
-    public static string ProgramDirectory { get; private set; }
-
     public static Action<string> ConsoleInputted;
 
     public static void Start()
     {
-        // Set Paths
-        ExecutablePath = Environment.ProcessPath;
-        ProgramDirectory = Directory.GetCurrentDirectory();
-
         Console.ForegroundColor = DEFAULT_FORGROUND_COLOR;
 
         RunEngineInitMethods();
@@ -67,17 +60,17 @@ public static class Engine
 
     public static string GetLocalModelPath(string model = null)
     {
-        if (model == null) return Path.Combine(ProgramDirectory, "Models");
+        if (model == null) return "../Models";
 
-        return Path.Combine(ProgramDirectory, "Models", model + ".obj");
+        return Path.Combine("../Models", model + ".obj");
     }
     public static string GetLocalTexturePath(string texture = null)
     {
-        if (texture == null) return Path.Combine(ProgramDirectory, "Textures");
+        if (texture == null) return "../Textures";
 
         if (texture.Split('.').Length == 1) texture += ".bmp";
 
-        return Path.Combine(ProgramDirectory, "Textures", texture);
+        return Path.Combine("../Textures", texture);
     }
 
     #region ConsoleLogging
