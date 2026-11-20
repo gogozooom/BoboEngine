@@ -60,17 +60,17 @@ public static class Engine
 
     public static string GetLocalModelPath(string model = null)
     {
-        if (model == null) return "../Models";
+        if (model == null) return "./Models";
 
-        return Path.Combine("../Models", model + ".obj");
+        return Path.Combine("./Models", model + ".obj");
     }
     public static string GetLocalTexturePath(string texture = null)
     {
-        if (texture == null) return "../Textures";
+        if (texture == null) return "./Textures";
 
         if (texture.Split('.').Length == 1) texture += ".bmp";
 
-        return Path.Combine("../Textures", texture);
+        return Path.Combine("./Textures", texture);
     }
 
     #region ConsoleLogging
