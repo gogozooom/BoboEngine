@@ -28,8 +28,16 @@
     <Folder Include="Libraries\SebText\" />
   </ItemGroup>
 
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="xcopy &quot;$(ProjectDir)Bin-Dep&quot; &quot;$(TargetDir)&quot; /E /I /Y" />
+  <Target Name="CopyBinDependencies" AfterTargets="Build">
+    <ItemGroup>
+      <BinDepFiles Include="$(ProjectDir)Bin-Dep\**\*"/>
+    </ItemGroup>
+	  
+	<Message Text="Copying @(BinDepFiles->Count()) files from Bin-Dep to $(TargetDir)" Importance="high" />
+
+	<Copy SourceFiles="@(BinDepFiles)"
+      DestinationFiles="@(BinDepFiles->'$(TargetDir)%(RecursiveDir)%(Filename)%(Extension)')"
+      SkipUnchangedFiles="true"/>
   </Target>
 
 </Project>
