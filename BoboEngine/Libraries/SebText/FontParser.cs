@@ -12,6 +12,11 @@ public static class FontParser
 
     public static FontData Parse(string pathToFont)
     {
+        if (!File.Exists(pathToFont))
+        {
+            throw new Exception($"Font file does not exist! '{pathToFont}'");
+        }
+
         using FontReader reader = new(pathToFont);
 
         // --- Get table locations ---
