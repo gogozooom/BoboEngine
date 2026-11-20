@@ -1,4 +1,5 @@
 ﻿using BoboEngine.UI;
+using SebText.FontLoading;
 using Xunit;
 
 namespace BoboEngine.Tests;
@@ -186,7 +187,7 @@ public class TextRendererTests
                 new(-2, -1), new(-3, 1)));
         }
     }
-    
+
     public class IsPointWithinTriangleTests
     {
         static readonly Float2 v0 = new(0, 0);
@@ -333,6 +334,27 @@ public class TextRendererTests
             Assert.Equal(0, v0Inf);
             Assert.Equal(0, v1Inf);
             Assert.Equal(1, v2Inf);
+        }
+    }
+       
+    public class CalculateBoundsTests
+    {
+        static string fontLocation = ".\\Fonts\\arial.ttf";
+        [Fact]
+        public void ExpectCorrectOutput()
+        {
+            var fontRender = new GameObject().AddComponent<TextRenderer>();
+            fontRender.font = FontParser.Parse(fontLocation);
+            fontRender.textWrap = true;
+            fontRender.fontSize = 15;
+            fontRender.uiTransform.pivot = Float2.zero;
+            fontRender.uiTransform.anchor = new(0, 0, 0, 0);
+            fontRender.uiTransform.scale = new(100, 100);
+            fontRender.text = "This is a wrapping test!";
+
+            var (lines, width, height) = fontRender.CalculateBounds();
+
+            Assert.Equal(["This is\n", "a\n", "wrappi\n", "ng test!"], lines.Select((item) => item.text));
         }
     }
 }

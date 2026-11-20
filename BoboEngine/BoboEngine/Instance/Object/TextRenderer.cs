@@ -1,4 +1,5 @@
 ﻿using SebText.FontLoading;
+using System.Text.RegularExpressions;
 
 namespace BoboEngine.UI;
 public class TextRenderer : UIRenderer
@@ -10,6 +11,8 @@ public class TextRenderer : UIRenderer
     private string _text = "";
     public float fontSize { get => _fontSize; set => UpdateFontSize(value); }
     private float _fontSize = 20;
+    public bool textWrap { get => _textWrap; set => UpdateTextWrap(value); }
+    private bool _textWrap = false;
 
     #endregion
 
@@ -27,6 +30,12 @@ public class TextRenderer : UIRenderer
     private void UpdateFontSize(float v)
     {
         _fontSize = v;
+        UpdateMesh();
+    }
+    private void UpdateTextWrap(bool v)
+    {
+        _textWrap = v;
+        UpdateMesh();
     }
     #endregion
 
@@ -57,36 +66,87 @@ public class TextRenderer : UIRenderer
         meshFilter.mesh = newMesh;
     }
 
-    private Float2 CalculateBounds()
+    public ((string text, int width)[] lines, int width, int height) CalculateBounds()
     {
-        int biggestXOffset = 0;
+        List<(string text, int width)> lines = [];
+        int height = font.UnitsPerEm;
+
+        int width = 0;
+        List<int> xOffsets = [];
         int xOffset = 0;
-        int yOffset = 0;
+        int words = 0;
+
+        float windowWidth = uiTransform.scale.x * 0.5f * font.UnitsPerEm / fontSize;
+
+        string buffer = "";
 
         foreach (var letter in text.ToCharArray())
         {
             font.TryGetGlyph(letter, out var glyph);
 
-            if (letter == ' ')
+            var advance = glyph.AdvanceWidth + glyph.LeftSideBearing;
+            var lineFits = xOffset + advance <= windowWidth; // TODO: Make calculation to get screen pixel size!
+
+            Engine.Log($"Checking '{letter}' + ({advance})");
+
+            if (letter == ' ' && Regex.IsMatch(buffer, @"^[\w]"))
             {
-                xOffset += glyph.AdvanceWidth;
+                Engine.Log($" - Is space!");
+                words++;
+            }
+            else if (textWrap && !lineFits && buffer.Length > 0)
+            {
+                Engine.Log($" - Can't fit, insert new line! ({xOffset})");
+                string carry = $"{letter}";
+                if (words > 0)
+                {
+                    var split = buffer.Split(' ');
+                    carry = split.Last()+letter;
+                    buffer = string.Join(' ', split[..(split.Length - 1)]);
+                    xOffsets = xOffsets[buffer.Length..];
+                }
+                else
+                {
+                    xOffsets = [];
+                }
+
+                if (xOffset > width) width = xOffset;
+                lines.Add((buffer + "\n", xOffset));
+
+                xOffset = xOffsets.Sum();
+                words = 0;
+                buffer = $"{carry}";
+
+                height += font.UnitsPerEm;
                 continue;
             }
-
-            if (letter == '\n')
+            else if (letter == '\n')
             {
-                if (xOffset > biggestXOffset) xOffset = biggestXOffset;
+                Engine.Log($" - New Line!");
+                if (xOffset > width) width = xOffset;
+                lines.Add((buffer + "\n", xOffset));
+
                 xOffset = 0;
-                yOffset -= font.UnitsPerEm;
+                xOffsets = [];
+                words = 0;
+                buffer = "";
+
+                height += font.UnitsPerEm;
                 continue;
             }
 
-            xOffset += glyph.AdvanceWidth + glyph.LeftSideBearing;
+            xOffsets.Add(advance);
+            xOffset += advance;
+
+            buffer += letter;
+            Engine.Log($" - Continue... ({xOffset})");
         }
 
-        if (xOffset > biggestXOffset) xOffset = biggestXOffset;
+        lines.Add((buffer, xOffset));
 
-        return new Float2(biggestXOffset, -yOffset + font.UnitsPerEm);
+        if (xOffset > width) width = xOffset;
+
+        return (lines.ToArray(), width, height);
     }
     private void CreateMesh(ref VertexData data, ref VertexMapper mapper)
     {
@@ -103,7 +163,7 @@ public class TextRenderer : UIRenderer
         // If current line is bigger than ui scale, move current word buffer into next line
         // Then when creating the mesh, init x and y offsets to match based on which vertical and horizontal align methods set
         // MAYBE?: Create autoFontScale by running the preprossessing step at max size until it can't fit, scale down then try again
-        var bounds = CalculateBounds(); 
+        var (lines, width, height) = CalculateBounds();
 
         int xOffset = 0;
         int yOffset = 0;
@@ -112,74 +172,77 @@ public class TextRenderer : UIRenderer
 
         float unitsPerEm = 1f / font.UnitsPerEm;
 
-        foreach (var letter in text.ToCharArray())
+        foreach (var line in lines)
         {
-            font.TryGetGlyph(letter, out var glyph);
-
-            if (letter == ' ')
+            foreach (var letter in line.text.ToCharArray())
             {
+                font.TryGetGlyph(letter, out var glyph);
+
+                if (letter == ' ')
+                {
+                    xOffset += glyph.AdvanceWidth;
+                    continue;
+                }
+
+                if (letter == '\n')
+                {
+                    xOffset = 0;
+                    yOffset -= font.UnitsPerEm;
+                    continue;
+                }
+
+                xOffset += glyph.LeftSideBearing;
+
+                var glyphs = ConnectContours(glyph.Glyphs);
+
+                foreach (var points in glyphs.Select((item) => item.Reverse())) // Reverse order for counter clockwise triangle rendering
+                {
+                    int indexOffset = vertices.Count;
+
+                    var curveClippedPoints = ClipOutsideCurves(points);
+
+                    //Engine.Log("Normal:");
+                    //DEBUG_OutputDesmosPointArray(points);
+                    //Engine.Log("On the curve:");
+                    //DEBUG_OutputDesmosPointArray(curveClippedPoints);
+
+                    List<VertexMapper.VertexMap> glyphVertMaps = [];
+
+                    // On the curve mesh
+                    foreach (var point in curveClippedPoints)
+                    {
+                        AddGlyphVert(point.Position, new(xOffset, yOffset), unitsPerEm, glyph, charI, vertI++, -1, false, ref vertices, ref normalPositions, ref glyphVertMaps);
+                    }
+
+                    mapper.AddRange(TriangulateEarClipping(vertices.values[indexOffset..], glyphVertMaps));
+
+                    LoopedArray<FontData.Point> loopedPointsArray = new(points);
+
+                    // Off the curve mesh
+                    foreach (var centerItem in loopedPointsArray)
+                    {
+                        if (centerItem.value.OnCurve) continue;
+
+                        indexOffset = vertices.values.Count;
+
+                        var previousItem = centerItem.Previous;
+                        var nextItem = centerItem.Next;
+
+                        bool clockwise = !IsTriangleCounterClockwise(previousItem.value.Position, centerItem.value.Position, nextItem.value.Position);
+
+                        List<VertexMapper.VertexMap> vertMaps = [];
+
+                        AddGlyphVert(centerItem.value.Position, new(xOffset, yOffset), unitsPerEm, glyph, charI, vertI++, 1, clockwise, ref vertices, ref normalPositions, ref vertMaps);
+                        AddGlyphVert(nextItem.value.Position, new(xOffset, yOffset), unitsPerEm, glyph, charI, vertI++, 2, clockwise, ref vertices, ref normalPositions, ref vertMaps);
+                        AddGlyphVert(previousItem.value.Position, new(xOffset, yOffset), unitsPerEm, glyph, charI, vertI++, 0, clockwise, ref vertices, ref normalPositions, ref vertMaps);
+
+                        mapper.Add(new VertexMapper.FaceMap(vertMaps));
+                    }
+                }
+
+                charI++;
                 xOffset += glyph.AdvanceWidth;
-                continue;
             }
-
-            if (letter == '\n')
-            {
-                xOffset = 0;
-                yOffset -= font.UnitsPerEm;
-                continue;
-            }
-
-            xOffset += glyph.LeftSideBearing;
-
-            var glyphs = ConnectContours(glyph.Glyphs);
-
-            foreach (var points in glyphs.Select((item) => item.Reverse())) // Reverse order for counter clockwise triangle rendering
-            {
-                int indexOffset = vertices.Count;
-
-                var curveClippedPoints = ClipOutsideCurves(points);
-
-                //Engine.Log("Normal:");
-                //DEBUG_OutputDesmosPointArray(points);
-                //Engine.Log("On the curve:");
-                //DEBUG_OutputDesmosPointArray(curveClippedPoints);
-
-                List<VertexMapper.VertexMap> glyphVertMaps = [];
-
-                // On the curve mesh
-                foreach (var point in curveClippedPoints)
-                {
-                    AddGlyphVert(point.Position, new(xOffset, yOffset), unitsPerEm, glyph, charI, vertI++, -1, false, ref vertices, ref normalPositions, ref glyphVertMaps);
-                }
-
-                mapper.AddRange(TriangulateEarClipping(vertices.values[indexOffset..], glyphVertMaps));
-
-                LoopedArray<FontData.Point> loopedPointsArray = new(points);
-
-                // Off the curve mesh
-                foreach (var centerItem in loopedPointsArray)
-                {
-                    if (centerItem.value.OnCurve) continue;
-
-                    indexOffset = vertices.values.Count;
-
-                    var previousItem = centerItem.Previous;
-                    var nextItem = centerItem.Next;
-
-                    bool clockwise = !IsTriangleCounterClockwise(previousItem.value.Position, centerItem.value.Position, nextItem.value.Position);
-
-                    List<VertexMapper.VertexMap> vertMaps = [];
-
-                    AddGlyphVert(centerItem.value.Position, new(xOffset, yOffset), unitsPerEm, glyph, charI, vertI++, 1, clockwise, ref vertices, ref normalPositions, ref vertMaps);
-                    AddGlyphVert(nextItem.value.Position, new(xOffset, yOffset), unitsPerEm, glyph, charI, vertI++, 2, clockwise, ref vertices, ref normalPositions, ref vertMaps);
-                    AddGlyphVert(previousItem.value.Position, new(xOffset, yOffset), unitsPerEm, glyph, charI, vertI++, 0, clockwise, ref vertices, ref normalPositions, ref vertMaps);
-
-                    mapper.Add(new VertexMapper.FaceMap(vertMaps));
-                }
-            }
-
-            charI++;
-            xOffset += glyph.AdvanceWidth;
         }
     }
 
