@@ -37,6 +37,8 @@ public class TextRenderer : UIRenderer
         _textWrap = v;
         UpdateMesh();
     }
+    private void OnWindowSizeChange() => UpdateMesh();
+    private void OnTransformChange() => UpdateMesh();
     #endregion
 
     public override void Start()
@@ -44,6 +46,8 @@ public class TextRenderer : UIRenderer
         base.Start();
 
         material.cullBackFaces = false;
+        uiTransform.onTransformUpdate += OnTransformChange;
+        WindowManager.onWindowSizeChange += OnWindowSizeChange;
         if (material.shaderID == "defaultUI") material.SetShaderID("defaultText");
     }
 
