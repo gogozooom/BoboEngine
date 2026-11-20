@@ -76,7 +76,7 @@ public class TextRenderer : UIRenderer
         int xOffset = 0;
         int words = 0;
 
-        float windowWidth = uiTransform.scale.x * 0.5f * font.UnitsPerEm / fontSize;
+        float windowWidth = uiTransform.pixelScale.x * 0.5f * font.UnitsPerEm / fontSize;
 
         string buffer = "";
 
@@ -85,18 +85,14 @@ public class TextRenderer : UIRenderer
             font.TryGetGlyph(letter, out var glyph);
 
             var advance = glyph.AdvanceWidth + glyph.LeftSideBearing;
-            var lineFits = xOffset + advance <= windowWidth; // TODO: Make calculation to get screen pixel size!
-
-            Engine.Log($"Checking '{letter}' + ({advance})");
+            var lineFits = xOffset + advance <= windowWidth;
 
             if (letter == ' ' && Regex.IsMatch(buffer, @"^[\w]"))
             {
-                Engine.Log($" - Is space!");
                 words++;
             }
             else if (textWrap && !lineFits && buffer.Length > 0)
             {
-                Engine.Log($" - Can't fit, insert new line! ({xOffset})");
                 string carry = $"{letter}";
                 if (words > 0)
                 {
@@ -122,7 +118,6 @@ public class TextRenderer : UIRenderer
             }
             else if (letter == '\n')
             {
-                Engine.Log($" - New Line!");
                 if (xOffset > width) width = xOffset;
                 lines.Add((buffer + "\n", xOffset));
 
@@ -139,7 +134,6 @@ public class TextRenderer : UIRenderer
             xOffset += advance;
 
             buffer += letter;
-            Engine.Log($" - Continue... ({xOffset})");
         }
 
         lines.Add((buffer, xOffset));
@@ -478,7 +472,7 @@ public class TextRenderer : UIRenderer
 
             if (tries >= remainingPoints.Size)
             {
-                Engine.LogError("Unable to fully mesh out text!");
+                //Engine.LogError("Unable to fully mesh out text!");
                 break;
             }
 
